@@ -23,10 +23,16 @@ export function createStrategyAPI(playerIndex: number): StrategyAPI {
 		},
 		detEllerDerover: () => {
 			ensureTurnActive()
+			if(gameState.getHasRolled()){
+				//remove previous action and roll again
+				gameState.removePreviousAction()	
+			}
 			const dice = rollDice()
 			const score = calculateScore(dice)
-			gameState.addAction({ type: 'detEllerDerover', value: score, playerIndex })
+			const previousAnnouncedValue = gameState.getPreviousActions()[0].announcedValue
+			gameState.addAction({ type: 'detEllerDerover', value: score, playerIndex, announcedValue: previousAnnouncedValue })
 			gameState.endTurn()
+
 		},
 		reveal: () => {
 			ensureTurnActive()
@@ -34,26 +40,18 @@ export function createStrategyAPI(playerIndex: number): StrategyAPI {
 				throw new Error('Cannot reveal the previous player\'s action after rolling the dice.')
 			}
 
-			// Previous player could have detEllerDerover or roll
-			// If the previous player had detEllerDerover, find the last roll action
-			// If the previous player had roll, the previous action is the score
-
-			// Find the last roll action
-			let lastRoll = null
-			for (const action of gameState.getPreviousActions()) {
-				if (action.type === 'roll') {
-					lastRoll = action
-					break
-				}
-			}
-
-			if (lastRoll === null) {
-				throw new Error('No previous action to reveal (First player in the round called detEllerDerover).')
-			}
-
 			const previousPlayerIndex = (playerIndex + gameState.getPlayers().length - 1) % gameState.getPlayers().length
+
 			const previousPlayerValue = gameState.getPreviousActions()[0].value
-			const previousPlayerLied = lastRoll.value > previousPlayerValue
+			const previousPlayerAnnouncedValue = gameState.getPreviousActions()[0].announcedValue
+
+			const previousActionType = gameState.getPreviousActions()[0].type
+			let previousPlayerLied = false
+			if (previousActionType === 'roll') {
+				previousPlayerLied = previousPlayerValue !== previousPlayerAnnouncedValue
+			} else if (previousActionType === 'detEllerDerover') {
+				previousPlayerLied = previousPlayerValue < previousPlayerAnnouncedValue
+			}
 
 			if (previousPlayerLied) {
 				gameState.modifyPlayerLife(previousPlayerIndex, -1)
@@ -71,7 +69,7 @@ export function createStrategyAPI(playerIndex: number): StrategyAPI {
 			ensureTurnActive()
 			const dice = rollDice()
 			const score = calculateScore(dice)
-			gameState.addAction({ type: 'roll', value: score, playerIndex })
+			gameState.addAction({ type: 'roll', value: score, playerIndex, announcedValue: score })
 			gameState.setHasRolled(true)
 			return score
 		},
@@ -80,8 +78,11 @@ export function createStrategyAPI(playerIndex: number): StrategyAPI {
 			if (!gameState.getHasRolled()) {
 				throw new Error('Cannot lie before rolling the dice.')
 			}
-			const actionValue = calculateScore(diePair)
-			gameState.addAction({ type: 'roll', value: actionValue, playerIndex })
+			const realValue = gameState.getPreviousActions()[0].value
+			const lieValue = calculateScore(diePair)
+
+			gameState.removePreviousAction()
+			gameState.addAction({ type: 'roll', value: realValue, playerIndex, announcedValue: lieValue })
 			gameState.endTurn()
 		},
 	}

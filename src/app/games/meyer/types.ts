@@ -15,7 +15,13 @@ export interface StrategyAPI {
 export interface Action {
 	type: ActionTypes
 	value: number
+	announcedValue: number
 	playerIndex: number
+}
+
+export interface PublicAction {
+	type: ActionTypes
+	announcedValue: number
 }
 
 export type StrategyFunction = (api: StrategyAPI) => void;

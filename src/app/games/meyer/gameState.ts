@@ -14,6 +14,9 @@ const gameState = (() => {
 
 	return {
 		getPreviousActions: () => [...previousActions],
+		removePreviousAction: () => {
+			previousActions.shift()
+		},
 		isFirstInRound: () => firstInRound,
 		getCurrentPlayerIndex: () => currentPlayerIndex,
 		setCurrentPlayerIndex: (index: number) => {
