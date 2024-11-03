@@ -65,7 +65,7 @@
 		"prefix": "gaslight-backend-production:"
 	},
     "user": {
-        "unconfirmedUserExpiry": 86400,
+        "verificationExpiry": 86400,
         "passwordResetExpiry": 86400
     }
 }
