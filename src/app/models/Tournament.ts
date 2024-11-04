@@ -72,6 +72,7 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 }, 'Gradings must be unique')
 
 // Adding indexes
+tournamentSchema.index({ gradings: 1 })
 
 // Pre-save middleware
 tournamentSchema.pre('save', async function (next) {
