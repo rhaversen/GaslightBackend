@@ -25,7 +25,6 @@ const {
 // Interfaces
 export interface IUser extends Document {
 	// Properties
-	_id: Schema.Types.ObjectId
 	username: string // Username of the user
 	email: string // Email of the user
 	password: string // Hashed password of the user

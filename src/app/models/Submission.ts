@@ -17,7 +17,6 @@ import UserModel from './User.js'
 // Interfaces
 export interface ISubmission extends Document {
     // Properties
-    _id: Schema.Types.ObjectId
     title: string // Title of the submission
     code: string // Code submitted by the user
     user: Schema.Types.ObjectId // User who submitted the code
