@@ -6,6 +6,7 @@
 // Process environment variables
 process.env.NODE_ENV = 'development'
 process.env.SESSION_SECRET = 'TEST_SESSION_SECRET'
+process.env.MICROSERVICE_AUTHORIZATION = 'TEST_MICROSERVICE_AUTHORIZATION'
 
 async function startServer (): Promise<void> {
 	try {
