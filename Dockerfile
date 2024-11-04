@@ -19,7 +19,7 @@ COPY dist/app/ ./
 COPY package*.json ./
 COPY config/ ./config/
 
-# Change the ownership of the copied files to backend_user
+# Change the ownership of the copied files to gaslight_backend_user
 RUN chown -R gaslight_backend_user:gaslight_backend_user /app
 
 # Switch to user for subsequent commands
