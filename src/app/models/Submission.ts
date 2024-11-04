@@ -30,12 +30,12 @@ export interface ISubmission extends Document {
 // Schema
 const submissionSchema = new Schema<ISubmission>({
 	title: {
-		type: String,
+		type: Schema.Types.String,
 		required: true,
 		maxlength: 100
 	},
 	code: {
-		type: String,
+		type: Schema.Types.String,
 		required: true,
 		maxlength: 10000
 	},
@@ -45,7 +45,7 @@ const submissionSchema = new Schema<ISubmission>({
 		required: true
 	},
 	active: {
-		type: Boolean,
+		type: Schema.Types.Boolean,
 		default: false
 	}
 }, {
