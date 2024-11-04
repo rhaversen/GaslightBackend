@@ -15,23 +15,31 @@ import mongoose from 'mongoose'
 import session from 'express-session'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import passport from 'passport'
 import MongoStore from 'connect-mongo'
+import * as Sentry from '@sentry/node'
 
 // Own modules
 import databaseConnector from './utils/databaseConnector.js'
 import globalErrorHandler from './middleware/globalErrorHandler.js'
 import logger from './utils/logger.js'
 import config from './utils/setupConfig.js'
+import configurePassport from './utils/passportConfig.js'
 
-// Logging environment
-if (typeof process.env.NODE_ENV !== 'undefined') {
-	logger.info(`Node environment: ${process.env.NODE_ENV}`)
-} else {
-	logger.warn('Node environment is undefined. Shutting down...')
-	process.exit(1)
-}
+// Business logic routes
+import authRouter from './routes/users/auth.js'
+import submissionRouter from './routes/users/submissions.js'
+import userRouter from './routes/users/users.js'
+import tournamentRouter from './routes/users/tournaments.js'
+
+// Microservices routes
+import microservicesRouter from './routes/microservices/codeRunners.js'
+
+// Service routes
+import serviceRoutes from './routes/service.js'
 
 // Environment variables
+const { NODE_ENV } = process.env as Record<string, string>
 
 // Config variables
 const {
@@ -44,11 +52,14 @@ const {
 const app = express() // Create an Express application
 const server = createServer(app) // Create an HTTP server
 
+// Logging environment
+logger.info(`Node environment: ${NODE_ENV}`)
+
 // Setup
 app.set('trust proxy', 1) // Trust the first proxy (NGINX)
 
 // Connect to MongoDB in production and staging environment
-if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'staging') {
+if (NODE_ENV === 'production' || NODE_ENV === 'staging') {
 	await databaseConnector.connectToMongoDB()
 }
 
@@ -77,6 +88,22 @@ app.use(session({ // Session management
 	store: sessionStore, // Store session in MongoDB
 	cookie: cookieOptions
 }))
+
+// Apply and configure Passport middleware
+app.use(passport.initialize()) // Initialize Passport
+app.use(passport.session()) // Passport session handling
+configurePassport(passport) // Use passportConfig
+
+// Use all routes
+app.use('/api/v1/auth', authRouter)
+app.use('/api/v1/submissions', submissionRouter)
+app.use('/api/v1/users', userRouter)
+app.use('/api/v1/tournaments', tournamentRouter)
+app.use('/api/v1/microservices', microservicesRouter)
+app.use('/api/v1/service', serviceRoutes)
+
+// Sentry error handler
+Sentry.setupExpressErrorHandler(app)
 
 // Global error handler middleware
 app.use(globalErrorHandler)
