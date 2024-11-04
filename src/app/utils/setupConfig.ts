@@ -41,6 +41,7 @@ const AppConfig = {
 	redisPrefix: config.get('redis.prefix') as string,
 	verificationExpiry: config.get('user.verificationExpiry') as number,
 	passwordResetExpiry: config.get('user.passwordResetExpiry') as number,
+	codeRunnerHost: config.get('microservices.codeRunner.host') as string,
 }
 
 export default AppConfig

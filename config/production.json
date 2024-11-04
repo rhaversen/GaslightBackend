@@ -67,5 +67,10 @@
     "user": {
         "verificationExpiry": 86400,
         "passwordResetExpiry": 86400
-    }
+    },
+	"microservices": {
+		"codeRunner": {
+			"host": "code-runner-service"
+		}
+	}
 }
