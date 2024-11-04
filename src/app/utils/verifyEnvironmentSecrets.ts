@@ -22,9 +22,8 @@ const envSecrets = [
 	'NODE_ENV',
 	'SESSION_SECRET',
 	'SENTRY_DSN',
-	// SumUp
-	'SUMUP_MERCHANT_CODE',
-	'SUMUP_API_KEY',
+	// Microservices
+	'MICROSERVICE_AUTHORIZATION',
 	// Redis
 	'REDIS_HOST',
 	'REDIS_PORT',
@@ -34,13 +33,13 @@ const envSecrets = [
 const envSecretsDev = [
 	'NODE_ENV',
 	'SESSION_SECRET',
-	'SUMUP_API_KEY',
-	'SUMUP_MERCHANT_CODE'
+	'MICROSERVICE_AUTHORIZATION'
 ]
 
 const envSecretsTest = [
 	'NODE_ENV',
-	'SESSION_SECRET'
+	'SESSION_SECRET',
+	'MICROSERVICE_AUTHORIZATION'
 ]
 
 // Verify that all environment secrets are set
