@@ -16,7 +16,8 @@ import GradingModel from './Grading.js'
 // Interfaces
 export interface ITournament extends Document {
     // Properties
-    gradings: Schema.Types.ObjectId[] // All gradings created from this tournament
+	/** All gradings created from this tournament */
+    gradings: Schema.Types.ObjectId[]
 
     // Timestamps
     createdAt: Date

@@ -16,8 +16,10 @@ import { ISubmission } from './Submission.js'
 // Interfaces
 export interface IGrading extends Document {
     // Properties
-    submission: Schema.Types.ObjectId | ISubmission // Submission being graded
-    score: number // Score given to the submission
+	/** Submission being graded */
+    submission: Schema.Types.ObjectId | ISubmission
+	/** Score given to the submission */
+    score: number
 
     // Timestamps
     createdAt: Date

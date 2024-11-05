@@ -17,10 +17,14 @@ import UserModel from './User.js'
 // Interfaces
 export interface ISubmission extends Document {
     // Properties
-    title: string // Title of the submission
-    code: string // Code submitted by the user
-    user: Schema.Types.ObjectId // User who submitted the code
-    active: boolean // Decides if the submission is part of the tournament (Can only have one active submission per user)
+	/** Title of the submission */
+    title: string
+    /** Code submitted by the user */
+	code: string
+	/** User who submitted the code */
+    user: Schema.Types.ObjectId
+	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
+    active: boolean
 
     // Timestamps
     createdAt: Date

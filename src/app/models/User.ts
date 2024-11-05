@@ -25,21 +25,34 @@ const {
 // Interfaces
 export interface IUser extends Document {
 	// Properties
-	username: string // Username of the user
-	email: string // Email of the user
-	password: string // Hashed password of the user
-	confirmed: boolean // If the user has confirmed their email
+	/** Username of the user */
+	username: string
+	/** Email of the user */
+	email: string
+	/** Hashed password of the user */
+	password: string
+	/** If the user has confirmed their email */
+	confirmed: boolean
 
-	expirationDate?: Date // Date when the user will be deleted if not confirmed
-	passwordResetExpirationDate?: Date // Date when the password reset code will expire
-	confirmationCode?: string // Code to confirm the user's email
-	passwordResetCode?: string // Code to reset the user's password
+	/** Date when the user will be deleted if not confirmed */
+	expirationDate?: Date
+	/** Date when the password reset code will expire */
+	passwordResetExpirationDate?: Date
+	/** Code to confirm the user's email */
+	confirmationCode?: string
+	/** Code to reset the user's password */
+	passwordResetCode?: string
 
 	// Methods
+	/** Compare the password with the hashed password */
 	comparePassword: (password: string) => Promise<boolean>
+	/** Confirm the user's email */
 	confirmUser: () => void
+	/** Reset the user's password */
 	resetPassword: (newPassword: string, passwordResetCode: string) => Promise<void>
+	/** Generate a new confirmation code */
 	generateNewConfirmationCode: () => Promise<string>
+	/** Generate a new password reset code */
 	generateNewPasswordResetCode: () => Promise<string>
 
 	// Timestamps
