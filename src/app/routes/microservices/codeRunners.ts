@@ -9,8 +9,8 @@ import {
 	createGrading,
 	createTournament,
 	createGradings,
-} from '../../controllers/microservices/codeRunnerController'
-import { authenticateMicroservice } from '../../middleware/authentication'
+} from '../../controllers/microservices/codeRunnerController.js'
+import { authenticateMicroservice } from '../../middleware/auth.js'
 
 // Environment variables
 

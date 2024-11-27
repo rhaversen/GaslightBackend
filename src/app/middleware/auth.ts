@@ -28,3 +28,12 @@ export function authenticateMicroservice(req: Request, res: Response, next: Next
 
 	next()
 }
+
+export function isAuthenticated(req: Request, res: Response, next: NextFunction) {
+	if (!req.user) {
+		logger.error('Unauthorized access')
+		return res.status(401).send({ message: 'Unauthorized access' })
+	}
+
+	next()
+}

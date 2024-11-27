@@ -4,9 +4,9 @@
 import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
-import logger from '../utils/logger.js'
 import GradingModel from './Grading.js'
 import UserModel from './User.js'
+import logger from '../utils/logger.js'
 
 // Environment variables
 
@@ -17,10 +17,18 @@ import UserModel from './User.js'
 // Interfaces
 export interface ISubmission extends Document {
     // Properties
-    title: string // Title of the submission
-    code: string // Code submitted by the user
-    user: Schema.Types.ObjectId // User who submitted the code
-    active: boolean // Decides if the submission is part of the tournament (Can only have one active submission per user)
+	/** Title of the submission */
+    title: string
+    /** Code submitted by the user */
+	code: string
+	/** User who submitted the code */
+    user: Schema.Types.ObjectId
+	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
+    active: boolean
+
+	// Methods
+	/** Get the number of lines of code in the submission */
+	getLoc: () => number
 
     // Timestamps
     createdAt: Date
@@ -73,6 +81,23 @@ submissionSchema.path('user').validate(async function (v: Schema.Types.ObjectId)
 // Adding indexes
 submissionSchema.index({ user: 1 })
 submissionSchema.index({ active: 1 })
+
+// Methods
+submissionSchema.methods.getLoc = function () {
+	// TODO: Count tokens instead of lines
+	return (this as ISubmission).code.split('\n').filter((line: string): boolean => {
+		const trimmed = line.trim()
+		return trimmed !== '' 
+			&& trimmed !== ' '
+			&& trimmed !== '\t'
+			&& !trimmed.startsWith('//')
+			&& !trimmed.startsWith('/*')
+			&& !trimmed.startsWith('*')
+			&& !trimmed.startsWith('#')
+			&& !trimmed.startsWith(';')
+			&& !trimmed.startsWith('(*')
+	}).length
+}
 
 // Pre-save middleware
 submissionSchema.pre('save', async function (next) {

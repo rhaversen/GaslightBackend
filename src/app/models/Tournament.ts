@@ -4,8 +4,8 @@
 import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
-import logger from '../utils/logger.js'
 import GradingModel from './Grading.js'
+import logger from '../utils/logger.js'
 
 // Environment variables
 
@@ -16,7 +16,8 @@ import GradingModel from './Grading.js'
 // Interfaces
 export interface ITournament extends Document {
     // Properties
-    gradings: Schema.Types.ObjectId[] // All gradings created from this tournament
+	/** All gradings created from this tournament */
+    gradings: Schema.Types.ObjectId[]
 
     // Timestamps
     createdAt: Date
