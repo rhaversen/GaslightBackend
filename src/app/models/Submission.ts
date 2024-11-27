@@ -26,6 +26,10 @@ export interface ISubmission extends Document {
 	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
     active: boolean
 
+	// Methods
+	/** Get the number of lines of code in the submission */
+	getLoc: () => number
+
     // Timestamps
     createdAt: Date
     updatedAt: Date
@@ -77,6 +81,23 @@ submissionSchema.path('user').validate(async function (v: Schema.Types.ObjectId)
 // Adding indexes
 submissionSchema.index({ user: 1 })
 submissionSchema.index({ active: 1 })
+
+// Methods
+submissionSchema.methods.getLoc = function () {
+	// TODO: Count tokens instead of lines
+	return (this as ISubmission).code.split('\n').filter((line: string): boolean => {
+		const trimmed = line.trim()
+		return trimmed !== '' 
+			&& trimmed !== ' '
+			&& trimmed !== '\t'
+			&& !trimmed.startsWith('//')
+			&& !trimmed.startsWith('/*')
+			&& !trimmed.startsWith('*')
+			&& !trimmed.startsWith('#')
+			&& !trimmed.startsWith(';')
+			&& !trimmed.startsWith('(*')
+	}).length
+}
 
 // Pre-save middleware
 submissionSchema.pre('save', async function (next) {
