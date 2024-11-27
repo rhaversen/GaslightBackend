@@ -4,20 +4,21 @@
 // file deepcode ignore HardcodedNonCryptoSecret/test: Hardcoded credentials are only used for testing purposes
 
 // Node.js built-in modules
+import process from 'process'
 
 // Third-party libraries
-import sinon from 'sinon'
-import chaiHttp from 'chai-http'
-import * as chai from 'chai'
-import mongoose from 'mongoose'
 import { type Server } from 'http'
-import { before, beforeEach, afterEach, after } from 'mocha'
 import * as Sentry from '@sentry/node'
+import * as chai from 'chai'
+import chaiHttp from 'chai-http'
 import type MongoStore from 'connect-mongo'
+import { before, beforeEach, afterEach, after } from 'mocha'
+import mongoose from 'mongoose'
+import sinon from 'sinon'
 
 // Own modules
-import logger from '../app/utils/logger.js'
 import { disconnectFromInMemoryMongoDB } from './mongoMemoryReplSetConnector.js'
+import logger from '../app/utils/logger.js'
 
 // Test environment settings
 process.env.NODE_ENV = 'test'

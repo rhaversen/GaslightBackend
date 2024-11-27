@@ -5,10 +5,10 @@ import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
 // Own modules
-import logger from '../../utils/logger.js'
-import SubmissionModel from '../../models/Submission.js'
 import GradingModel from '../../models/Grading.js'
+import SubmissionModel from '../../models/Submission.js'
 import { submitCodeForTest } from '../../services/CodeRunner.js'
+import logger from '../../utils/logger.js'
 
 // Environment variables
 

@@ -4,8 +4,8 @@
 import { type NextFunction, type Request, type Response } from 'express'
 
 // Own modules
-import UserModel from '../../models/User.js'
 import { loginUserLocal } from './authController.js'
+import UserModel from '../../models/User.js'
 
 // Environment variables
 

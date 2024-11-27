@@ -3,8 +3,8 @@
 // Third-party libraries
 
 // Own modules
-import { emitSocketEvent } from '../utils/socket.js'
 import { IGrading } from '../models/Grading.js'
+import { emitSocketEvent } from '../utils/socket.js'
 
 // Environment variables
 

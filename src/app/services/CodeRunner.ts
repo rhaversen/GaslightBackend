@@ -4,8 +4,8 @@
 import axios from 'axios'
 
 // Own modules
-import logger from '../utils/logger.js'
 import { ISubmission } from '../models/Submission.js'
+import logger from '../utils/logger.js'
 import AppConfig from '../utils/setupConfig.js'
 
 // Environment variables

@@ -2,8 +2,8 @@
 
 // Third-party libraries
 import { compare, hash } from 'bcrypt'
-import { nanoid } from 'nanoid'
 import { type Document, model, Schema } from 'mongoose'
+import { nanoid } from 'nanoid'
 
 // Own modules
 import logger from '../utils/logger.js'

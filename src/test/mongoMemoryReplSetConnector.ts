@@ -3,9 +3,9 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import mongoose from 'mongoose'
-import { MongoMemoryReplSet } from 'mongodb-memory-server'
 import type MongoStore from 'connect-mongo'
+import { MongoMemoryReplSet } from 'mongodb-memory-server'
+import mongoose from 'mongoose'
 
 // Own modules
 import logger from '../app/utils/logger.js'

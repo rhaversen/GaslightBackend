@@ -1,19 +1,23 @@
 // Node.js built-in modules
+
 // Third-party libraries
-// Own modules
-// Environment variables
-// Config variables
-// Destructuring and global variables
 
 import Router from 'express'
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
-import { isAuthenticated } from '../../middleware/authorization.js'
+
+// Own modules
 import {
 	getAllTournaments,
 	getTournament,
 	getTournamentGradings
 } from '../../controllers/users/tournamentController.js'
+import { isAuthenticated } from '../../middleware/authorization.js'
+import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
+// Environment variables
+
+// Config variables
+
+// Destructuring and global variables
 const router = Router()
 
 /**

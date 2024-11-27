@@ -1,8 +1,8 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import { Strategy as LocalStrategy } from 'passport-local'
 import { type PassportStatic } from 'passport'
+import { Strategy as LocalStrategy } from 'passport-local'
 
 // Own modules
 import UserModel, { type IUser } from '../models/User.js'

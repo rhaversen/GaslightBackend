@@ -4,12 +4,10 @@
 import Router from 'express'
 
 // Own modules
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
-
-// Controller functions
 import {
 	register
 } from '../../controllers/users/userController.js'
+import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
 // Environment variables
 

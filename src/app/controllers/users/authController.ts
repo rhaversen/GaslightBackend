@@ -1,13 +1,13 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import passport from 'passport'
 import { type NextFunction, type Request, type Response } from 'express'
+import passport from 'passport'
 
 // Own modules
-import config from '../../utils/setupConfig.js'
-import logger from '../../utils/logger.js'
 import { type IUser } from '../../models/User.js'
+import logger from '../../utils/logger.js'
+import config from '../../utils/setupConfig.js'
 
 // Environment variables
 

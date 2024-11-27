@@ -5,9 +5,9 @@ import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
 // Own modules
-import logger from '../../utils/logger.js'
-import TournamentModel from '../../models/Tournament.js'
 import GradingModel from '../../models/Grading.js'
+import TournamentModel from '../../models/Tournament.js'
+import logger from '../../utils/logger.js'
 
 // Environment variables
 // Config variables

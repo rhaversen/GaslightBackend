@@ -1,12 +1,14 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import { Server } from 'socket.io'
-import config from './setupConfig.js'
 import { type Server as HttpServer } from 'http'
-import logger from './logger.js'
+
 import { createAdapter } from '@socket.io/redis-adapter'
 import { createClient } from 'redis'
+import { Server } from 'socket.io'
+
+import logger from './logger.js'
+import config from './setupConfig.js'
 
 // Own modules
 

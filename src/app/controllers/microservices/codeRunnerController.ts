@@ -4,8 +4,8 @@
 import { Request, Response } from 'express'
 
 // Own modules
-import SubmissionModel from '../../models/Submission'
 import GradingModel from '../../models/Grading'
+import SubmissionModel from '../../models/Submission'
 import TournamentModel from '../../models/Tournament'
 import logger from '../../utils/logger'
 import { emitGradingCreated } from '../../webSockets/GradingHandlers'

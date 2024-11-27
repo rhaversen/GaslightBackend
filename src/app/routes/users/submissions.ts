@@ -4,17 +4,6 @@
 import Router from 'express'
 
 // Own modules
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
-import { isAuthenticated } from '../../middleware/authorization.js'
-
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
-const router = Router()
-
-// Controller functions
 import {
 	createSubmission,
 	getSubmissions,
@@ -23,6 +12,15 @@ import {
 	requestTestGrading,
 	getSubmissionGradings
 } from '../../controllers/users/submissionController.js'
+import { isAuthenticated } from '../../middleware/authorization.js'
+import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
+
+// Environment variables
+
+// Config variables
+
+// Destructuring and global variables
+const router = Router()
 
 /**
  * @route POST /api/v1/submissions
