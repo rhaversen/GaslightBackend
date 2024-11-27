@@ -25,6 +25,7 @@ import globalErrorHandler from './middleware/globalErrorHandler.js'
 import logger from './utils/logger.js'
 import config from './utils/setupConfig.js'
 import configurePassport from './utils/passportConfig.js'
+import { initSocket } from './utils/socket.js'
 
 // Business logic routes
 import authRouter from './routes/users/auth.js'
@@ -56,6 +57,7 @@ const server = createServer(app) // Create an HTTP server
 logger.info(`Node environment: ${NODE_ENV}`)
 
 // Setup
+await initSocket(server) // Initialize socket.io
 app.set('trust proxy', 1) // Trust the first proxy (NGINX)
 
 // Connect to MongoDB in production and staging environment

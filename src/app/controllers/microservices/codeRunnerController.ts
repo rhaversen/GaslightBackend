@@ -8,6 +8,7 @@ import SubmissionModel from '../../models/Submission'
 import GradingModel from '../../models/Grading'
 import TournamentModel from '../../models/Tournament'
 import logger from '../../utils/logger'
+import { emitGradingCreated } from '../../webSockets/GradingHandlers'
 
 // Environment variables
 
@@ -34,6 +35,7 @@ export async function createGrading(req: Request, res: Response) {
 	try {
 		const newGrading = await GradingModel.create(allowedFields)
 		res.status(201).json(newGrading)
+		emitGradingCreated(newGrading)
 	} catch (error) {
 		logger.error(error)
 		res.status(400).json({ error: 'Invalid data' })
