@@ -86,6 +86,7 @@
 		"chai-http": "^4.4.0",
 		"depcheck": "^1.4.7",
 		"eslint": "^9.15.0",
+		"eslint-plugin-import": "^2.31.0",
 		"eslint-plugin-local-rules": "^3.0.2",
 		"mocha": "^10.8.2",
 		"mongodb-memory-server": "^10.1.2",
