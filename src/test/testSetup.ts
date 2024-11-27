@@ -14,7 +14,7 @@ import chaiHttp from 'chai-http'
 import type MongoStore from 'connect-mongo'
 import { before, beforeEach, afterEach, after } from 'mocha'
 import mongoose from 'mongoose'
-import sinon from 'sinon'
+import { restore } from 'sinon'
 
 // Own modules
 import { disconnectFromInMemoryMongoDB } from './mongoMemoryReplSetConnector.js'
@@ -63,7 +63,7 @@ beforeEach(async function () {
 })
 
 afterEach(async function () {
-	sinon.restore()
+	restore()
 	await cleanDatabase()
 	chaiAppServer.close()
 })
