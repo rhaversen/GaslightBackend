@@ -10,7 +10,7 @@ import {
 	getTournament,
 	getTournamentGradings
 } from '../../controllers/users/tournamentController.js'
-import { isAuthenticated } from '../../middleware/authorization.js'
+import { isAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
 // Environment variables

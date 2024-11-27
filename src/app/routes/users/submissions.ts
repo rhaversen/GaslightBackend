@@ -12,7 +12,7 @@ import {
 	requestTestGrading,
 	getSubmissionGradings
 } from '../../controllers/users/submissionController.js'
-import { isAuthenticated } from '../../middleware/authorization.js'
+import { isAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
 // Environment variables
