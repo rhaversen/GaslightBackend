@@ -9,7 +9,7 @@ import {
 	getSubmissions,
 	updateSubmission,
 	getSubmission,
-	requestTestGrading,
+	evaluateSubmission,
 	getSubmissionGradings
 } from '../../controllers/users/submissionController.js'
 import { isAuthenticated } from '../../middleware/auth.js'
@@ -60,8 +60,8 @@ router.get('/:id',
  * @route POST /api/v1/submissions/:id/test
  * @description Request test grading for a submission
  */
-router.post('/:id/test',
-	asyncErrorHandler(requestTestGrading)
+router.post('/:id/evaluate',
+	asyncErrorHandler(evaluateSubmission)
 )
 
 /**

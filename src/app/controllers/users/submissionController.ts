@@ -173,7 +173,7 @@ export async function getSubmission(
 	}
 }
 
-export async function requestTestGrading(
+export async function evaluateSubmission(
 	req: Request,
 	res: Response,
 	next: NextFunction
