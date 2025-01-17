@@ -72,5 +72,9 @@
 		"codeRunner": {
 			"host": "http://localhost:5001"
 		}
+	},
+	"codeRunnerTimeouts": {
+		"executionTimeout": 5,
+		"loadingTimeout": 1000
 	}
 }

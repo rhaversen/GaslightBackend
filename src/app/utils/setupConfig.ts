@@ -42,6 +42,8 @@ const AppConfig = {
 	verificationExpiry: config.get('user.verificationExpiry') as number,
 	passwordResetExpiry: config.get('user.passwordResetExpiry') as number,
 	codeRunnerHost: config.get('microservices.codeRunner.host') as string,
+	strategyExecutionTimeout: config.get('codeRunnerTimeouts.executionTimeout') as number,
+	strategyLoadingTimeout: config.get('codeRunnerTimeouts.loadingTimeout') as number
 }
 
 export default AppConfig
