@@ -14,16 +14,23 @@ const { MICROSERVICE_AUTHORIZATION } = process.env
 // Destructuring and global variables
 
 export function authenticateMicroservice(req: Request, res: Response, next: NextFunction) {
-	const { authorization } = req.headers
+	const authHeader = req.headers.authorization
 
-	if (!authorization) {
+	if (!authHeader) {
 		logger.error('Authorization header not found')
 		return res.status(401).send({ message: 'Authorization header not found' })
 	}
 
-	if (authorization !== MICROSERVICE_AUTHORIZATION) {
-		logger.error('Invalid authorization header')
-		return res.status(401).send({ message: 'Invalid authorization header' })
+	const [scheme, token] = authHeader.split(' ')
+
+	if (scheme !== 'Bearer' || !token) {
+		logger.error('Invalid authorization format')
+		return res.status(401).send({ message: 'Invalid authorization format' })
+	}
+
+	if (token !== MICROSERVICE_AUTHORIZATION) {
+		logger.error('Invalid authorization token')
+		return res.status(401).send({ message: 'Invalid authorization token' })
 	}
 
 	next()

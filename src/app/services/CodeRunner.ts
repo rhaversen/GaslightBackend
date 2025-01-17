@@ -4,11 +4,15 @@
 import axios from 'axios'
 
 // Own modules
-import { ISubmission } from '../models/Submission.js'
+import SubmissionModel, { ISubmission } from '../models/Submission.js'
 import logger from '../utils/logger.js'
 import AppConfig from '../utils/setupConfig.js'
+import { EvaluationResults } from '../types/CodeRunnerTypes.js'
 
 // Environment variables
+const {
+	MICROSERVICE_AUTHORIZATION
+} = process.env as Record<string, string>
 
 // Config variables
 const {
@@ -17,16 +21,19 @@ const {
 
 // Destructuring and global variables
 
-export async function submitCodeForTest(submission: ISubmission): Promise<boolean> {
+export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<EvaluationResults | false> {
 	try {
-
-		await axios.post(`http://${codeRunnerHost}/api/v1/grade-submission`, {
-			submission
+		const otherSubmissions = SubmissionModel.find({ _id: { $ne: candidateSubmission._id } })
+		const response = await axios.post<EvaluationResults>(`http://${codeRunnerHost}/api/v1/evaluate-submission`, {
+			candidateSubmission,
+			otherSubmissions
+		}, {
+			headers: {
+				Authorization: `Bearer ${MICROSERVICE_AUTHORIZATION}`
+			}
 		})
 
-		logger.info('Code submitted for test', submission.id)
-
-		return true
+		return response.data
 	} catch (error) {
 		if (error instanceof Error) {
 			logger.error('Error submitting code for test', { error: error.message })
