@@ -7,12 +7,18 @@ import mongoose from 'mongoose'
 // Own modules
 import GradingModel from '../../models/Grading.js'
 import SubmissionModel from '../../models/Submission.js'
-import { submitCodeForTest } from '../../services/CodeRunner.js'
+import { submitCodeForEvaluation } from '../../services/CodeRunner.js'
 import logger from '../../utils/logger.js'
+import { IUser } from '../../models/User.js'
+import configs from '../../utils/setupConfig.js'
 
 // Environment variables
 
 // Config variables
+const {
+	strategyExecutionTimeout,
+	strategyLoadingTimeout
+} = configs
 
 // Destructuring and global variables
 
@@ -180,16 +186,64 @@ export async function evaluateSubmission(
 ): Promise<void> {
 	logger.silly('Requesting test grading')
 	try {
+		const user = req.user as IUser
 		const submission = await SubmissionModel.findById(req.params.id)
 		if (submission === null) {
 			res.status(404).json({ error: 'Submission not found' })
 			return
 		}
-		const success = await submitCodeForTest(submission)
-		if (!success) {
-			res.status(500).json({ error: 'Failed to submit code for test' })
+
+		if (submission.user.toString() !== user.id) {
+			res.status(403).json({ error: 'Forbidden' })
 			return
 		}
+
+		const response = await submitCodeForEvaluation(submission)
+
+		if (response === false) {
+			res.status(500).json({ error: 'Server Error' })
+			return
+		}
+
+		let submissionPass = false
+		let executionTimeExceeded = false
+		let loadingTimeExceeded = false
+
+		// Check if strategy loading time exceeded
+		if (response.strategyLoadingTimings > strategyLoadingTimeout) {
+			submissionPass = false
+			loadingTimeExceeded = true
+		}
+
+		// Check if strategy execution time 99th percentile exceeded
+		if (response.strategyExecutionTimings.sort()[Math.floor(response.strategyExecutionTimings.length * 0.99)] > strategyExecutionTimeout) {
+			submissionPass = false
+			executionTimeExceeded = true
+		}
+
+		// Check if disqualified
+		if (response.disqualified !== null) {
+			submissionPass = false
+		}
+
+		// Check if results are valid
+		if (response.results === undefined) {
+			submissionPass = false
+		}
+
+		// Update submission
+		submission.passedEvaluation = submissionPass
+		await submission.save()
+
+		res.status(200).json({
+			passed: submissionPass,
+			results: response.results,
+			disqualified: response.disqualified,
+			executionTimeExceeded,
+			loadingTimeExceeded,
+			strategyLoadingTimings: response.strategyLoadingTimings,
+			strategyExecutionTimings: response.strategyExecutionTimings
+		})
 	} catch (error) {
 		next(error)
 	}

@@ -25,6 +25,8 @@ export interface ISubmission extends Document {
     user: Schema.Types.ObjectId
 	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
     active: boolean
+	/** Decides if the submission has passed an evaluation and is ready for tournaments */
+	passedEvaluation: boolean
 
 	// Methods
 	/** Get the number of lines of code in the submission */
@@ -53,6 +55,10 @@ const submissionSchema = new Schema<ISubmission>({
 		required: true
 	},
 	active: {
+		type: Schema.Types.Boolean,
+		default: false
+	},
+	passedEvaluation: {
 		type: Schema.Types.Boolean,
 		default: false
 	}
@@ -102,6 +108,10 @@ submissionSchema.methods.getLoc = function () {
 // Pre-save middleware
 submissionSchema.pre('save', async function (next) {
 	logger.silly('Saving submission')
+	// If code is updated, reset evaluation status
+	if (this.isModified('code')) {
+		this.passedEvaluation = false
+	}
 	next()
 })
 
