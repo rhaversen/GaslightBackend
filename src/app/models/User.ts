@@ -15,6 +15,61 @@ import config from '../utils/setupConfig.js'
 
 // Destructuring and global variables
 
+const funnyAdjectives = [
+	'Sleepy', 'Dancing', 'Quirky', 'Sparkly', 'Wobbly',
+	'Bouncy', 'Jazzy', 'Wiggly', 'Fluffy', 'Cosmic',
+	'Derpy', 'Snazzy', 'Clumsy', 'Grumpy', 'Glitchy',
+	'Silly', 'Mystical', 'Sassy', 'Hungry', 'Zesty',
+	'Magical', 'Dramatic', 'Awkward', 'Curious', 'Chaotic',
+	'Groovy', 'Hyperactive', 'Peppy', 'Ridiculous', 'Enigmatic',
+	'Chirpy', 'Bonkers', 'Fizzy', 'Spunky', 'Majestic'
+]
+
+const funnyNouns = [
+	'Penguin', 'Unicorn', 'Ninja', 'Potato', 'Pickle',
+	'Dinosaur', 'Wizard', 'Robot', 'Hamster', 'Developer',
+	'Burrito', 'Pirate', 'Llama', 'Waffle', 'Dragon',
+	'Raccoon', 'Noodle', 'Muffin', 'Kitten', 'Panda',
+	'Banana', 'Zombie', 'Donut', 'Gamer', 'Taco',
+	'Octopus', 'Marshmallow', 'Sandwich', 'Beaver', 'Lobster',
+	'Chipmunk', 'Volcano', 'Airplane', 'Sprocket', 'Cactus'
+]
+
+const funnyPrefixes = [
+	'Ultra', 'Mega', 'Professor', 'Count', 'Doctor',
+	'Captain', 'Grand', 'Hyper', 'Papa', 'Admiral'
+]
+
+const funnyPostfixes = [
+	'BG', 'XL', 'Jr', 'IV', 'III',
+	'The Great', 'Prime', 'Universe', '3000', 'Supreme'
+]
+
+function generateFunnyUsername(): string {
+	const usePrefix = Math.random() < 0.5
+	const useAdjective = Math.random() < 0.5
+	const usePostfix = Math.random() < 0.5
+
+	const prefix = usePrefix ? funnyPrefixes[Math.floor(Math.random() * funnyPrefixes.length)] : ''
+	const adjective = useAdjective ? funnyAdjectives[Math.floor(Math.random() * funnyAdjectives.length)] : ''
+	const noun = funnyNouns[Math.floor(Math.random() * funnyNouns.length)]
+	const postfix = usePostfix ? funnyPostfixes[Math.floor(Math.random() * funnyPostfixes.length)] : ''
+
+	// Ensure at least one of prefix, adjective, or postfix is used
+	if (!usePrefix && !useAdjective && !usePostfix) {
+		const fallback = Math.floor(Math.random() * 3)
+		if (fallback === 0) {
+			return `${funnyPrefixes[Math.floor(Math.random() * funnyPrefixes.length)]} ${noun}`
+		} else if (fallback === 1) {
+			return `${funnyAdjectives[Math.floor(Math.random() * funnyAdjectives.length)]} ${noun}`
+		} else {
+			return `${noun} ${funnyPostfixes[Math.floor(Math.random() * funnyPostfixes.length)]}`
+		}
+	}
+
+	return `${prefix} ${adjective} ${noun} ${postfix}`.trim().replace(/\s+/g, ' ')
+}
+
 // Config
 const {
 	bcryptSaltRounds,
@@ -63,8 +118,8 @@ export interface IUser extends Document {
 const userSchema = new Schema<IUser>({
 	username: {
 		type: Schema.Types.String,
-		required: true,
 		trim: true,
+		default: generateFunnyUsername,
 		maxlength: [50, 'Username must be at most 50 characters long']
 	},
 	email: {
