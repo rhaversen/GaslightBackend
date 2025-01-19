@@ -21,17 +21,23 @@ import passport from 'passport'
 
 // Own modules
 import globalErrorHandler from './middleware/globalErrorHandler.js'
-import microservicesRouter from './routes/microservices/codeRunners.js'
-import serviceRoutes from './routes/service.js'
-import authRouter from './routes/users/auth.js'
-import submissionRouter from './routes/users/submissions.js'
-import tournamentRouter from './routes/users/tournaments.js'
-import userRouter from './routes/users/users.js'
 import databaseConnector from './utils/databaseConnector.js'
 import logger from './utils/logger.js'
 import configurePassport from './utils/passportConfig.js'
 import config from './utils/setupConfig.js'
 import { initSocket } from './utils/socket.js'
+
+// Business logic routes
+import authRouter from './routes/users/auth.js'
+import submissionRouter from './routes/users/submissions.js'
+import tournamentRouter from './routes/users/tournaments.js'
+import userRouter from './routes/users/users.js'
+
+// Service routes
+import serviceRoutes from './routes/service.js'
+
+// Microservices routes
+import microservicesRouter from './routes/microservices/codeRunners.js'
 
 // Environment variables
 const { NODE_ENV } = process.env as Record<string, string>

@@ -17,8 +17,8 @@ import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 const router = Router()
 
 /**
- * @route POST /api/v1/user/user
- * @description Register user and return session cookie.
+ * @route POST /api/v1/users
+ * @description Register user, login and return session cookie.
  * @access Public
  * @param {string} req.body.email - The email of the user.
  * @param {string} req.body.password - The password of the user.
@@ -27,7 +27,7 @@ const router = Router()
  * @returns {Object} res.body - The user object.
  * @returns {string} res.headers['set-cookie'] - The session cookie.
  */
-router.post('/user',
+router.post('/',
 	asyncErrorHandler(register)
 )
 
