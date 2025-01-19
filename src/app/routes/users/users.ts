@@ -20,7 +20,6 @@ const router = Router()
  * @route POST /api/v1/user/user
  * @description Register user and return session cookie.
  * @access Public
- * @param {string} req.body.username - The username of the user.
  * @param {string} req.body.email - The email of the user.
  * @param {string} req.body.password - The password of the user.
  * @param {string} req.body.confirmPassword - The password confirmation of the user.

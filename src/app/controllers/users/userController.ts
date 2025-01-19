@@ -15,7 +15,6 @@ import UserModel from '../../models/User.js'
 
 export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
 	const body: Record<string, unknown> = {
-		username: req.body.username,
 		email: req.body.email,
 		password: req.body.password,
 		confirmPassword: req.body.confirmPassword
@@ -23,10 +22,9 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
 	const existingUser = await UserModel.findOne({ email: body.email }).exec()
 
-	if (existingUser !== null) {
+	if (existingUser === null) {
 		// User doesn't exist, create a new user
 		await UserModel.create({
-			username: body.username,
 			email: body.email,
 			password: body.password,
 			confirmed: true // TODO: Implement confirmation logic later
@@ -34,5 +32,4 @@ export async function register(req: Request, res: Response, next: NextFunction):
 	}
 
 	loginUserLocal(req, res, next)
-	next()
 }

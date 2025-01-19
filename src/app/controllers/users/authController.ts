@@ -20,10 +20,10 @@ const {
 
 export async function loginUserLocal (req: Request, res: Response, next: NextFunction): Promise<void> {
 	// Check if name and password are provided
-	if (req.body.name === undefined || req.body.password === undefined) {
+	if (req.body.email === undefined || req.body.password === undefined) {
 		res.status(400).json({
 			auth: false,
-			error: 'Name and password must be provided'
+			error: 'Email and password must be provided'
 		})
 		return
 	}
