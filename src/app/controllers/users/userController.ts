@@ -20,6 +20,14 @@ export async function register(req: Request, res: Response, next: NextFunction):
 		confirmPassword: req.body.confirmPassword
 	}
 
+	if (body.password !== body.confirmPassword) {
+		res.status(400).json({
+			auth: false,
+			error: 'Passwords do not match'
+		})
+		return
+	}
+
 	const existingUser = await UserModel.findOne({ email: body.email }).exec()
 
 	if (existingUser === null) {
