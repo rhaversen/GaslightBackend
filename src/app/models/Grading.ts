@@ -39,9 +39,7 @@ const gradingSchema = new Schema<IGrading>({
 	},
 	score: {
 		type: Schema.Types.Number,
-		required: true,
-		min: 0,
-		max: 1000
+		required: true
 	}
 }, {
 	timestamps: true
