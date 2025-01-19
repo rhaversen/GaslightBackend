@@ -29,12 +29,21 @@ export async function createSubmission(
 ): Promise<void> {
 	logger.silly('Creating submission')
 
+	const user = req.user as IUser
+
 	const session = await mongoose.startSession()
 	session.startTransaction()
 
-	try {
-		const newSubmission = await SubmissionModel.create([req.body], { session })
+	const allowedFields = {
+		title: req.body.title,
+		code: req.body.code,
+	} 
 
+	try {
+		const newSubmission = await SubmissionModel.create({
+			...allowedFields,
+			user: user.id
+		}, { session })
 		await session.commitTransaction()
 		res.status(201).json(newSubmission[0])
 	} catch (error) {
@@ -168,9 +177,14 @@ export async function getSubmission(
 ): Promise<void> {
 	logger.silly('Getting submission')
 	try {
+		const user = req.user as IUser
 		const submission = await SubmissionModel.findById(req.params.id)
 		if (submission === null) {
 			res.status(404).json({ error: 'Submission not found' })
+			return
+		}
+		if (submission.user.toString() !== user.id) {
+			res.status(403).json({ error: 'Forbidden' })
 			return
 		}
 		res.status(200).json(submission)

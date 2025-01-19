@@ -21,17 +21,46 @@ const {
 
 // Destructuring and global variables
 
+export interface FileMap {
+	'main.ts': string;
+	[key: string]: string;
+}
+
+interface submission {
+	submissionId: string
+	files: FileMap
+}
+
+interface EvaluationRequestBody {
+	candidateSubmission: submission;
+	otherSubmissions: submission[];
+}
+
 export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<EvaluationResults | false> {
 	try {
-		const otherSubmissions = SubmissionModel.find({ _id: { $ne: candidateSubmission._id } })
-		const response = await axios.post<EvaluationResults>(`http://${codeRunnerHost}/api/v1/evaluate-submission`, {
-			candidateSubmission,
-			otherSubmissions
-		}, {
-			headers: {
-				Authorization: `Bearer ${MICROSERVICE_AUTHORIZATION}`
+		const otherSubmissions = await SubmissionModel.find({ _id: { $ne: candidateSubmission._id } })
+		const mappedCandidateSubmission: submission = {
+			submissionId: candidateSubmission.id,
+			files: { 'main.ts': candidateSubmission.code }
+		}
+
+		const mappedOtherSubmissions: submission[] = otherSubmissions.map(sub => ({
+			submissionId: sub.id,
+			files: { 'main.ts': sub.code }
+		}))
+
+		const response = await axios.post<EvaluationResults>(
+			`http://${codeRunnerHost}/api/v1/evaluate-submission`,
+			{
+				candidateSubmission: mappedCandidateSubmission,
+				otherSubmissions: mappedOtherSubmissions
+			} as EvaluationRequestBody,
+			{
+				headers: {
+					Authorization: `Bearer ${MICROSERVICE_AUTHORIZATION}`
+				}
 			}
-		})
+		)
 
 		return response.data
 	} catch (error) {
