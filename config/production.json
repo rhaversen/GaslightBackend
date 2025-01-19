@@ -65,8 +65,8 @@
 		"prefix": "gaslight-backend-production:"
 	},
     "user": {
-        "verificationExpiry": 86400,
-        "passwordResetExpiry": 86400
+        "verificationExpiry": 86400000,
+        "passwordResetExpiry": 86400000
     },
 	"microservices": {
 		"codeRunner": {
