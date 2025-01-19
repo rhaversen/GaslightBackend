@@ -10,7 +10,6 @@ import {
 	updateSubmission,
 	getSubmission,
 	evaluateSubmission,
-	getSubmissionGradings
 } from '../../controllers/users/submissionController.js'
 import { isAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
@@ -62,14 +61,6 @@ router.get('/:id',
  */
 router.post('/:id/evaluate',
 	asyncErrorHandler(evaluateSubmission)
-)
-
-/**
- * @route GET /api/v1/submissions/:id/gradings
- * @description Get all gradings for a submission
- */
-router.get('/:id/gradings',
-	asyncErrorHandler(getSubmissionGradings)
 )
 
 export default router

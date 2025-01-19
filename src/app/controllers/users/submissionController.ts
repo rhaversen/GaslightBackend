@@ -248,38 +248,3 @@ export async function evaluateSubmission(
 		next(error)
 	}
 }
-
-export async function getSubmissionGradings(
-	req: Request,
-	res: Response,
-	next: NextFunction
-): Promise<void> {
-	logger.silly('Getting submission gradings')
-	try {
-		const submissionId = req.params.id
-		const submission = await SubmissionModel.findById(submissionId)
-
-		if (!submission) {
-			res.status(404).json({
-				status: 'error',
-				message: 'Submission not found'
-			})
-			return
-		}
-
-		const gradings = await GradingModel.find({ submission: submissionId })
-		res.status(200).json({
-			status: 'success',
-			data: gradings
-		})
-	} catch (error) {
-		if (error instanceof mongoose.Error.CastError) {
-			res.status(400).json({
-				status: 'error',
-				message: 'Invalid submission ID'
-			})
-			return
-		}
-		next(error)
-	}
-}
