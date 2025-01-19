@@ -24,11 +24,12 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
 	if (existingUser === null) {
 		// User doesn't exist, create a new user
-		await UserModel.create({
+		const newUser = await UserModel.create({
 			email: body.email,
 			password: body.password,
-			confirmed: true // TODO: Implement confirmation logic later
 		})
+		newUser.confirmUser() // TODO: Implement confirmation logic later
+		await newUser.save()
 	}
 
 	loginUserLocal(req, res, next)
