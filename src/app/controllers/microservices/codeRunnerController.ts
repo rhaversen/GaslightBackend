@@ -4,11 +4,11 @@
 import { Request, Response } from 'express'
 
 // Own modules
-import GradingModel from '../../models/Grading'
-import SubmissionModel from '../../models/Submission'
-import TournamentModel from '../../models/Tournament'
-import logger from '../../utils/logger'
-import { emitGradingCreated } from '../../webSockets/GradingHandlers'
+import GradingModel from '../../models/Grading.js'
+import SubmissionModel from '../../models/Submission.js'
+import TournamentModel from '../../models/Tournament.js'
+import logger from '../../utils/logger.js'
+import { emitGradingCreated } from '../../webSockets/GradingHandlers.js'
 
 // Environment variables
 
