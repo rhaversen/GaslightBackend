@@ -93,13 +93,3 @@ export async function logoutLocal (req: Request, res: Response, next: NextFuncti
 		})
 	})
 }
-
-export function ensureAuthenticated (req: Request, res: Response, next: NextFunction): void {
-	logger.silly('Ensuring authentication')
-
-	if (!req.isAuthenticated()) {
-		res.status(401).json({ message: 'Unauthorized' })
-		return
-	}
-	next()
-}

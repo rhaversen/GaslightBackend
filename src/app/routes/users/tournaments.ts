@@ -10,8 +10,8 @@ import {
 	getTournament,
 	getTournamentGradings
 } from '../../controllers/users/tournamentController.js'
-import { isAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
+import { ensureAuthenticated } from '../../middleware/auth.js'
 
 // Environment variables
 
@@ -26,7 +26,7 @@ const router = Router()
  * @access Private
  */
 router.get('/',
-	isAuthenticated,
+	ensureAuthenticated,
 	asyncErrorHandler(getAllTournaments)
 )
 

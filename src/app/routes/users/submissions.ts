@@ -11,7 +11,7 @@ import {
 	getSubmission,
 	evaluateSubmission,
 } from '../../controllers/users/submissionController.js'
-import { isAuthenticated } from '../../middleware/auth.js'
+import { ensureAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
 // Environment variables
@@ -27,7 +27,7 @@ const router = Router()
  * @access Private
  */
 router.post('/',
-	isAuthenticated,
+	ensureAuthenticated,
 	asyncErrorHandler(createSubmission)
 )
 

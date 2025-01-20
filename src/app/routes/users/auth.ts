@@ -5,11 +5,11 @@ import Router from 'express'
 
 // Own modules
 import {
-	ensureAuthenticated,
 	loginUserLocal,
 	logoutLocal
 } from '../../controllers/users/authController.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
+import { ensureAuthenticated } from '../../middleware/auth.js'
 
 // Environment variables
 
