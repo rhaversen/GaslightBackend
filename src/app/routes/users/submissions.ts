@@ -34,6 +34,7 @@ router.post('/',
 /**
  * @route GET /api/v1/submissions
  * @description Get all submissions
+ * @access Public
  */
 router.get('/',
 	asyncErrorHandler(getSubmissions)
@@ -42,24 +43,30 @@ router.get('/',
 /**
  * @route PATCH /api/v1/submissions/:id
  * @description Update a specific submission
+ * @access Private
  */
 router.patch('/:id',
+	ensureAuthenticated,
 	asyncErrorHandler(updateSubmission)
 )
 
 /**
  * @route GET /api/v1/submissions/:id
  * @description Get a specific submission
+ * @access Private
  */
 router.get('/:id',
+	ensureAuthenticated,
 	asyncErrorHandler(getSubmission)
 )
 
 /**
- * @route POST /api/v1/submissions/:id/test
+ * @route POST /api/v1/submissions/:id/evaluate
  * @description Request test grading for a submission
+ * @access Private
  */
 router.post('/:id/evaluate',
+	ensureAuthenticated,
 	asyncErrorHandler(evaluateSubmission)
 )
 

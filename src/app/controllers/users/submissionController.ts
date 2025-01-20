@@ -134,6 +134,7 @@ export async function updateSubmission(
 	next: NextFunction
 ): Promise<void> {
 	logger.silly('Updating submission')
+	const user = req.user as IUser
 
 	const session = await mongoose.startSession()
 	session.startTransaction()
@@ -144,6 +145,11 @@ export async function updateSubmission(
 
 		if (submission === null) {
 			res.status(404).json({ error: 'Submission not found' })
+			return
+		}
+
+		if (submission.user.toString() !== user.id) {
+			res.status(403).json({ error: 'Forbidden' })
 			return
 		}
 
