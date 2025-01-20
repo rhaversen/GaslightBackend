@@ -31,9 +31,6 @@ export async function createSubmission(
 
 	const user = req.user as IUser
 
-	const session = await mongoose.startSession()
-	session.startTransaction()
-
 	const allowedFields = {
 		title: req.body.title,
 		code: req.body.code,
@@ -43,18 +40,14 @@ export async function createSubmission(
 		const newSubmission = await SubmissionModel.create({
 			...allowedFields,
 			user: user.id
-		}, { session })
-		await session.commitTransaction()
-		res.status(201).json(newSubmission[0])
+		})
+		res.status(201).json(newSubmission)
 	} catch (error) {
-		await session.abortTransaction()
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
 			return
 		}
 		next(error)
-	} finally {
-		session.endSession()
 	}
 }
 
