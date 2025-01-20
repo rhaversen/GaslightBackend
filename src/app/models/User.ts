@@ -153,6 +153,8 @@ const userSchema = new Schema<IUser>({
 	passwordResetExpirationDate: {
 		type: Schema.Types.Date
 	}
+}, {
+	timestamps: true
 })
 
 userSchema.index({ expirationDate: 1 }, { expireAfterSeconds: 0 })
