@@ -42,3 +42,38 @@ export async function register(req: Request, res: Response, next: NextFunction):
 
 	loginUserLocal(req, res, next)
 }
+
+export async function getAllUsers(req: Request, res: Response): Promise<void> {
+	const users = await UserModel.find().exec()
+
+	const mappedUsers = users.map(user => {
+		return {
+			username: user.username,
+			email: user.email,
+			createdAt: user.createdAt,
+			updatedAt: user.updatedAt
+		}
+	})
+
+	res.status(200).json(mappedUsers)
+}
+
+export async function getUser(req: Request, res: Response): Promise<void> {
+	const user = await UserModel.findById(req.params.id).exec()
+
+	if (user === null) {
+		res.status(404).json({
+			error: 'User not found'
+		})
+		return
+	}
+
+	const mappedUser = {
+		username: user.username,
+		email: user.email,
+		createdAt: user.createdAt,
+		updatedAt: user.updatedAt
+	}
+
+	res.status(200).json(mappedUser)
+}

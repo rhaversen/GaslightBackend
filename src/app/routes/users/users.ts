@@ -5,7 +5,9 @@ import Router from 'express'
 
 // Own modules
 import {
-	register
+	register,
+	getAllUsers,
+	getUser
 } from '../../controllers/users/userController.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
@@ -29,6 +31,29 @@ const router = Router()
  */
 router.post('/',
 	asyncErrorHandler(register)
+)
+
+/**
+ * @route GET /api/v1/users
+ * @description Get all users.
+ * @access Public
+ * @returns {number} res.status - The status code of the HTTP response.
+ * @returns {Object} res.body - The user object.
+ */
+router.get('/',
+	asyncErrorHandler(getAllUsers)
+)
+
+/**
+ * @route GET /api/v1/users/[id]
+ * @description Get single user by ID.
+ * @access Public
+ * @param {string} req.params.id - The ID of the user.
+ * @returns {number} res.status - The status code of the HTTP response.
+ * @returns {Object} res.body - The user object.
+ */
+router.get('/:id',
+	asyncErrorHandler(getUser)
 )
 
 export default router
