@@ -34,7 +34,7 @@ export async function createSubmission(
 	const allowedFields = {
 		title: req.body.title,
 		code: req.body.code,
-	} 
+	}
 
 	try {
 		const newSubmission = await SubmissionModel.create({
@@ -58,8 +58,9 @@ export async function getSubmissions(
 ): Promise<void> {
 	logger.silly('Getting submissions')
 
-	const maxAmount = Number(req.query.maxAmount) || 0
+	const maxAmount = Number(req.query.maxAmount) || 100
 	const startIndex = Number(req.query.startIndex) || 0
+	const user = req.user as IUser | undefined
 
 	const query: any = {}
 
@@ -70,48 +71,30 @@ export async function getSubmissions(
 		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
 	}
 
-	// Non-active submissions are considered private
-	// Only show submissions that are active
-	query.active = true
+	if (req.query.active !== undefined) query.active = req.query.adjective
+	if (req.query.passedEvaluation !== undefined) query.passedEvaluation = req.query.passedEvaluation
+	if (req.query.user !== undefined) query.user = req.query.user
 
 	try {
-		const submissionsWithGrading = await SubmissionModel.aggregate([
-			{ $match: query },
-			{ $skip: startIndex },
-			{ $limit: maxAmount },
-			{
-				$lookup: {
-					from: 'gradings',
-					localField: '_id',
-					foreignField: 'submission',
-					as: 'grading'
-				}
-			},
-			{
-				$addFields: {
-					grading: { $arrayElemAt: ['$grading', 0] }
-				}
-			},
-			{
-				$project: {
-					_id: 1,
-					title: 1,
-					user: 1,
-					LOC: {
-						$function: {
-							body: 'function(submission) { return submission.getLoc(); }',
-							args: ['$$ROOT'],
-							lang: 'js'
-						}
-					},
-					createdAt: 1,
-					updatedAt: 1,
-					grading: 1
-				}
-			}
-		])
+		const submissions = await SubmissionModel
+			.find(query)
+			.skip(startIndex)
+			.limit(maxAmount)
+			.exec()
 
-		res.status(200).json(submissionsWithGrading)
+		const submissionsWithLOC = submissions.map(submission => ({
+			_id: submission.id,
+			title: submission.title,
+			code: submission.user === user?.id ? submission.code : null,
+			user: submission.user,
+			active: submission.active,
+			passedEvaluation: submission.passedEvaluation,
+			loc: submission.getLoc(),
+			createdAt: submission.createdAt,
+			updatedAt: submission.updatedAt
+		}))
+
+		res.status(200).json(submissionsWithLOC)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
