@@ -15,6 +15,28 @@ import logger from '../utils/logger.js'
 // Destructuring and global variables
 
 // Interfaces
+export interface ISubmissionEvaluation {
+	// Properties
+	results: {
+		/** This submission's score */
+		candidate: number
+		/** Average score of all submissions */
+		average: number
+	} | undefined
+	/** Reason for disqualification */
+	disqualified: string | null
+	/** If the execution time exceeded the limit */
+	executionTimeExceeded: boolean
+	/** If the loading time exceeded the limit */
+	loadingTimeExceeded: boolean
+	/** Time taken to load the strategy */
+	strategyLoadingTimings: number
+	/** Time taken to execute the strategy */
+	strategyExecutionTimings: number[]
+	/** Average execution time of the strategy */
+	averageExecutionTime: number
+}
+
 export interface ISubmission extends Document {
     // Properties
 	/** Title of the submission */
@@ -27,6 +49,8 @@ export interface ISubmission extends Document {
     active: boolean
 	/** Decides if the submission has passed an evaluation and is ready for tournaments */
 	passedEvaluation: boolean
+	/** Evaluation results */
+	evaluation: ISubmissionEvaluation
 
 	// Methods
 	/** Get the number of lines of code in the submission */
@@ -36,6 +60,39 @@ export interface ISubmission extends Document {
     createdAt: Date
     updatedAt: Date
 }
+
+const evaluationSubSchema = new Schema<ISubmissionEvaluation>({
+	results: {
+		candidate: {
+			type: Schema.Types.Number
+		},
+		average: {
+			type: Schema.Types.Number
+		}
+	},
+	disqualified: {
+		type: Schema.Types.Mixed
+	},
+	executionTimeExceeded: {
+		type: Schema.Types.Boolean,
+		required: true
+	},
+	loadingTimeExceeded: {
+		type: Schema.Types.Boolean,
+		required: true
+	},
+	strategyLoadingTimings: {
+		type: Schema.Types.Mixed
+	},
+	strategyExecutionTimings: {
+		type: Schema.Types.Mixed
+	},
+	averageExecutionTime: {
+		type: Schema.Types.Number
+	}
+}, {
+	timestamps: true
+})
 
 // Schema
 const submissionSchema = new Schema<ISubmission>({
@@ -61,7 +118,8 @@ const submissionSchema = new Schema<ISubmission>({
 	passedEvaluation: {
 		type: Schema.Types.Boolean,
 		default: false
-	}
+	},
+	evaluation: evaluationSubSchema
 }, {
 	timestamps: true
 })
