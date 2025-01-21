@@ -141,7 +141,8 @@ await SubmissionModel.create({
 
 export default main`,
 	user: otherUser.id,
-	active: true
+	active: true,
+	passedEvaluation: true,
 })
 
 logger.info('Database seeded')
