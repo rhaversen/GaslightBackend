@@ -90,6 +90,7 @@ export async function getSubmissions(
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
 			loc: submission.getLoc(),
+			evaluation: submission.evaluation,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}))
@@ -129,12 +130,67 @@ export async function updateSubmission(
 			return
 		}
 
+		const codeUpdated = req.body.code !== undefined && req.body.code !== submission.code
+
 		// Manually set each field from allowed fields if it's present in the request body
 		if (req.body.title !== undefined) { submission.title = req.body.title }
 		if (req.body.code !== undefined) { submission.code = req.body.code }
 		if (req.body.active !== undefined) { submission.active = req.body.active }
 
 		await submission.validate()
+		
+		// If the code was updated, submit it for evaluation
+		if (codeUpdated) {
+			const evaluationResult = await submitCodeForEvaluation(submission)
+
+			if (evaluationResult === false) {
+				res.status(500).json({ error: 'Server Error' })
+				return
+			}
+
+			let submissionPass = true
+			let executionTimeExceeded = false
+			let loadingTimeExceeded = false
+
+			// Check if strategy loading time exceeded
+			if (evaluationResult.strategyLoadingTimings > strategyLoadingTimeout) {
+				submissionPass = false
+				loadingTimeExceeded = true
+			}
+
+			// Check if average strategy execution time exceeded
+			const averageExecutionTime = evaluationResult.strategyExecutionTimings.reduce((a, b) => a + b, 0) / evaluationResult.strategyExecutionTimings.length
+			if (averageExecutionTime > strategyExecutionTimeout) {
+				submissionPass = false
+				executionTimeExceeded = true
+			}
+
+			// Check if disqualified
+			if (evaluationResult.disqualified !== null) {
+				submissionPass = false
+			}
+
+			// Check if results are valid
+			if (evaluationResult.results === undefined) {
+				submissionPass = false
+			}
+
+			// Update submission with evaluation results
+			submission.passedEvaluation = submissionPass
+			submission.evaluation = {
+				results: evaluationResult.results ? {
+					candidate: evaluationResult.results.candidate,
+					average: evaluationResult.results.average
+				} : undefined,
+				disqualified: evaluationResult.disqualified,
+				executionTimeExceeded: executionTimeExceeded,
+				loadingTimeExceeded: loadingTimeExceeded,
+				strategyLoadingTimings: evaluationResult.strategyLoadingTimings,
+				strategyExecutionTimings: evaluationResult.strategyExecutionTimings,
+				averageExecutionTime: averageExecutionTime
+			}
+		}
+
 		await submission.save({ session })
 
 		await session.commitTransaction()
@@ -170,76 +226,6 @@ export async function getSubmission(
 			return
 		}
 		res.status(200).json(submission)
-	} catch (error) {
-		next(error)
-	}
-}
-
-export async function evaluateSubmission(
-	req: Request,
-	res: Response,
-	next: NextFunction
-): Promise<void> {
-	logger.silly('Requesting test grading')
-	try {
-		const user = req.user as IUser
-		const submission = await SubmissionModel.findById(req.params.id)
-		if (submission === null) {
-			res.status(404).json({ error: 'Submission not found' })
-			return
-		}
-
-		if (submission.user.toString() !== user.id) {
-			res.status(403).json({ error: 'Forbidden' })
-			return
-		}
-
-		const response = await submitCodeForEvaluation(submission)
-
-		if (response === false) {
-			res.status(500).json({ error: 'Server Error' })
-			return
-		}
-
-		let submissionPass = false
-		let executionTimeExceeded = false
-		let loadingTimeExceeded = false
-
-		// Check if strategy loading time exceeded
-		if (response.strategyLoadingTimings > strategyLoadingTimeout) {
-			submissionPass = false
-			loadingTimeExceeded = true
-		}
-
-		// Check if strategy execution time 99th percentile exceeded
-		if (response.strategyExecutionTimings.sort()[Math.floor(response.strategyExecutionTimings.length * 0.99)] > strategyExecutionTimeout) {
-			submissionPass = false
-			executionTimeExceeded = true
-		}
-
-		// Check if disqualified
-		if (response.disqualified !== null) {
-			submissionPass = false
-		}
-
-		// Check if results are valid
-		if (response.results === undefined) {
-			submissionPass = false
-		}
-
-		// Update submission
-		submission.passedEvaluation = submissionPass
-		await submission.save()
-
-		res.status(200).json({
-			passed: submissionPass,
-			results: response.results,
-			disqualified: response.disqualified,
-			executionTimeExceeded,
-			loadingTimeExceeded,
-			strategyLoadingTimings: response.strategyLoadingTimings,
-			strategyExecutionTimings: response.strategyExecutionTimings
-		})
 	} catch (error) {
 		next(error)
 	}

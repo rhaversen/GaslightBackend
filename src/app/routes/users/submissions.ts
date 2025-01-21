@@ -8,8 +8,7 @@ import {
 	createSubmission,
 	getSubmissions,
 	updateSubmission,
-	getSubmission,
-	evaluateSubmission,
+	getSubmission
 } from '../../controllers/users/submissionController.js'
 import { ensureAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
@@ -42,7 +41,7 @@ router.get('/',
 
 /**
  * @route PATCH /api/v1/submissions/:id
- * @description Update a specific submission
+ * @description Update a specific submission and re-evaluate it
  * @access Private
  */
 router.patch('/:id',
@@ -58,16 +57,6 @@ router.patch('/:id',
 router.get('/:id',
 	ensureAuthenticated,
 	asyncErrorHandler(getSubmission)
-)
-
-/**
- * @route POST /api/v1/submissions/:id/evaluate
- * @description Request test grading for a submission
- * @access Private
- */
-router.post('/:id/evaluate',
-	ensureAuthenticated,
-	asyncErrorHandler(evaluateSubmission)
 )
 
 export default router

@@ -166,10 +166,6 @@ submissionSchema.methods.getLoc = function () {
 // Pre-save middleware
 submissionSchema.pre('save', async function (next) {
 	logger.silly('Saving submission')
-	// If code is updated, reset evaluation status
-	if (this.isModified('code')) {
-		this.passedEvaluation = false
-	}
 	next()
 })
 
