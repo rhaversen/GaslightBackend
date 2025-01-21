@@ -229,3 +229,28 @@ export async function getSubmission(
 		next(error)
 	}
 }
+
+export async function deleteSubmission(
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> {
+	logger.silly('Deleting submission')
+	const user = req.user as IUser
+	try {
+		const submission = await SubmissionModel.findById(req.params.id)
+		if (submission === null) {
+			res.status(404).json({ error: 'Submission not found' })
+			return
+		}
+		if (submission.user.toString() !== user.id) {
+			res.status(403).json({ error: 'Forbidden' })
+			return
+		}
+		await submission.deleteOne()
+		res.status(204).end()
+	}
+	catch (error) {
+		next(error)
+	}
+}

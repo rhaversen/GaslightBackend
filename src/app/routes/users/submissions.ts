@@ -8,7 +8,8 @@ import {
 	createSubmission,
 	getSubmissions,
 	updateSubmission,
-	getSubmission
+	getSubmission,
+	deleteSubmission
 } from '../../controllers/users/submissionController.js'
 import { ensureAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
@@ -57,6 +58,16 @@ router.patch('/:id',
 router.get('/:id',
 	ensureAuthenticated,
 	asyncErrorHandler(getSubmission)
+)
+
+/**
+ * @route DELETE /api/v1/submissions/:id
+ * @description Delete a specific submission
+ * @access Private
+ */
+router.delete('/:id',
+	ensureAuthenticated,
+	asyncErrorHandler(deleteSubmission)
 )
 
 export default router
