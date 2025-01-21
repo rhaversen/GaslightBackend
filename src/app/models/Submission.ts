@@ -2,6 +2,7 @@
 
 // Third-party libraries
 import { type Document, model, Schema } from 'mongoose'
+import * as esprima from 'esprima'
 
 // Own modules
 import GradingModel from './Grading.js'
@@ -53,8 +54,8 @@ export interface ISubmission extends Document {
 	evaluation: ISubmissionEvaluation
 
 	// Methods
-	/** Get the number of lines of code in the submission */
-	getLoc: () => number
+	/** Get the number of tokens in the submission code */
+	getTokenCount: () => number
 
     // Timestamps
     createdAt: Date
@@ -147,20 +148,31 @@ submissionSchema.index({ user: 1 })
 submissionSchema.index({ active: 1 })
 
 // Methods
-submissionSchema.methods.getLoc = function () {
-	// TODO: Count tokens instead of lines
-	return (this as ISubmission).code.split('\n').filter((line: string): boolean => {
-		const trimmed = line.trim()
-		return trimmed !== '' 
-			&& trimmed !== ' '
-			&& trimmed !== '\t'
-			&& !trimmed.startsWith('//')
-			&& !trimmed.startsWith('/*')
-			&& !trimmed.startsWith('*')
-			&& !trimmed.startsWith('#')
-			&& !trimmed.startsWith(';')
-			&& !trimmed.startsWith('(*')
-	}).length
+submissionSchema.methods.getTokenCount = function () {
+	try {
+		const tokens = esprima.tokenize(this.code)
+		// Filter out comments, whitespace, and punctuation
+		return tokens.filter(token => 
+			token.type !== 'Punctuator' && 
+            token.type !== 'BlockComment' && 
+            token.type !== 'LineComment'
+		).length
+	} catch (error) {
+		logger.error('Error parsing code for token count:', error)
+		// Fallback to simple line counting if parsing fails
+		return this.code.split('\n').filter((line: string): boolean => {
+			const trimmed = line.trim()
+			return trimmed !== '' 
+                && trimmed !== ' '
+                && trimmed !== '\t'
+                && !trimmed.startsWith('//')
+                && !trimmed.startsWith('/*')
+                && !trimmed.startsWith('*')
+                && !trimmed.startsWith('#')
+                && !trimmed.startsWith(';')
+                && !trimmed.startsWith('(*')
+		}).length
+	}
 }
 
 // Pre-save middleware

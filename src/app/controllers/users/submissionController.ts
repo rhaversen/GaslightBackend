@@ -88,7 +88,7 @@ export async function getSubmissions(
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
-			loc: submission.getLoc(),
+			tokenCount: submission.getTokenCount(),
 			evaluation: submission.evaluation,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
