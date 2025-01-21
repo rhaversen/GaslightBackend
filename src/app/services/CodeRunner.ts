@@ -38,7 +38,7 @@ interface EvaluationRequestBody {
 
 export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<EvaluationResults | false> {
 	try {
-		const otherSubmissions = await SubmissionModel.find({ _id: { $ne: candidateSubmission._id } })
+		const otherSubmissions = await SubmissionModel.find({ _id: { $ne: candidateSubmission._id }, active: true })
 		const mappedCandidateSubmission: submission = {
 			submissionId: candidateSubmission.id,
 			files: { 'main.ts': candidateSubmission.code }
