@@ -138,8 +138,8 @@ export async function updateSubmission(
 
 		await submission.validate()
 		
-		// If the code was updated, submit it for evaluation
-		if (codeUpdated) {
+		// If the code was updated or the submission was not evaluated yet, re-evaluate it
+		if (codeUpdated || submission.passedEvaluation === null) {
 			const evaluationResult = await submitCodeForEvaluation(submission)
 
 			if (evaluationResult === false) {
@@ -152,14 +152,15 @@ export async function updateSubmission(
 			let loadingTimeExceeded = false
 
 			// Check if strategy loading time exceeded
-			if (evaluationResult.strategyLoadingTimings > strategyLoadingTimeout) {
+			if (evaluationResult.strategyLoadingTimings !== null && evaluationResult.strategyLoadingTimings > strategyLoadingTimeout) {
 				submissionPass = false
 				loadingTimeExceeded = true
 			}
 
 			// Check if average strategy execution time exceeded
-			const averageExecutionTime = evaluationResult.strategyExecutionTimings.reduce((a, b) => a + b, 0) / evaluationResult.strategyExecutionTimings.length
-			if (averageExecutionTime > strategyExecutionTimeout) {
+			const executionTimings = evaluationResult.strategyExecutionTimings
+			const averageExecutionTime = executionTimings ? executionTimings.reduce((a, b) => a + b, 0) / executionTimings.length : null
+			if (executionTimings && averageExecutionTime !== null && averageExecutionTime > strategyExecutionTimeout) {
 				submissionPass = false
 				executionTimeExceeded = true
 			}
@@ -184,9 +185,9 @@ export async function updateSubmission(
 				disqualified: evaluationResult.disqualified,
 				executionTimeExceeded: executionTimeExceeded,
 				loadingTimeExceeded: loadingTimeExceeded,
-				strategyLoadingTimings: evaluationResult.strategyLoadingTimings,
-				strategyExecutionTimings: evaluationResult.strategyExecutionTimings,
-				averageExecutionTime: averageExecutionTime
+				strategyLoadingTimings: evaluationResult.strategyLoadingTimings ?? undefined,
+				strategyExecutionTimings: evaluationResult.strategyExecutionTimings ?? undefined,
+				averageExecutionTime: averageExecutionTime ?? undefined
 			}
 		}
 

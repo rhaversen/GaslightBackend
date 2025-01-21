@@ -30,11 +30,11 @@ export interface ISubmissionEvaluation {
 	/** If the loading time exceeded the limit */
 	loadingTimeExceeded: boolean
 	/** Time taken to load the strategy */
-	strategyLoadingTimings: number
+	strategyLoadingTimings?: number
 	/** Time taken to execute the strategy */
-	strategyExecutionTimings: number[]
+	strategyExecutionTimings?: number[]
 	/** Average execution time of the strategy */
-	averageExecutionTime: number
+	averageExecutionTime?: number
 }
 
 export interface ISubmission extends Document {
@@ -47,8 +47,8 @@ export interface ISubmission extends Document {
     user: Schema.Types.ObjectId
 	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
     active: boolean
-	/** Decides if the submission has passed an evaluation and is ready for tournaments */
-	passedEvaluation: boolean
+	/** Decides if the submission has passed an evaluation and is ready for tournaments. Null if not evaluated yet */
+	passedEvaluation: boolean | null
 	/** Evaluation results */
 	evaluation: ISubmissionEvaluation
 
@@ -82,10 +82,10 @@ const evaluationSubSchema = new Schema<ISubmissionEvaluation>({
 		required: true
 	},
 	strategyLoadingTimings: {
-		type: Schema.Types.Mixed
+		type: Schema.Types.Number
 	},
 	strategyExecutionTimings: {
-		type: Schema.Types.Mixed
+		type: [Schema.Types.Number]
 	},
 	averageExecutionTime: {
 		type: Schema.Types.Number
@@ -117,7 +117,7 @@ const submissionSchema = new Schema<ISubmission>({
 	},
 	passedEvaluation: {
 		type: Schema.Types.Boolean,
-		default: false
+		default: null
 	},
 	evaluation: evaluationSubSchema
 }, {

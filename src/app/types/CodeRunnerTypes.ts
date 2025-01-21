@@ -6,8 +6,8 @@ export interface EvaluationResults {
 		average: number // Total average of other players
 	},
 	disqualified: string | null // Error or null
-	strategyExecutionTimings: number[] // Timings
-	strategyLoadingTimings: number // Timings
+	strategyExecutionTimings: number[] | null // Timings
+	strategyLoadingTimings: number | null // Timings
 }
 
 export interface TournamentResults {
