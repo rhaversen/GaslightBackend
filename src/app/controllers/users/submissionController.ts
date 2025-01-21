@@ -5,7 +5,6 @@ import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
 // Own modules
-import GradingModel from '../../models/Grading.js'
 import SubmissionModel from '../../models/Submission.js'
 import { submitCodeForEvaluation } from '../../services/CodeRunner.js'
 import logger from '../../utils/logger.js'

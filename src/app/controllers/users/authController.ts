@@ -6,7 +6,6 @@ import passport from 'passport'
 
 // Own modules
 import { type IUser } from '../../models/User.js'
-import logger from '../../utils/logger.js'
 import config from '../../utils/setupConfig.js'
 
 // Environment variables
