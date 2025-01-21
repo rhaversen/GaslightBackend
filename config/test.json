@@ -74,7 +74,7 @@
 		}
 	},
 	"codeRunnerTimeouts": {
-		"executionTimeout": 5,
-		"loadingTimeout": 1000
+		"executionTimeout": 1,
+		"loadingTimeout": 100
 	}
 }
