@@ -50,7 +50,7 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 		}))
 
 		const response = await axios.post<EvaluationResults>(
-			`http://${codeRunnerHost}/api/v1/evaluate-submission`,
+			`${codeRunnerHost}/api/v1/evaluate-submission`,
 			{
 				candidateSubmission: mappedCandidateSubmission,
 				otherSubmissions: mappedOtherSubmissions
