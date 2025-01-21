@@ -189,6 +189,11 @@ export async function updateSubmission(
 				strategyExecutionTimings: evaluationResult.strategyExecutionTimings ?? undefined,
 				averageExecutionTime: averageExecutionTime ?? undefined
 			}
+
+			// If the didnt pass evaluation, set it as inactive
+			if (!submission.passedEvaluation) {
+				submission.active = false
+			}
 		}
 
 		await submission.save({ session })
