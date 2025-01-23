@@ -76,10 +76,10 @@ export async function getSubmissions(
 			.limit(maxAmount)
 			.exec()
 
-		const submissionsWithLOC = submissions.map(submission => ({
+		const formattedSubmission = submissions.map(submission => ({
 			_id: submission.id,
 			title: submission.title,
-			code: submission.user === user?.id ? submission.code : null,
+			code: submission.user.toString() === user?.id ? submission.code : null,
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
@@ -89,7 +89,7 @@ export async function getSubmissions(
 			updatedAt: submission.updatedAt
 		}))
 
-		res.status(200).json(submissionsWithLOC)
+		res.status(200).json(formattedSubmission)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
@@ -152,7 +152,21 @@ export async function updateSubmission(
 
 		await submission.save({ session })
 		await session.commitTransaction()
-		res.status(200).json(submission)
+
+		const formattedSubmission = {
+			_id: submission.id,
+			title: submission.title,
+			code: submission.user.toString() === user?.id ? submission.code : null,
+			user: submission.user,
+			active: submission.active,
+			passedEvaluation: submission.passedEvaluation,
+			tokenCount: submission.getTokenCount(),
+			evaluation: submission.evaluation,
+			createdAt: submission.createdAt,
+			updatedAt: submission.updatedAt
+		}
+
+		res.status(200).json(formattedSubmission)
 	} catch (error) {
 		await session.abortTransaction()
 		if (error instanceof mongoose.Error.ValidationError || error instanceof mongoose.Error.CastError) {
@@ -253,7 +267,21 @@ export async function reEvaluateSubmission(
 
 		await submission.save({ session })
 		await session.commitTransaction()
-		res.status(200).json(submission)
+
+		const formattedSubmission = {
+			_id: submission.id,
+			title: submission.title,
+			code: submission.user.toString() === user?.id ? submission.code : null,
+			user: submission.user,
+			active: submission.active,
+			passedEvaluation: submission.passedEvaluation,
+			tokenCount: submission.getTokenCount(),
+			evaluation: submission.evaluation,
+			createdAt: submission.createdAt,
+			updatedAt: submission.updatedAt
+		}
+
+		res.status(200).json(formattedSubmission)
 	} catch (error) {
 		await session.abortTransaction()
 		if (error instanceof mongoose.Error.ValidationError || error instanceof mongoose.Error.CastError) {
