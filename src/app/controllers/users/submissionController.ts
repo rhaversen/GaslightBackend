@@ -9,15 +9,10 @@ import SubmissionModel from '../../models/Submission.js'
 import { submitCodeForEvaluation } from '../../services/CodeRunner.js'
 import logger from '../../utils/logger.js'
 import { IUser } from '../../models/User.js'
-import configs from '../../utils/setupConfig.js'
 
 // Environment variables
 
 // Config variables
-const {
-	strategyExecutionTimeout,
-	strategyLoadingTimeout
-} = configs
 
 // Destructuring and global variables
 
@@ -147,59 +142,16 @@ export async function updateSubmission(
 				return
 			}
 
-			let submissionPass = true
-			let executionTimeExceeded = false
-			let loadingTimeExceeded = false
+			submission.passedEvaluation = evaluationResult.passedEvaluation
+			submission.evaluation = evaluationResult.evaluation
 
-			// Check if strategy loading time exceeded
-			if (evaluationResult.strategyLoadingTimings !== null && evaluationResult.strategyLoadingTimings > strategyLoadingTimeout) {
-				submissionPass = false
-				loadingTimeExceeded = true
-			}
-
-			// Check if average strategy execution time exceeded
-			const executionTimings = evaluationResult.strategyExecutionTimings
-			const averageExecutionTime = executionTimings ? executionTimings.reduce((a, b) => a + b, 0) / executionTimings.length : null
-			if (executionTimings && averageExecutionTime !== null && averageExecutionTime > strategyExecutionTimeout) {
-				submissionPass = false
-				executionTimeExceeded = true
-			}
-
-			// Check if disqualified
-			if (evaluationResult.disqualified !== null) {
-				submissionPass = false
-			}
-
-			// Check if results are valid
-			if (evaluationResult.results === undefined) {
-				submissionPass = false
-			}
-
-			// Update submission with evaluation results
-			submission.passedEvaluation = submissionPass
-			submission.evaluation = {
-				results: evaluationResult.results ? {
-					candidate: evaluationResult.results.candidate,
-					average: evaluationResult.results.average
-				} : undefined,
-				disqualified: evaluationResult.disqualified,
-				executionTimeExceeded: executionTimeExceeded,
-				loadingTimeExceeded: loadingTimeExceeded,
-				strategyLoadingTimings: evaluationResult.strategyLoadingTimings ?? undefined,
-				strategyExecutionTimings: evaluationResult.strategyExecutionTimings ?? undefined,
-				averageExecutionTime: averageExecutionTime ?? undefined
-			}
-
-			// If the didnt pass evaluation, set it as inactive
 			if (!submission.passedEvaluation) {
 				submission.active = false
 			}
 		}
 
 		await submission.save({ session })
-
 		await session.commitTransaction()
-
 		res.status(200).json(submission)
 	} catch (error) {
 		await session.abortTransaction()
