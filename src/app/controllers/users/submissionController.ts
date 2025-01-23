@@ -212,3 +212,56 @@ export async function deleteSubmission(
 		next(error)
 	}
 }
+
+export async function reEvaluateSubmission(
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> {
+	logger.silly('Re-evaluating submission')
+	const user = req.user as IUser
+
+	const session = await mongoose.startSession()
+	session.startTransaction()
+
+	try {
+		const submission = await SubmissionModel.findById(req.params.id, null, { session })
+
+		if (submission === null) {
+			res.status(404).json({ error: 'Submission not found' })
+			return
+		}
+
+		if (submission.user.toString() !== user.id) {
+			res.status(403).json({ error: 'Forbidden' })
+			return
+		}
+
+		const evaluationResult = await submitCodeForEvaluation(submission)
+
+		if (evaluationResult === false) {
+			res.status(500).json({ error: 'Server Error' })
+			return
+		}
+
+		submission.passedEvaluation = evaluationResult.passedEvaluation
+		submission.evaluation = evaluationResult.evaluation
+
+		if (!submission.passedEvaluation) {
+			submission.active = false
+		}
+
+		await submission.save({ session })
+		await session.commitTransaction()
+		res.status(200).json(submission)
+	} catch (error) {
+		await session.abortTransaction()
+		if (error instanceof mongoose.Error.ValidationError || error instanceof mongoose.Error.CastError) {
+			res.status(400).json({ error: error.message })
+			return
+		}
+		next(error)
+	} finally {
+		session.endSession()
+	}
+}

@@ -9,7 +9,8 @@ import {
 	getSubmissions,
 	updateSubmission,
 	getSubmission,
-	deleteSubmission
+	deleteSubmission,
+	reEvaluateSubmission
 } from '../../controllers/users/submissionController.js'
 import { ensureAuthenticated } from '../../middleware/auth.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
@@ -68,6 +69,16 @@ router.get('/:id',
 router.delete('/:id',
 	ensureAuthenticated,
 	asyncErrorHandler(deleteSubmission)
+)
+
+/**
+ * @route POST /api/v1/submissions/:id/evaluate
+ * @description Re-evaluate a specific submission
+ * @access Private
+ */
+router.post('/:id/evaluate',
+	ensureAuthenticated,
+	asyncErrorHandler(reEvaluateSubmission)
 )
 
 export default router
