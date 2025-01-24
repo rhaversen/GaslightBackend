@@ -45,7 +45,14 @@ export interface ProcessedEvaluationResults {
 
 export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<ProcessedEvaluationResults | false> {
 	try {
-		const otherSubmissions = await SubmissionModel.find({ _id: { $ne: candidateSubmission._id }, active: true, passedEvaluation: true })
+		let otherSubmissions
+		otherSubmissions = await SubmissionModel.find({ _id: { $ne: candidateSubmission._id }, active: true, passedEvaluation: true })
+
+		// If the candidate is the only submission, evaluate it against itself
+		if (otherSubmissions.length === 0) {
+			otherSubmissions = [{ id: 'other', code: candidateSubmission.code }]
+		}
+
 		const mappedCandidateSubmission: submission = {
 			submissionId: candidateSubmission.id,
 			files: { 'main.ts': candidateSubmission.code }
