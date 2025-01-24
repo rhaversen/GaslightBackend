@@ -44,12 +44,13 @@ export async function register(req: Request, res: Response, next: NextFunction):
 }
 
 export async function getAllUsers(req: Request, res: Response): Promise<void> {
+	const reqUser = req.user
 	const users = await UserModel.find().exec()
 
 	const mappedUsers = users.map(user => {
 		return {
 			username: user.username,
-			email: user.email,
+			email: user.id === reqUser?.id ? user.email : null,
 			createdAt: user.createdAt,
 			updatedAt: user.updatedAt
 		}
@@ -59,9 +60,10 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
 }
 
 export async function getUser(req: Request, res: Response): Promise<void> {
-	const user = await UserModel.findById(req.params.id).exec()
+	const user = req.user
+	const paramUser = await UserModel.findById(req.params.id).exec()
 
-	if (user === null) {
+	if (paramUser === null) {
 		res.status(404).json({
 			error: 'User not found'
 		})
@@ -69,10 +71,10 @@ export async function getUser(req: Request, res: Response): Promise<void> {
 	}
 
 	const mappedUser = {
-		username: user.username,
-		email: user.email,
-		createdAt: user.createdAt,
-		updatedAt: user.updatedAt
+		username: paramUser.username,
+		email: paramUser.id === user?.id ? paramUser.email : null,
+		createdAt: paramUser.createdAt,
+		updatedAt: paramUser.updatedAt
 	}
 
 	res.status(200).json(mappedUser)
