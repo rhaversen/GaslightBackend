@@ -6,6 +6,7 @@ import { type NextFunction, type Request, type Response } from 'express'
 // Own modules
 import { loginUserLocal } from './authController.js'
 import UserModel from '../../models/User.js'
+import SubmissionModel from '../../models/Submission.js'
 
 // Environment variables
 
@@ -47,10 +48,21 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
 	const reqUser = req.user
 	const users = await UserModel.find().exec()
 
+	// Use aggregation instead of multiple queries
+	const counts = await SubmissionModel.aggregate([
+		{ $group: { _id: '$user', count: { $sum: 1 } } }
+	])
+	const submissionCountMap = Object.fromEntries(
+		counts.map(item => [item._id.toString(), item.count])
+	)
+
 	const mappedUsers = users.map(user => {
 		return {
 			username: user.username,
 			email: user.id === reqUser?.id ? user.email : null,
+			expirationDate: user.id === reqUser?.id ? user.expirationDate : null,
+			confirmed: user.id === reqUser?.id ? user.confirmed : null,
+			submissionCount: submissionCountMap[user.id] || 0,
 			createdAt: user.createdAt,
 			updatedAt: user.updatedAt
 		}
@@ -73,6 +85,9 @@ export async function getUser(req: Request, res: Response): Promise<void> {
 	const mappedUser = {
 		username: paramUser.username,
 		email: paramUser.id === user?.id ? paramUser.email : null,
+		expirationDate: paramUser.id === user?.id ? paramUser.expirationDate : null,
+		confirmed: paramUser.id === user?.id ? paramUser.confirmed : null,
+		submissionCount: await SubmissionModel.countDocuments({ user: paramUser.id }),
 		createdAt: paramUser.createdAt,
 		updatedAt: paramUser.updatedAt
 	}
