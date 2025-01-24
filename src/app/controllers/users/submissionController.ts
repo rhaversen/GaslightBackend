@@ -201,11 +201,21 @@ export async function getSubmission(
 			res.status(404).json({ error: 'Submission not found' })
 			return
 		}
-		if (submission.user.toString() !== user.id) {
-			res.status(403).json({ error: 'Forbidden' })
-			return
+
+		const formattedSubmission = {
+			_id: submission.id,
+			title: submission.title,
+			code: submission.user.toString() === user?.id ? submission.code : null,
+			user: submission.user,
+			active: submission.active,
+			passedEvaluation: submission.passedEvaluation,
+			tokenCount: submission.getTokenCount(),
+			evaluation: submission.evaluation,
+			createdAt: submission.createdAt,
+			updatedAt: submission.updatedAt
 		}
-		res.status(200).json(submission)
+
+		res.status(200).json(formattedSubmission)
 	} catch (error) {
 		next(error)
 	}
