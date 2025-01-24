@@ -14,6 +14,8 @@ const user = await UserModel.create({
 	email: 'test@test.com',
 	password: 'password',
 })
+user.confirmUser()
+await user.save()
 
 await SubmissionModel.create({
 	title: 'dumbStrategy',
@@ -104,6 +106,8 @@ const otherUser = await UserModel.create({
 	email: 'test2@test.com',
 	password: 'password',
 })
+otherUser.confirmUser()
+await otherUser.save()
 
 await SubmissionModel.create({
 	title: 'dumbStrategy',
