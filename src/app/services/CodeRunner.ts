@@ -120,13 +120,11 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 				averageExecutionTime: averageExecutionTime ?? undefined
 			}
 		}
-	} catch (error) {
-		if (error instanceof Error) {
-			logger.error('Error submitting code for test', { error: error.message })
-		} else {
-			logger.error('Error submitting code for test', { error: String(error) })
-		}
-
+	} catch (error: any) {
+		logger.error(
+			'Error submitting code for test',
+			error?.response?.data?.error ?? error.message,
+		)
 		return false
 	}
 }
