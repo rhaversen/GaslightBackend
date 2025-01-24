@@ -54,10 +54,9 @@ router.patch('/:id',
 /**
  * @route GET /api/v1/submissions/:id
  * @description Get a specific submission
- * @access Private
+ * @access Public
  */
 router.get('/:id',
-	ensureAuthenticated,
 	asyncErrorHandler(getSubmission)
 )
 

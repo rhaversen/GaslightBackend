@@ -13,6 +13,12 @@ import UserModel, { type IUser } from '../models/User.js'
 
 // Destructuring and global variables
 
+declare global {
+	namespace Express {
+		interface User extends IUser { }
+	}
+}
+
 const configurePassport = (passport: PassportStatic): void => {
 	// Local User Strategy
 	passport.use('user-local', new LocalStrategy({
@@ -40,8 +46,8 @@ const configurePassport = (passport: PassportStatic): void => {
 		})().catch(err => { done(err) })
 	}))
 
-	passport.serializeUser(function (user, done) {
-		const userId = (user as IUser).id
+	passport.serializeUser(function (user: IUser, done) {
+		const userId = user.id
 		done(null, userId)
 	})
 

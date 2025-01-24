@@ -8,7 +8,6 @@ import mongoose from 'mongoose'
 import SubmissionModel from '../../models/Submission.js'
 import { submitCodeForEvaluation } from '../../services/CodeRunner.js'
 import logger from '../../utils/logger.js'
-import { IUser } from '../../models/User.js'
 
 // Environment variables
 
@@ -23,7 +22,12 @@ export async function createSubmission(
 ): Promise<void> {
 	logger.silly('Creating submission')
 
-	const user = req.user as IUser
+	const user = req.user
+
+	if (user === undefined) {
+		res.status(401).json({ error: 'Unauthorized' })
+		return
+	}
 
 	const allowedFields = {
 		title: req.body.title,
@@ -54,7 +58,7 @@ export async function getSubmissions(
 
 	const maxAmount = Number(req.query.maxAmount) || 100
 	const startIndex = Number(req.query.startIndex) || 0
-	const user = req.user as IUser | undefined
+	const user = req.user
 
 	const query: any = {}
 
@@ -105,7 +109,12 @@ export async function updateSubmission(
 	next: NextFunction
 ): Promise<void> {
 	logger.silly('Updating submission')
-	const user = req.user as IUser
+	const user = req.user
+
+	if (user === undefined) {
+		res.status(401).json({ error: 'Unauthorized' })
+		return
+	}
 
 	const session = await mongoose.startSession()
 	session.startTransaction()
@@ -156,7 +165,7 @@ export async function updateSubmission(
 		const formattedSubmission = {
 			_id: submission.id,
 			title: submission.title,
-			code: submission.user.toString() === user?.id ? submission.code : null,
+			code: submission.user.toString() === user.id ? submission.code : null,
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
@@ -186,7 +195,7 @@ export async function getSubmission(
 ): Promise<void> {
 	logger.silly('Getting submission')
 	try {
-		const user = req.user as IUser
+		const user = req.user
 		const submission = await SubmissionModel.findById(req.params.id)
 		if (submission === null) {
 			res.status(404).json({ error: 'Submission not found' })
@@ -208,8 +217,12 @@ export async function deleteSubmission(
 	next: NextFunction
 ): Promise<void> {
 	logger.silly('Deleting submission')
-	const user = req.user as IUser
+	const user = req.user
 	try {
+		if (user === undefined) {
+			res.status(401).json({ error: 'Unauthorized' })
+			return
+		}
 		const submission = await SubmissionModel.findById(req.params.id)
 		if (submission === null) {
 			res.status(404).json({ error: 'Submission not found' })
@@ -233,7 +246,12 @@ export async function reEvaluateSubmission(
 	next: NextFunction
 ): Promise<void> {
 	logger.silly('Re-evaluating submission')
-	const user = req.user as IUser
+	const user = req.user
+
+	if (user === undefined) {
+		res.status(401).json({ error: 'Unauthorized' })
+		return
+	}
 
 	const session = await mongoose.startSession()
 	session.startTransaction()
@@ -271,7 +289,7 @@ export async function reEvaluateSubmission(
 		const formattedSubmission = {
 			_id: submission.id,
 			title: submission.title,
-			code: submission.user.toString() === user?.id ? submission.code : null,
+			code: submission.user.toString() === user.id ? submission.code : null,
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,

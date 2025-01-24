@@ -27,7 +27,7 @@ export async function loginUserLocal (req: Request, res: Response, next: NextFun
 		return
 	}
 
-	passport.authenticate('user-local', (err: Error, user: Express.User, info: { message: string }) => {
+	passport.authenticate('user-local', (err: Error, user: Express.User | boolean, info: { message: string }) => {
 		if (err !== null && err !== undefined) {
 			return res.status(500).json({
 				auth: false,
@@ -42,7 +42,9 @@ export async function loginUserLocal (req: Request, res: Response, next: NextFun
 			})
 		}
 
-		req.logIn(user, loginErr => {
+		const typedUser = user as IUser
+
+		req.logIn(typedUser, loginErr => {
 			if (loginErr !== null && loginErr !== undefined) {
 				return res.status(500).json({
 					auth: false,
@@ -55,7 +57,7 @@ export async function loginUserLocal (req: Request, res: Response, next: NextFun
 				req.session.cookie.maxAge = sessionExpiry
 			}
 
-			const loggedInUser = user as IUser
+			const loggedInUser = typedUser
 
 			const userWithoutPassword = {
 				_id: loggedInUser._id,
