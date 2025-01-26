@@ -18,7 +18,7 @@ import { emitGradingCreated } from '../../webSockets/GradingHandlers.js'
 
 export async function getActiveSubmissions(req: Request, res: Response) {
 	try {
-		const submissions = await SubmissionModel.find({ active: true })
+		const submissions = await SubmissionModel.find({ active: true, passedEvaluation: true }).exec()
 		res.status(200).json(submissions)
 	} catch (error) {
 		logger.error(error)
