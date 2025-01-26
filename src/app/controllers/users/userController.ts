@@ -58,6 +58,7 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
 
 	const mappedUsers = users.map(user => {
 		return {
+			_id: user.id,
 			username: user.username,
 			email: user.id === reqUser?.id ? user.email : null,
 			expirationDate: user.id === reqUser?.id ? user.expirationDate : null,
@@ -83,6 +84,7 @@ export async function getUser(req: Request, res: Response): Promise<void> {
 	}
 
 	const mappedUser = {
+		_id: paramUser.id,
 		username: paramUser.username,
 		email: paramUser.id === user?.id ? paramUser.email : null,
 		expirationDate: paramUser.id === user?.id ? paramUser.expirationDate : null,
