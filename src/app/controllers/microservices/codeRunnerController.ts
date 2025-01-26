@@ -27,12 +27,19 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 }
 
 export async function createGradings(req: Request, res: Response) {
-	const allowedFields: Record<string, unknown> = {
-		gradings: req.body.gradings
+	const { gradings } = req.body
+
+	if (!Array.isArray(gradings)) {
+		return res.status(400).json({ error: 'Gradings must be an array' })
 	}
 
 	try {
-		const newGradings = await GradingModel.insertMany(allowedFields)
+		const gradingObjects = gradings.map(grading => ({
+			submission: grading.submission,
+			score: grading.score
+		}))
+
+		const newGradings = await GradingModel.insertMany(gradingObjects)
 		const gradingIds = newGradings.map(grading => grading._id)
 		res.status(201).json(gradingIds)
 	} catch (error) {
