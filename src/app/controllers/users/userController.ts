@@ -56,6 +56,12 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
 		counts.map(item => [item._id.toString(), item.count])
 	)
 
+	// Find each users active submission name
+	const activeSubmissions = await SubmissionModel.find({ active: true }).exec()
+	const activeSubmissionMap = Object.fromEntries(
+		activeSubmissions.map(submission => [submission.user.toString(), submission.title])
+	)
+
 	const mappedUsers = users.map(user => {
 		return {
 			_id: user.id,
@@ -64,6 +70,7 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
 			expirationDate: user.id === reqUser?.id ? user.expirationDate : null,
 			confirmed: user.id === reqUser?.id ? user.confirmed : null,
 			submissionCount: submissionCountMap[user.id] || 0,
+			activeSubmission: activeSubmissionMap[user.id] || null,
 			createdAt: user.createdAt,
 			updatedAt: user.updatedAt
 		}
@@ -90,6 +97,7 @@ export async function getUser(req: Request, res: Response): Promise<void> {
 		expirationDate: paramUser.id === user?.id ? paramUser.expirationDate : null,
 		confirmed: paramUser.id === user?.id ? paramUser.confirmed : null,
 		submissionCount: await SubmissionModel.countDocuments({ user: paramUser.id }),
+		activeSubmission: (await SubmissionModel.findOne({ user: paramUser.id, active: true }).exec())?.title || null,
 		createdAt: paramUser.createdAt,
 		updatedAt: paramUser.updatedAt
 	}
