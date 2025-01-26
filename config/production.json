@@ -69,8 +69,8 @@
         "passwordResetExpiry": 86400000
     },
 	"microservices": {
-		"codeRunner": {
-			"host": "code-runner-service"
+		"evaluationRunner": {
+			"host": "evaluation-runner-service"
 		}
 	},
 	"codeRunnerTimeouts": {

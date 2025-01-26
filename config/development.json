@@ -69,7 +69,7 @@
         "passwordResetExpiry": 86400000
     },
 	"microservices": {
-		"codeRunner": {
+		"evaluationRunner": {
 			"host": "http://localhost:5001"
 		}
 	},

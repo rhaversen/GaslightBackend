@@ -16,7 +16,7 @@ const {
 
 // Config variables
 const {
-	codeRunnerHost,
+	evaluationRunnerHost,
 	strategyExecutionTimeout,
 	strategyLoadingTimeout
 } = AppConfig
@@ -64,7 +64,7 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 		}))
 
 		const response = await axios.post<EvaluationResults>(
-			`${codeRunnerHost}/api/v1/evaluate-submission`,
+			`${evaluationRunnerHost}/api/v1/evaluate-submission`,
 			{
 				candidateSubmission: mappedCandidateSubmission,
 				otherSubmissions: mappedOtherSubmissions
