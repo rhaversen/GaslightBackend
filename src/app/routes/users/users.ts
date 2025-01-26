@@ -7,9 +7,11 @@ import Router from 'express'
 import {
 	register,
 	getAllUsers,
-	getUser
+	getUser,
+	updateUser
 } from '../../controllers/users/userController.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
+import { ensureAuthenticated } from '../../middleware/auth.js'
 
 // Environment variables
 
@@ -54,6 +56,23 @@ router.get('/',
  */
 router.get('/:id',
 	asyncErrorHandler(getUser)
+)
+
+/**
+ * @route PATCH /api/v1/users/[id]
+ * @description Update user by ID.
+ * @access Private
+ * @param {string} req.params.id - The ID of the user.
+ * @param {string} [req.body.username] - The username of the user.
+ * @param {string} [req.body.email] - The email of the user.
+ * @param {string} [req.body.password] - The password of the user.
+ * @param {string} [req.body.confirmPassword] - The password confirmation of the user.
+ * @returns {number} res.status - The status code of the HTTP response.
+ * @returns {Object} res.body - The user object.
+ */
+router.patch('/:id',
+	ensureAuthenticated,
+	asyncErrorHandler(updateUser)
 )
 
 export default router
