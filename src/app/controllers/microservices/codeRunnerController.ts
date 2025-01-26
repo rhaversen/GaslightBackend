@@ -26,22 +26,6 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 	}
 }
 
-export async function createGrading(req: Request, res: Response) {
-	const allowedFields: Record<string, unknown> = {
-		submission: req.body.submission,
-		score: req.body.score
-	}
-
-	try {
-		const newGrading = await GradingModel.create(allowedFields)
-		res.status(201).json(newGrading)
-		emitGradingCreated(newGrading)
-	} catch (error) {
-		logger.error(error)
-		res.status(400).json({ error: 'Invalid data' })
-	}
-}
-
 export async function createGradings(req: Request, res: Response) {
 	const allowedFields: Record<string, unknown> = {
 		gradings: req.body.gradings

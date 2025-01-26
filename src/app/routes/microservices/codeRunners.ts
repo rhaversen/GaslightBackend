@@ -6,7 +6,6 @@ import { Router } from 'express'
 // Own modules
 import {
 	getActiveSubmissions,
-	createGrading,
 	createTournament,
 	createGradings,
 } from '../../controllers/microservices/codeRunnerController.js'
@@ -31,18 +30,6 @@ router.use(authenticateMicroservice)
  * @returns {Array<Object>} res.body - Array of active submissions
  */
 router.get('/submissions', getActiveSubmissions)
-
-/**
- * @route POST api/v1/microservices/grading
- * @description Create a grading
- * @access Private (Microservice)
- * @param {string} req.header.authorization - The secret key for the microservice.
- * @param {string} req.body.submission - Submission ID
- * @param {number} req.body.score - Grading score
- * @returns {number} res.status - HTTP status code
- * @returns {Object} res.body - New grading
- */
-router.post('/grading', createGrading)
 
 /**
  * @route POST api/v1/microservices/gradings
