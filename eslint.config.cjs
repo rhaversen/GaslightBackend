@@ -1,10 +1,11 @@
-// eslint.config.js
-
 "use strict";
+
+const js = require('@eslint/js');
 
 // ESLint plugins
 const typescriptEslintPlugin = require("@typescript-eslint/eslint-plugin");
 const typescriptEslintParser = require("@typescript-eslint/parser");
+const importPlugin = require('eslint-plugin-import');
 
 // Custom rules
 const enforceCommentOrderRule = require("./eslint-rules/enforce-comment-order.cjs");
@@ -17,6 +18,8 @@ const localPlugin = {
 };
 
 module.exports = [
+	js.configs.recommended,
+	importPlugin.flatConfigs.recommended,
 	{
 		ignores: ["node_modules/**"],
 	},
@@ -37,8 +40,11 @@ module.exports = [
 			quotes: ["error", "single"],
 			indent: ["error", "tab", { SwitchCase: 1 }],
 			"typescript/no-unused-vars": "warn",
+			"no-unused-vars": "off",
 			"no-tabs": "off",
 			"local/enforce-comment-order": "error",
+			"import/no-unresolved": "off",
+			"no-undef": "off",
 		},
 		settings: {
 			// Include any necessary settings here

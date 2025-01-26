@@ -4,8 +4,8 @@
 import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
-import logger from '../utils/logger.js'
 import GradingModel from './Grading.js'
+import logger from '../utils/logger.js'
 
 // Environment variables
 
@@ -16,7 +16,10 @@ import GradingModel from './Grading.js'
 // Interfaces
 export interface ITournament extends Document {
     // Properties
-    gradings: Schema.Types.ObjectId[] // All gradings created from this tournament
+	/** All gradings created from this tournament */
+    gradings: Schema.Types.ObjectId[]
+	/** All disqualifications from this tournament */
+	disqualified?: Schema.Types.ObjectId[]
 
     // Timestamps
     createdAt: Date
@@ -29,6 +32,10 @@ const tournamentSchema = new Schema<ITournament>({
 		type: Schema.Types.ObjectId,
 		ref: 'Grading',
 		required: true
+	}],
+	disqualified: [{
+		type: Schema.Types.ObjectId,
+		ref: 'Grading',
 	}]
 }, {
 	timestamps: true
@@ -70,6 +77,35 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	}
 	return true
 }, 'Gradings must be unique')
+
+tournamentSchema.path('disqualified').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if all disqualifications exist
+	const gradings = await GradingModel.find({ _id: { $in: v } })
+	if (gradings.length !== v.length) {
+		return false
+	}
+	return true
+}, 'All disqualifications must exist')
+
+tournamentSchema.path('disqualified').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if all disqualifications are from different submissions
+	const gradings = await GradingModel.find({ _id: { $in: v } })
+	const submissions = gradings.map(grading => grading.submission)
+	const uniqueSubmissions = new Set(submissions)
+	if (submissions.length !== uniqueSubmissions.size) {
+		return false
+	}
+	return true
+}, 'All disqualifications must be from different submissions')
+
+tournamentSchema.path('disqualified').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if length of unique disqualifications is the same as the length of the disqualifications
+	const uniqueDisqualifications = new Set(v)
+	if (v.length !== uniqueDisqualifications.size) {
+		return false
+	}
+	return true
+}, 'Disqualifications must be unique')
 
 // Adding indexes
 tournamentSchema.index({ gradings: 1 })

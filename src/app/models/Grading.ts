@@ -4,8 +4,8 @@
 import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
-import logger from '../utils/logger.js'
 import { ISubmission } from './Submission.js'
+import logger from '../utils/logger.js'
 
 // Environment variables
 
@@ -16,8 +16,10 @@ import { ISubmission } from './Submission.js'
 // Interfaces
 export interface IGrading extends Document {
     // Properties
-    submission: Schema.Types.ObjectId | ISubmission // Submission being graded
-    score: number // Score given to the submission
+	/** Submission being graded */
+    submission: Schema.Types.ObjectId | ISubmission
+	/** Score given to the submission */
+    score: number
 
     // Timestamps
     createdAt: Date
@@ -37,9 +39,7 @@ const gradingSchema = new Schema<IGrading>({
 	},
 	score: {
 		type: Schema.Types.Number,
-		required: true,
-		min: 0,
-		max: 1000
+		required: true
 	}
 }, {
 	timestamps: true

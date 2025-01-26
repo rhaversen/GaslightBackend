@@ -1,9 +1,9 @@
 // Node.js built-in modules
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
-import { Logtail } from '@logtail/node'
 
 // Third-party libraries
+import { Logtail } from '@logtail/node'
 import { createLogger, format as _format, transports as _transports } from 'winston'
 
 // Own modules

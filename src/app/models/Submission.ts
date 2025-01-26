@@ -2,11 +2,12 @@
 
 // Third-party libraries
 import { type Document, model, Schema } from 'mongoose'
+import * as esprima from 'esprima'
 
 // Own modules
-import logger from '../utils/logger.js'
 import GradingModel from './Grading.js'
 import UserModel from './User.js'
+import logger from '../utils/logger.js'
 
 // Environment variables
 
@@ -15,17 +16,84 @@ import UserModel from './User.js'
 // Destructuring and global variables
 
 // Interfaces
+export interface ISubmissionEvaluation {
+	// Properties
+	results: {
+		/** This submission's score */
+		candidate: number
+		/** Average score of all submissions */
+		average: number
+	} | undefined
+	/** Reason for disqualification */
+	disqualified: string | null
+	/** If the execution time exceeded the limit */
+	executionTimeExceeded: boolean
+	/** If the loading time exceeded the limit */
+	loadingTimeExceeded: boolean
+	/** Time taken to load the strategy */
+	strategyLoadingTimings?: number
+	/** Time taken to execute the strategy */
+	strategyExecutionTimings?: number[]
+	/** Average execution time of the strategy */
+	averageExecutionTime?: number
+}
+
 export interface ISubmission extends Document {
     // Properties
-    title: string // Title of the submission
-    code: string // Code submitted by the user
-    user: Schema.Types.ObjectId // User who submitted the code
-    active: boolean // Decides if the submission is part of the tournament (Can only have one active submission per user)
+	/** Title of the submission */
+    title: string
+    /** Code submitted by the user */
+	code: string
+	/** User who submitted the code */
+    user: Schema.Types.ObjectId
+	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
+    active: boolean
+	/** Decides if the submission has passed an evaluation and is ready for tournaments. Null if not evaluated yet */
+	passedEvaluation: boolean | null
+	/** Evaluation results */
+	evaluation: ISubmissionEvaluation
+
+	// Methods
+	/** Get the number of tokens in the submission code */
+	getTokenCount: () => number
 
     // Timestamps
     createdAt: Date
     updatedAt: Date
 }
+
+const evaluationSubSchema = new Schema<ISubmissionEvaluation>({
+	results: {
+		candidate: {
+			type: Schema.Types.Number
+		},
+		average: {
+			type: Schema.Types.Number
+		}
+	},
+	disqualified: {
+		type: Schema.Types.Mixed
+	},
+	executionTimeExceeded: {
+		type: Schema.Types.Boolean,
+		required: true
+	},
+	loadingTimeExceeded: {
+		type: Schema.Types.Boolean,
+		required: true
+	},
+	strategyLoadingTimings: {
+		type: Schema.Types.Number
+	},
+	strategyExecutionTimings: {
+		type: [Schema.Types.Number]
+	},
+	averageExecutionTime: {
+		type: Schema.Types.Number
+	}
+}, {
+	timestamps: true
+})
 
 // Schema
 const submissionSchema = new Schema<ISubmission>({
@@ -47,7 +115,12 @@ const submissionSchema = new Schema<ISubmission>({
 	active: {
 		type: Schema.Types.Boolean,
 		default: false
-	}
+	},
+	passedEvaluation: {
+		type: Schema.Types.Boolean,
+		default: null
+	},
+	evaluation: evaluationSubSchema
 }, {
 	timestamps: true
 })
@@ -73,6 +146,34 @@ submissionSchema.path('user').validate(async function (v: Schema.Types.ObjectId)
 // Adding indexes
 submissionSchema.index({ user: 1 })
 submissionSchema.index({ active: 1 })
+
+// Methods
+submissionSchema.methods.getTokenCount = function () {
+	try {
+		const tokens = esprima.tokenize(this.code)
+		// Filter out comments, whitespace, and punctuation
+		return tokens.filter(token => 
+			token.type !== 'Punctuator' && 
+            token.type !== 'BlockComment' && 
+            token.type !== 'LineComment'
+		).length
+	} catch (error) {
+		logger.error('Error parsing code for token count:', error)
+		// Fallback to simple line counting if parsing fails
+		return this.code.split('\n').filter((line: string): boolean => {
+			const trimmed = line.trim()
+			return trimmed !== '' 
+                && trimmed !== ' '
+                && trimmed !== '\t'
+                && !trimmed.startsWith('//')
+                && !trimmed.startsWith('/*')
+                && !trimmed.startsWith('*')
+                && !trimmed.startsWith('#')
+                && !trimmed.startsWith(';')
+                && !trimmed.startsWith('(*')
+		}).length
+	}
+}
 
 // Pre-save middleware
 submissionSchema.pre('save', async function (next) {

@@ -1,13 +1,12 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import passport from 'passport'
 import { type NextFunction, type Request, type Response } from 'express'
+import passport from 'passport'
 
 // Own modules
-import config from '../../utils/setupConfig.js'
-import logger from '../../utils/logger.js'
 import { type IUser } from '../../models/User.js'
+import config from '../../utils/setupConfig.js'
 
 // Environment variables
 
@@ -20,15 +19,15 @@ const {
 
 export async function loginUserLocal (req: Request, res: Response, next: NextFunction): Promise<void> {
 	// Check if name and password are provided
-	if (req.body.name === undefined || req.body.password === undefined) {
+	if (req.body.email === undefined || req.body.password === undefined) {
 		res.status(400).json({
 			auth: false,
-			error: 'Name and password must be provided'
+			error: 'Email and password must be provided'
 		})
 		return
 	}
 
-	passport.authenticate('user-local', (err: Error, user: Express.User, info: { message: string }) => {
+	passport.authenticate('user-local', (err: Error, user: Express.User | boolean, info: { message: string }) => {
 		if (err !== null && err !== undefined) {
 			return res.status(500).json({
 				auth: false,
@@ -43,7 +42,9 @@ export async function loginUserLocal (req: Request, res: Response, next: NextFun
 			})
 		}
 
-		req.logIn(user, loginErr => {
+		const typedUser = user as IUser
+
+		req.logIn(typedUser, loginErr => {
 			if (loginErr !== null && loginErr !== undefined) {
 				return res.status(500).json({
 					auth: false,
@@ -56,7 +57,7 @@ export async function loginUserLocal (req: Request, res: Response, next: NextFun
 				req.session.cookie.maxAge = sessionExpiry
 			}
 
-			const loggedInUser = user as IUser
+			const loggedInUser = typedUser
 
 			const userWithoutPassword = {
 				_id: loggedInUser._id,
@@ -92,14 +93,4 @@ export async function logoutLocal (req: Request, res: Response, next: NextFuncti
 			res.status(200).json({ message: 'Logged out' })
 		})
 	})
-}
-
-export function ensureAuthenticated (req: Request, res: Response, next: NextFunction): void {
-	logger.silly('Ensuring authentication')
-
-	if (!req.isAuthenticated()) {
-		res.status(401).json({ message: 'Unauthorized' })
-		return
-	}
-	next()
 }
