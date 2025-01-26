@@ -65,12 +65,16 @@
 		"prefix": "gaslight-backend-development:"
 	},
     "user": {
-        "verificationExpiry": 86400,
-        "passwordResetExpiry": 86400
+        "verificationExpiry": 86400000,
+        "passwordResetExpiry": 86400000
     },
 	"microservices": {
-		"codeRunner": {
+		"evaluationRunner": {
 			"host": "http://localhost:5001"
 		}
+	},
+	"codeRunnerTimeouts": {
+		"executionTimeout": 1,
+		"loadingTimeout": 100
 	}
 }

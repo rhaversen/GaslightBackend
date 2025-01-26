@@ -65,12 +65,16 @@
 		"prefix": "gaslight-backend-staging:"
 	},
     "user": {
-        "verificationExpiry": 86400,
-        "passwordResetExpiry": 86400
+        "verificationExpiry": 86400000,
+        "passwordResetExpiry": 86400000
     },
 	"microservices": {
-		"codeRunner": {
-			"host": "code-runner-service"
+		"evaluationRunner": {
+			"host": "evaluation-runner-service"
 		}
+	},
+	"codeRunnerTimeouts": {
+		"executionTimeout": 1,
+		"loadingTimeout": 100
 	}
 }

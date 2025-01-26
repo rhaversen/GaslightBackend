@@ -1,8 +1,8 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import { Strategy as LocalStrategy } from 'passport-local'
 import { type PassportStatic } from 'passport'
+import { Strategy as LocalStrategy } from 'passport-local'
 
 // Own modules
 import UserModel, { type IUser } from '../models/User.js'
@@ -12,6 +12,12 @@ import UserModel, { type IUser } from '../models/User.js'
 // Config variables
 
 // Destructuring and global variables
+
+declare global {
+	namespace Express {
+		interface User extends IUser { }
+	}
+}
 
 const configurePassport = (passport: PassportStatic): void => {
 	// Local User Strategy
@@ -40,8 +46,8 @@ const configurePassport = (passport: PassportStatic): void => {
 		})().catch(err => { done(err) })
 	}))
 
-	passport.serializeUser(function (user, done) {
-		const userId = (user as IUser).id
+	passport.serializeUser(function (user: IUser, done) {
+		const userId = user.id
 		done(null, userId)
 	})
 

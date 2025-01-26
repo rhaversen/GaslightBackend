@@ -1,11 +1,11 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import { type Options as RateLimitOptions } from 'express-rate-limit'
-import { type ConnectOptions } from 'mongoose'
+import config from 'config'
 import { type CorsOptions } from 'cors'
 import { type CookieOptions } from 'express'
-import config from 'config'
+import { type Options as RateLimitOptions } from 'express-rate-limit'
+import { type ConnectOptions } from 'mongoose'
 
 // Own modules
 import logger from './logger.js'
@@ -41,7 +41,9 @@ const AppConfig = {
 	redisPrefix: config.get('redis.prefix') as string,
 	verificationExpiry: config.get('user.verificationExpiry') as number,
 	passwordResetExpiry: config.get('user.passwordResetExpiry') as number,
-	codeRunnerHost: config.get('microservices.codeRunner.host') as string,
+	evaluationRunnerHost: config.get('microservices.evaluationRunner.host') as string,
+	strategyExecutionTimeout: config.get('codeRunnerTimeouts.executionTimeout') as number,
+	strategyLoadingTimeout: config.get('codeRunnerTimeouts.loadingTimeout') as number
 }
 
 export default AppConfig
