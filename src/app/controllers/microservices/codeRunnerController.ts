@@ -25,36 +25,27 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 	}
 }
 
-export async function createGradings(req: Request, res: Response) {
-	const { gradings } = req.body
+export async function saveGradingsWithTournament(req: Request, res: Response) {
+	const {
+		gradings,
+		disqualified,
+	 } = req.body
 
 	if (!Array.isArray(gradings)) {
 		return res.status(400).json({ error: 'Gradings must be an array' })
 	}
 
 	try {
-		const gradingObjects = gradings.map(grading => ({
-			submission: grading.submission,
-			score: grading.score
-		}))
-
-		const newGradings = await GradingModel.insertMany(gradingObjects)
+		const newGradings = await GradingModel.insertMany(gradings)
 		const gradingIds = newGradings.map(grading => grading._id)
-		res.status(201).json(gradingIds)
-	} catch (error) {
-		logger.error(error)
-		res.status(400).json({ error: 'Invalid data' })
-	}
-}
 
-export async function createTournament(req: Request, res: Response) {
-	const allowedFields: Record<string, unknown> = {
-		gradings: req.body.gradings
-	}
+		// Create tournament with the new gradings and disqualified submissions
+		const newTournament = await TournamentModel.create({ gradings: gradingIds, disqualified })
 
-	try {
-		const newTournament = await TournamentModel.create(allowedFields)
-		res.status(201).json(newTournament)
+		res.status(201).json({
+			gradings: gradingIds,
+			tournament: newTournament
+		})
 	} catch (error) {
 		logger.error(error)
 		res.status(400).json({ error: 'Invalid data' })
