@@ -29,7 +29,10 @@ router.use(authenticateMicroservice)
  * @returns {number} res.status - HTTP status code
  * @returns {Array<Object>} res.body - Array of active submissions
  */
-router.get('/submissions', getActiveSubmissions)
+router.get('/submissions',
+	authenticateMicroservice,
+	getActiveSubmissions
+)
 
 /**
  * @route POST api/v1/microservices/gradings
@@ -40,7 +43,10 @@ router.get('/submissions', getActiveSubmissions)
  * @returns {number} res.status - HTTP status code
  * @returns {Array<Object>} res.body - New gradings
  */
-router.post('/gradings', createGradings)
+router.post('/gradings', 
+	authenticateMicroservice,
+	createGradings
+)
 
 /**
  * @route POST api/v1/microservices/tournaments
@@ -51,6 +57,9 @@ router.post('/gradings', createGradings)
  * @returns {number} res.status - HTTP status code
  * @returns {Object} res.body - New tournament
  */
-router.post('/tournaments', createTournament)
+router.post('/tournaments',
+	authenticateMicroservice,
+	createTournament
+)
 
 export default router
