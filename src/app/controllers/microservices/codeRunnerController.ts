@@ -33,7 +33,8 @@ export async function createGradings(req: Request, res: Response) {
 
 	try {
 		const newGradings = await GradingModel.insertMany(allowedFields)
-		res.status(201).json(newGradings)
+		const gradingIds = newGradings.map(grading => grading._id)
+		res.status(201).json(gradingIds)
 	} catch (error) {
 		logger.error(error)
 		res.status(400).json({ error: 'Invalid data' })
