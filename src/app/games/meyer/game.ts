@@ -1,8 +1,8 @@
 /* eslint-disable local/enforce-comment-order */
 
-import { StrategyFunction } from './types.js'
 import gameState from './gameState.js'
 import { createStrategyAPI } from './strategyAPI.js'
+import { StrategyFunction } from './types.js'
 
 export function startGame(strategies: StrategyFunction[]) {
 	gameState.setPlayers(strategies)

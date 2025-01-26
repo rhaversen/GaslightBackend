@@ -8,35 +8,36 @@ import './utils/instrument.js'
 import { createServer } from 'node:http'
 
 // Third-party libraries
+import * as Sentry from '@sentry/node'
+import MongoStore from 'connect-mongo'
+import cookieParser from 'cookie-parser'
+import cors from 'cors'
 import express from 'express'
 import mongoSanitize from 'express-mongo-sanitize'
+import session from 'express-session'
 import helmet from 'helmet'
 import mongoose from 'mongoose'
-import session from 'express-session'
-import cors from 'cors'
-import cookieParser from 'cookie-parser'
 import passport from 'passport'
-import MongoStore from 'connect-mongo'
-import * as Sentry from '@sentry/node'
 
 // Own modules
-import databaseConnector from './utils/databaseConnector.js'
 import globalErrorHandler from './middleware/globalErrorHandler.js'
+import databaseConnector from './utils/databaseConnector.js'
 import logger from './utils/logger.js'
-import config from './utils/setupConfig.js'
 import configurePassport from './utils/passportConfig.js'
+import config from './utils/setupConfig.js'
+import { initSocket } from './utils/socket.js'
 
 // Business logic routes
 import authRouter from './routes/users/auth.js'
 import submissionRouter from './routes/users/submissions.js'
-import userRouter from './routes/users/users.js'
 import tournamentRouter from './routes/users/tournaments.js'
-
-// Microservices routes
-import microservicesRouter from './routes/microservices/codeRunners.js'
+import userRouter from './routes/users/users.js'
 
 // Service routes
 import serviceRoutes from './routes/service.js'
+
+// Microservices routes
+import microservicesRouter from './routes/microservices/codeRunners.js'
 
 // Environment variables
 const { NODE_ENV } = process.env as Record<string, string>
@@ -56,6 +57,7 @@ const server = createServer(app) // Create an HTTP server
 logger.info(`Node environment: ${NODE_ENV}`)
 
 // Setup
+await initSocket(server) // Initialize socket.io
 app.set('trust proxy', 1) // Trust the first proxy (NGINX)
 
 // Connect to MongoDB in production and staging environment
