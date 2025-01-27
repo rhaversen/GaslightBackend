@@ -102,7 +102,7 @@ app.use('/api/v1/submissions', submissionRouter)
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/tournaments', tournamentRouter)
 app.use('/api/v1/microservices', microservicesRouter)
-app.use('/api/v1/service', serviceRoutes)
+app.use('/api/service', serviceRoutes)
 
 // Sentry error handler
 Sentry.setupExpressErrorHandler(app)
