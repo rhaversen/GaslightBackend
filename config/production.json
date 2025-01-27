@@ -70,7 +70,7 @@
     },
 	"microservices": {
 		"evaluationRunner": {
-			"host": "evaluation-runner-service"
+			"host": "http://evaluation-runner-service.gaslight-production.svc.cluster.local"
 		}
 	},
 	"codeRunnerTimeouts": {
