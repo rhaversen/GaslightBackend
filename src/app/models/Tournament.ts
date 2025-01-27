@@ -17,9 +17,12 @@ import logger from '../utils/logger.js'
 export interface ITournament extends Document {
     // Properties
 	/** All gradings created from this tournament */
-    gradings: Schema.Types.ObjectId[]
+    gradings: string[]
 	/** All disqualifications from this tournament */
-	disqualified?: Schema.Types.ObjectId[]
+	disqualified?: [{
+		submission: string
+		reason: string
+	}]
 
     // Timestamps
     createdAt: Date
@@ -34,8 +37,15 @@ const tournamentSchema = new Schema<ITournament>({
 		required: true
 	}],
 	disqualified: [{
-		type: Schema.Types.ObjectId,
-		ref: 'Grading',
+		submission: {
+			type: Schema.Types.ObjectId,
+			ref: 'Submission',
+			required: true
+		},
+		reason: {
+			type: Schema.Types.String,
+			required: true
+		}
 	}]
 }, {
 	timestamps: true
@@ -78,34 +88,33 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'Gradings must be unique')
 
-tournamentSchema.path('disqualified').validate(async function (v: Schema.Types.ObjectId[]) {
-	// Check if all disqualifications exist
-	const gradings = await GradingModel.find({ _id: { $in: v } })
-	if (gradings.length !== v.length) {
+tournamentSchema.path('disqualified').validate(async function (v: { submission: Schema.Types.ObjectId, reason: string }[]) {
+	// Check if all submissions exist
+	const submissions = v.map(disqualification => disqualification.submission)
+	if (submissions.length !== v.length) {
 		return false
 	}
 	return true
-}, 'All disqualifications must exist')
+}, 'All submissions must exist')
 
-tournamentSchema.path('disqualified').validate(async function (v: Schema.Types.ObjectId[]) {
-	// Check if all disqualifications are from different submissions
-	const gradings = await GradingModel.find({ _id: { $in: v } })
-	const submissions = gradings.map(grading => grading.submission)
+tournamentSchema.path('disqualified').validate(async function (v: { submission: Schema.Types.ObjectId, reason: string }[]) {
+	// Check if all submissions are from different submissions
+	const submissions = v.map(disqualification => disqualification.submission)
 	const uniqueSubmissions = new Set(submissions)
 	if (submissions.length !== uniqueSubmissions.size) {
 		return false
 	}
 	return true
-}, 'All disqualifications must be from different submissions')
+}, 'All submissions must be different')
 
-tournamentSchema.path('disqualified').validate(async function (v: Schema.Types.ObjectId[]) {
-	// Check if length of unique disqualifications is the same as the length of the disqualifications
-	const uniqueDisqualifications = new Set(v)
-	if (v.length !== uniqueDisqualifications.size) {
+tournamentSchema.path('disqualified').validate(async function (v: { submission: Schema.Types.ObjectId, reason: string }[]) {
+	// Check if length of unique submissions is the same as the length of the submissions
+	const uniqueSubmissions = new Set(v.map(disqualification => disqualification.submission))
+	if (v.length !== uniqueSubmissions.size) {
 		return false
 	}
 	return true
-}, 'Disqualifications must be unique')
+}, 'Submissions must be unique')
 
 // Adding indexes
 tournamentSchema.index({ gradings: 1 })
