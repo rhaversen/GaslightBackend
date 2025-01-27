@@ -42,3 +42,22 @@ spec:
                                 name: backend-service
                                 port:
                                     number: 80
+        -   host: www.gaslight.fun
+            http:
+                paths:
+                    # API Path
+                    - path: /api/
+                      pathType: Prefix
+                      backend:
+                            service:
+                                name: backend-service
+                                port:
+                                    number: 80
+                    # Websocket Path
+                    - path: /socket.io/
+                      pathType: Prefix
+                      backend:
+                            service:
+                                name: backend-service
+                                port:
+                                    number: 80
