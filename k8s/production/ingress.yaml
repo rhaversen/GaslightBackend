@@ -19,6 +19,7 @@ spec:
     ingressClassName: nginx
     tls:
         -   hosts:
+                - www.gaslight.fun
                 - gaslight.fun
             secretName: backend-tls
     rules:
