@@ -8,6 +8,7 @@ import GradingModel from '../../models/Grading.js'
 import SubmissionModel from '../../models/Submission.js'
 import TournamentModel from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
+import { submission } from '../../services/CodeRunner.js'
 
 // Environment variables
 
@@ -18,7 +19,11 @@ import logger from '../../utils/logger.js'
 export async function getActiveSubmissions(req: Request, res: Response) {
 	try {
 		const submissions = await SubmissionModel.find({ active: true, passedEvaluation: true }).exec()
-		res.status(200).json(submissions)
+		const mappedSubmissions: submission[] = submissions.map(sub => ({
+			submissionId: sub.id,
+			files: { 'main.ts': sub.code }
+		}))
+		res.status(200).json(mappedSubmissions)
 	} catch (error) {
 		logger.error(error)
 		res.status(500).json({ error: 'Server error' })

@@ -28,7 +28,7 @@ export interface FileMap {
 	[key: string]: string;
 }
 
-interface submission {
+export interface submission {
 	submissionId: string
 	files: FileMap
 }
