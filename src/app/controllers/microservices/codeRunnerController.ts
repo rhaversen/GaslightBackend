@@ -34,7 +34,8 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 	const {
 		gradings,
 		disqualified,
-	 } = req.body
+		tournamentExecutionTime
+	} = req.body
 
 	if (!Array.isArray(gradings)) {
 		return res.status(400).json({ error: 'Gradings must be an array' })
@@ -42,7 +43,7 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 
 	try {
 		// Calculate z-scores before insertion
-		const scores = gradings.map(g => g.score)
+		const scores = gradings.map(g => g.score).sort((a, b) => a - b)
 		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
 		const standardDeviation = Math.sqrt(
 			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
@@ -55,11 +56,12 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 		}))
 
 		const newGradings = await GradingModel.insertMany(gradingsWithZ) as IGrading[]
-		const gradingIds = newGradings.map(grading => grading._id)
+		const gradingsSorted = newGradings.sort((a, b) => b.score - a.score)
+		const gradingIds = gradingsSorted.map(grading => grading._id)
 
 		// Get all submissions for the gradings
 		const submissions = await SubmissionModel
-			.find({ _id: { $in: newGradings.map(g => g.submission) } })
+			.find({ _id: { $in: gradingsSorted.map(g => g.submission) } })
 			.populate('user', 'username')
 			.exec() as ISubmissionPopulated[]
 
@@ -67,17 +69,36 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 			submissions.map(sub => [sub.id, sub])
 		)
 
-		// Calculate percentiles from original scores array
-		scores.sort((a, b) => a - b)
+		// Calculate statistics
+		const percentiles = {
+			p10: scores[Math.floor(scores.length * 0.10)],
+			p25: scores[Math.floor(scores.length * 0.25)],
+			p50: scores[Math.floor(scores.length * 0.50)],
+			p75: scores[Math.floor(scores.length * 0.75)],
+			p90: scores[Math.floor(scores.length * 0.90)]
+		}
+		const averageScore = mean
+		const minMax = {
+			min: Math.min(...scores),
+			max: Math.max(...scores)
+		}
+		const iqr = percentiles.p75 - percentiles.p25
+		const outlierBoundaries = {
+			lower: percentiles.p25 - (1.5 * iqr),
+			upper: percentiles.p75 + (1.5 * iqr)
+		}
+		const outliers = scores.filter(score =>
+			score < percentiles.p25 - (1.5 * iqr) ||
+			score > percentiles.p75 + (1.5 * iqr)
+		)
+
 		const statistics = {
-			percentiles: {
-				p25: scores[Math.floor(scores.length * 0.25)],
-				p50: scores[Math.floor(scores.length * 0.50)],
-				p75: scores[Math.floor(scores.length * 0.75)],
-				p90: scores[Math.floor(scores.length * 0.90)]
-			},
-			averageScore: mean,
-			medianScore: scores[Math.floor(scores.length * 0.5)]
+			percentiles,
+			averageScore,
+			minMax,
+			iqr,
+			outlierBoundaries,
+			outliers
 		}
 
 		// Define winner type
@@ -95,56 +116,57 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 		}
 
 		// Initialize winners object with type
-		const firstSubmission = submissionMap.get(newGradings[0].submission.toString())
+		const firstSubmission = submissionMap.get(gradingsSorted[0].submission.toString())
 		if (!firstSubmission?.user) {
 			throw new Error('First place submission user not found')
 		}
 
 		const winners: Winners = {
 			first: {
-				user: typeof firstSubmission.user === 'string' 
-					? firstSubmission.user 
+				user: typeof firstSubmission.user === 'string'
+					? firstSubmission.user
 					: firstSubmission.user.id,
-				submission: newGradings[0].submission.toString(),
-				grade: newGradings[0].score,
-				zValue: newGradings[0].zValue
+				submission: gradingsSorted[0].submission.toString(),
+				grade: gradingsSorted[0].score,
+				zValue: gradingsSorted[0].zValue
 			}
 		}
 
-		if (newGradings.length > 1) {
-			const secondSubmission = submissionMap.get(newGradings[1].submission.toString())
+		if (gradingsSorted.length > 1) {
+			const secondSubmission = submissionMap.get(gradingsSorted[1].submission.toString())
 			if (secondSubmission?.user) {
 				winners.second = {
 					user: typeof secondSubmission.user === 'string'
 						? secondSubmission.user
 						: secondSubmission.user.id,
-					submission: newGradings[1].submission.toString(),
-					grade: newGradings[1].score,
-					zValue: newGradings[1].zValue
+					submission: gradingsSorted[1].submission.toString(),
+					grade: gradingsSorted[1].score,
+					zValue: gradingsSorted[1].zValue
 				}
 			}
 		}
 
-		if (newGradings.length > 2) {
-			const thirdSubmission = submissionMap.get(newGradings[2].submission.toString())
+		if (gradingsSorted.length > 2) {
+			const thirdSubmission = submissionMap.get(gradingsSorted[2].submission.toString())
 			if (thirdSubmission?.user) {
 				winners.third = {
 					user: typeof thirdSubmission.user === 'string'
 						? thirdSubmission.user
 						: thirdSubmission.user.id,
-					submission: newGradings[2].submission.toString(),
-					grade: newGradings[2].score,
-					zValue: newGradings[2].zValue
+					submission: gradingsSorted[2].submission.toString(),
+					grade: gradingsSorted[2].score,
+					zValue: gradingsSorted[2].zValue
 				}
 			}
 		}
 
 		// Create tournament with all required fields
-		await TournamentModel.create({ 
-			gradings: gradingIds, 
+		await TournamentModel.create({
+			gradings: gradingIds,
 			disqualified,
 			statistics,
-			winners
+			winners,
+			tournamentExecutionTime
 		})
 
 		res.status(201).send()
