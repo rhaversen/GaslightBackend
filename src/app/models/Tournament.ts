@@ -50,6 +50,9 @@ export interface ITournament extends Document {
     /** Tournament statistics */
     statistics: TournamentStatistics
 
+	/** Tournament execution time in milliseconds */
+	tournamentExecutionTime: number
+
     // Timestamps
     createdAt: Date
     updatedAt: Date
@@ -162,6 +165,10 @@ const tournamentSchema = new Schema<ITournament>({
 			type: Schema.Types.Number,
 			required: true
 		}
+	},
+	tournamentExecutionTime: {
+		type: Schema.Types.Number,
+		required: true
 	}
 }, {
 	timestamps: true

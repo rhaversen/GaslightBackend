@@ -34,6 +34,7 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 	const {
 		gradings,
 		disqualified,
+		tournamentExecutionTime
 	 } = req.body
 
 	if (!Array.isArray(gradings)) {
@@ -145,7 +146,8 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 			gradings: gradingIds, 
 			disqualified,
 			statistics,
-			winners
+			winners,
+			tournamentExecutionTime
 		})
 
 		res.status(201).send()
