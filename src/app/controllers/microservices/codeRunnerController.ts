@@ -35,7 +35,7 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 		gradings,
 		disqualified,
 		tournamentExecutionTime
-	 } = req.body
+	} = req.body
 
 	if (!Array.isArray(gradings)) {
 		return res.status(400).json({ error: 'Gradings must be an array' })
@@ -43,7 +43,7 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 
 	try {
 		// Calculate z-scores before insertion
-		const scores = gradings.map(g => g.score)
+		const scores = gradings.map(g => g.score).sort((a, b) => a - b)
 		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
 		const standardDeviation = Math.sqrt(
 			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
@@ -71,14 +71,35 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 
 		// Calculate percentiles from original scores array
 		scores.sort((a, b) => a - b)
+		const percentiles = {
+			p10: scores[Math.floor(scores.length * 0.10)],
+			p25: scores[Math.floor(scores.length * 0.25)],
+			p50: scores[Math.floor(scores.length * 0.50)],
+			p75: scores[Math.floor(scores.length * 0.75)],
+			p90: scores[Math.floor(scores.length * 0.90)]
+		}
+		const averageScore = mean
+		const minMax = {
+			min: Math.min(...scores),
+			max: Math.max(...scores)
+		}
+		const iqr = percentiles.p75 - percentiles.p25
+		const outlierBoundaries = {
+			lower: percentiles.p25 - (1.5 * (percentiles.p75 - percentiles.p25)),
+			upper: percentiles.p75 + (1.5 * (percentiles.p75 - percentiles.p25))
+		}
+		const outliers = scores.filter(score =>
+			score < percentiles.p25 - (1.5 * (percentiles.p75 - percentiles.p25)) ||
+			score > percentiles.p75 + (1.5 * (percentiles.p75 - percentiles.p25))
+		)
+
 		const statistics = {
-			percentiles: {
-				p25: scores[Math.floor(scores.length * 0.25)],
-				p50: scores[Math.floor(scores.length * 0.50)],
-				p75: scores[Math.floor(scores.length * 0.75)],
-				p90: scores[Math.floor(scores.length * 0.90)]
-			},
-			averageScore: mean
+			percentiles,
+			averageScore,
+			minMax,
+			iqr,
+			outlierBoundaries,
+			outliers
 		}
 
 		// Define winner type
@@ -103,8 +124,8 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 
 		const winners: Winners = {
 			first: {
-				user: typeof firstSubmission.user === 'string' 
-					? firstSubmission.user 
+				user: typeof firstSubmission.user === 'string'
+					? firstSubmission.user
 					: firstSubmission.user.id,
 				submission: gradingsSorted[0].submission.toString(),
 				grade: gradingsSorted[0].score,
@@ -141,8 +162,8 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 		}
 
 		// Create tournament with all required fields
-		await TournamentModel.create({ 
-			gradings: gradingIds, 
+		await TournamentModel.create({
+			gradings: gradingIds,
 			disqualified,
 			statistics,
 			winners,
