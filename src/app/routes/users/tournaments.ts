@@ -11,7 +11,6 @@ import {
 	getTournamentGradings
 } from '../../controllers/users/tournamentController.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
-import { ensureAuthenticated } from '../../middleware/auth.js'
 
 // Environment variables
 
@@ -23,10 +22,9 @@ const router = Router()
 /**
  * @route GET /api/v1/tournaments
  * @description Get all tournaments with optional filtering
- * @access Private
+ * @access Public
  */
 router.get('/',
-	ensureAuthenticated,
 	asyncErrorHandler(getAllTournaments)
 )
 
