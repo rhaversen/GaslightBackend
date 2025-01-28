@@ -69,8 +69,7 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 			submissions.map(sub => [sub.id, sub])
 		)
 
-		// Calculate percentiles from original scores array
-		scores.sort((a, b) => a - b)
+		// Calculate statistics
 		const percentiles = {
 			p10: scores[Math.floor(scores.length * 0.10)],
 			p25: scores[Math.floor(scores.length * 0.25)],
@@ -85,12 +84,12 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 		}
 		const iqr = percentiles.p75 - percentiles.p25
 		const outlierBoundaries = {
-			lower: percentiles.p25 - (1.5 * (percentiles.p75 - percentiles.p25)),
-			upper: percentiles.p75 + (1.5 * (percentiles.p75 - percentiles.p25))
+			lower: percentiles.p25 - (1.5 * iqr),
+			upper: percentiles.p75 + (1.5 * iqr)
 		}
 		const outliers = scores.filter(score =>
-			score < percentiles.p25 - (1.5 * (percentiles.p75 - percentiles.p25)) ||
-			score > percentiles.p75 + (1.5 * (percentiles.p75 - percentiles.p25))
+			score < percentiles.p25 - (1.5 * iqr) ||
+			score > percentiles.p75 + (1.5 * iqr)
 		)
 
 		const statistics = {
