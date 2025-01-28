@@ -36,10 +36,6 @@ export async function getAllTournaments(
 		const tournaments = await TournamentModel.find(query)
 			.limit(Number(maxAmount) || 0)
 			.skip(Number(startIndex) || 0)
-			.populate({
-				path: 'gradings',
-				select: 'status score'
-			})
 			.exec()
 
 		res.status(200).json(tournaments)
