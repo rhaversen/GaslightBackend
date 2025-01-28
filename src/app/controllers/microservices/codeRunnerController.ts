@@ -55,11 +55,12 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 		}))
 
 		const newGradings = await GradingModel.insertMany(gradingsWithZ) as IGrading[]
-		const gradingIds = newGradings.map(grading => grading._id)
+		const gradingsSorted = newGradings.sort((a, b) => b.score - a.score)
+		const gradingIds = gradingsSorted.map(grading => grading._id)
 
 		// Get all submissions for the gradings
 		const submissions = await SubmissionModel
-			.find({ _id: { $in: newGradings.map(g => g.submission) } })
+			.find({ _id: { $in: gradingsSorted.map(g => g.submission) } })
 			.populate('user', 'username')
 			.exec() as ISubmissionPopulated[]
 
@@ -95,7 +96,7 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 		}
 
 		// Initialize winners object with type
-		const firstSubmission = submissionMap.get(newGradings[0].submission.toString())
+		const firstSubmission = submissionMap.get(gradingsSorted[0].submission.toString())
 		if (!firstSubmission?.user) {
 			throw new Error('First place submission user not found')
 		}
@@ -105,36 +106,36 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 				user: typeof firstSubmission.user === 'string' 
 					? firstSubmission.user 
 					: firstSubmission.user.id,
-				submission: newGradings[0].submission.toString(),
-				grade: newGradings[0].score,
-				zValue: newGradings[0].zValue
+				submission: gradingsSorted[0].submission.toString(),
+				grade: gradingsSorted[0].score,
+				zValue: gradingsSorted[0].zValue
 			}
 		}
 
-		if (newGradings.length > 1) {
-			const secondSubmission = submissionMap.get(newGradings[1].submission.toString())
+		if (gradingsSorted.length > 1) {
+			const secondSubmission = submissionMap.get(gradingsSorted[1].submission.toString())
 			if (secondSubmission?.user) {
 				winners.second = {
 					user: typeof secondSubmission.user === 'string'
 						? secondSubmission.user
 						: secondSubmission.user.id,
-					submission: newGradings[1].submission.toString(),
-					grade: newGradings[1].score,
-					zValue: newGradings[1].zValue
+					submission: gradingsSorted[1].submission.toString(),
+					grade: gradingsSorted[1].score,
+					zValue: gradingsSorted[1].zValue
 				}
 			}
 		}
 
-		if (newGradings.length > 2) {
-			const thirdSubmission = submissionMap.get(newGradings[2].submission.toString())
+		if (gradingsSorted.length > 2) {
+			const thirdSubmission = submissionMap.get(gradingsSorted[2].submission.toString())
 			if (thirdSubmission?.user) {
 				winners.third = {
 					user: typeof thirdSubmission.user === 'string'
 						? thirdSubmission.user
 						: thirdSubmission.user.id,
-					submission: newGradings[2].submission.toString(),
-					grade: newGradings[2].score,
-					zValue: newGradings[2].zValue
+					submission: gradingsSorted[2].submission.toString(),
+					grade: gradingsSorted[2].score,
+					zValue: gradingsSorted[2].zValue
 				}
 			}
 		}
