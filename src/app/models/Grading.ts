@@ -17,9 +17,11 @@ import logger from '../utils/logger.js'
 export interface IGrading extends Document {
     // Properties
 	/** Submission being graded */
-    submission: Schema.Types.ObjectId | ISubmission
+    submission: string | ISubmission
 	/** Score given to the submission */
     score: number
+	/** Z-value */
+	zValue: number
 
     // Timestamps
     createdAt: Date
@@ -38,6 +40,10 @@ const gradingSchema = new Schema<IGrading>({
 		required: true
 	},
 	score: {
+		type: Schema.Types.Number,
+		required: true
+	},
+	zValue: {
 		type: Schema.Types.Number,
 		required: true
 	}

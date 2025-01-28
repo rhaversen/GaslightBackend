@@ -6,7 +6,7 @@ import * as esprima from 'esprima'
 
 // Own modules
 import GradingModel from './Grading.js'
-import UserModel from './User.js'
+import UserModel, { IUser } from './User.js'
 import logger from '../utils/logger.js'
 
 // Environment variables
@@ -45,7 +45,7 @@ export interface ISubmission extends Document {
     /** Code submitted by the user */
 	code: string
 	/** User who submitted the code */
-    user: Schema.Types.ObjectId
+    user: Schema.Types.ObjectId | string | IUser
 	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
     active: boolean
 	/** Decides if the submission has passed an evaluation and is ready for tournaments. Null if not evaluated yet */
@@ -60,6 +60,10 @@ export interface ISubmission extends Document {
     // Timestamps
     createdAt: Date
     updatedAt: Date
+}
+
+export interface ISubmissionPopulated extends ISubmission {
+	user: IUser
 }
 
 const evaluationSubSchema = new Schema<ISubmissionEvaluation>({
