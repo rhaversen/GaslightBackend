@@ -14,6 +14,24 @@ import logger from '../utils/logger.js'
 // Destructuring and global variables
 
 // Interfaces
+interface TournamentWinner {
+    user: string
+    submission: string
+    grade: number
+    zValue: number
+}
+
+interface TournamentStatistics {
+    percentiles: {
+        p25: number
+        p50: number
+        p75: number
+        p90: number
+    }
+    averageScore: number
+    medianScore: number
+}
+
 export interface ITournament extends Document {
     // Properties
 	/** All gradings created from this tournament */
@@ -23,6 +41,14 @@ export interface ITournament extends Document {
 		submission: string
 		reason: string
 	}]
+    /** Tournament winners */
+    winners: {
+        first: TournamentWinner
+        second?: TournamentWinner
+        third?: TournamentWinner
+    }
+    /** Tournament statistics */
+    statistics: TournamentStatistics
 
     // Timestamps
     createdAt: Date
@@ -45,8 +71,98 @@ const tournamentSchema = new Schema<ITournament>({
 		reason: {
 			type: Schema.Types.String,
 			required: true
+		},
+	}],
+	winners: {
+		first: {
+			user: {
+				type: Schema.Types.ObjectId,
+				ref: 'User',
+				required: true
+			},
+			submission: {
+				type: Schema.Types.ObjectId,
+				ref: 'Submission',
+				required: true
+			},
+			grade: {
+				type: Schema.Types.Number,
+				required: true
+			},
+			zValue: {
+				type: Schema.Types.Number,
+				required: true
+			},
+		},
+		second: {
+			user: {
+				type: Schema.Types.ObjectId,
+				ref: 'User',
+				required: false
+			},
+			submission: {
+				type: Schema.Types.ObjectId,
+				ref: 'Submission',
+				required: false
+			},
+			grade: {
+				type: Schema.Types.Number,
+				required: false
+			},
+			zValue: {
+				type: Schema.Types.Number,
+				required: false
+			},
+		},
+		third: {
+			user: {
+				type: Schema.Types.ObjectId,
+				ref: 'User',
+				required: false
+			},
+			submission: {
+				type: Schema.Types.ObjectId,
+				ref: 'Submission',
+				required: false
+			},
+			grade: {
+				type: Schema.Types.Number,
+				required: false
+			},
+			zValue: {
+				type: Schema.Types.Number,
+				required: false
+			},
 		}
-	}]
+	},
+	statistics: {
+		percentiles: {
+			p25: {
+				type: Schema.Types.Number,
+				required: true
+			},
+			p50: {
+				type: Schema.Types.Number,
+				required: true
+			},
+			p75: {
+				type: Schema.Types.Number,
+				required: true
+			},
+			p90: {
+				type: Schema.Types.Number,
+				required: true
+			}
+		},
+		averageScore: {
+			type: Schema.Types.Number,
+			required: true
+		},
+		medianScore: {
+			type: Schema.Types.Number,
+			required: true
+		}
+	}
 }, {
 	timestamps: true
 })
