@@ -29,7 +29,6 @@ interface TournamentStatistics {
         p90: number
     }
     averageScore: number
-    medianScore: number
 }
 
 export interface ITournament extends Document {
@@ -158,10 +157,6 @@ const tournamentSchema = new Schema<ITournament>({
 			}
 		},
 		averageScore: {
-			type: Schema.Types.Number,
-			required: true
-		},
-		medianScore: {
 			type: Schema.Types.Number,
 			required: true
 		}

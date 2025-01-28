@@ -78,8 +78,7 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 				p75: scores[Math.floor(scores.length * 0.75)],
 				p90: scores[Math.floor(scores.length * 0.90)]
 			},
-			averageScore: mean,
-			medianScore: scores[Math.floor(scores.length * 0.5)]
+			averageScore: mean
 		}
 
 		// Define winner type
