@@ -23,13 +23,23 @@ interface TournamentWinner {
 
 interface TournamentStatistics {
     percentiles: {
+		p10: number
         p25: number
         p50: number
         p75: number
         p90: number
     }
     averageScore: number
-    medianScore: number
+	minMax: {
+		min: number
+		max: number
+	}
+	iqr: number
+	outlierBoundaries: {
+		lower: number
+		upper: number
+	}
+	outliers: number[]
 }
 
 export interface ITournament extends Document {
@@ -49,6 +59,9 @@ export interface ITournament extends Document {
     }
     /** Tournament statistics */
     statistics: TournamentStatistics
+
+	/** Tournament execution time in milliseconds */
+	tournamentExecutionTime: number
 
     // Timestamps
     createdAt: Date
@@ -137,6 +150,10 @@ const tournamentSchema = new Schema<ITournament>({
 	},
 	statistics: {
 		percentiles: {
+			p10: {
+				type: Schema.Types.Number,
+				required: true
+			},
 			p25: {
 				type: Schema.Types.Number,
 				required: true
@@ -158,10 +175,38 @@ const tournamentSchema = new Schema<ITournament>({
 			type: Schema.Types.Number,
 			required: true
 		},
-		medianScore: {
+		minMax: {
+			min: {
+				type: Schema.Types.Number,
+				required: true
+			},
+			max: {
+				type: Schema.Types.Number,
+				required: true
+			}
+		},
+		iqr: {
 			type: Schema.Types.Number,
 			required: true
-		}
+		},
+		outlierBoundaries: {
+			lower: {
+				type: Schema.Types.Number,
+				required: true
+			},
+			upper: {
+				type: Schema.Types.Number,
+				required: true
+			}
+		},
+		outliers: [{
+			type: Schema.Types.Number,
+			required: true
+		}]
+	},
+	tournamentExecutionTime: {
+		type: Schema.Types.Number,
+		required: true
 	}
 }, {
 	timestamps: true
