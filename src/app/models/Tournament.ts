@@ -4,7 +4,7 @@
 import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
-import GradingModel from './Grading.js'
+import GradingModel, { IGradingStatistics } from './Grading.js'
 import logger from '../utils/logger.js'
 import SubmissionModel from './Submission.js'
 
@@ -20,6 +20,7 @@ interface TournamentStanding {
     submission: string
     grade: number
     zValue: number
+	statistics: IGradingStatistics
 }
 
 interface TournamentStatistics {
@@ -136,7 +137,8 @@ tournamentSchema.methods.getStandings = async function(limit?: number) {
 			user: typeof submission.user === 'string' ? submission.user : submission.user.toString(),
 			submission: grading.submission.toString(),
 			grade: grading.score,
-			zValue: grading.zValue
+			zValue: grading.zValue,
+			statistics: await grading.calculateStatistics()
 		})
 	}
 
