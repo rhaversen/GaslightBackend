@@ -6,7 +6,7 @@ import { type Document, model, Schema } from 'mongoose'
 // Own modules
 import GradingModel, { IGradingStatistics } from './Grading.js'
 import logger from '../utils/logger.js'
-import SubmissionModel from './Submission.js'
+import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 
 // Environment variables
 
@@ -121,7 +121,7 @@ tournamentSchema.methods.getStandings = async function(limit?: number) {
 	const submissions = await SubmissionModel
 		.find({ _id: { $in: gradings.map(g => g.submission) } })
 		.populate('user', 'username')
-		.exec()
+		.exec() as ISubmissionPopulated[]
 
 	const submissionMap = new Map(
 		submissions.map(sub => [sub.id.toString(), sub])
@@ -134,7 +134,7 @@ tournamentSchema.methods.getStandings = async function(limit?: number) {
 		if (!submission?.user) continue
 
 		standings.push({
-			user: typeof submission.user === 'string' ? submission.user : submission.user.toString(),
+			user: submission.user.id,
 			submission: grading.submission.toString(),
 			grade: grading.score,
 			zValue: grading.zValue,
