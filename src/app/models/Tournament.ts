@@ -300,7 +300,7 @@ tournamentSchema.path('disqualified').validate(async function (v: { submission: 
 	// Check if all submissions are from different submissions
 	const submissions = v.map(disqualification => disqualification.submission)
 	const uniqueSubmissions = new Set(submissions)
-	if (submissions.length !== v.length) {
+	if (submissions.length !== uniqueSubmissions.size) {
 		return false
 	}
 	return true
