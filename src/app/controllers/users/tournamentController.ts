@@ -43,9 +43,14 @@ export async function getAllTournaments(
 			const statistics = await tournament.calculateStatistics()
 			const standings = await tournament.getStandings(Number(winnerCount) || 3)
 			return {
-				...tournament.toObject(),
+				_id: tournament.id,
+				gradings: tournament.gradings,
+				disqualified: tournament.disqualified,
+				tournamentExecutionTime: tournament.tournamentExecutionTime,
 				statistics,
-				standings
+				standings,
+				createdAt: tournament.createdAt,
+				updatedAt: tournament.updatedAt
 			}
 		}))
 
@@ -76,9 +81,14 @@ export async function getTournament(
 		const standings = await tournament.getStandings()
 
 		res.status(200).json({
-			...tournament.toObject(),
+			_id: tournament.id,
+			gradings: tournament.gradings,
+			disqualified: tournament.disqualified,
+			tournamentExecutionTime: tournament.tournamentExecutionTime,
 			statistics,
-			standings
+			standings,
+			createdAt: tournament.createdAt,
+			updatedAt: tournament.updatedAt
 		})
 	} catch (error) {
 		next(error)
