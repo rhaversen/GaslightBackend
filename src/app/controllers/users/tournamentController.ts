@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { status, fromDate, toDate, type, maxAmount, startIndex } = req.query
+	const { status, fromDate, toDate, type, maxAmount, startIndex, winnerCount } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -38,7 +38,18 @@ export async function getAllTournaments(
 			.skip(Number(startIndex) || 0)
 			.exec()
 
-		res.status(200).json(tournaments)
+		// Calculate statistics and winners for each tournament
+		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
+			const statistics = await tournament.calculateStatistics()
+			const standings = await tournament.getStandings(Number(winnerCount) || 3)
+			return {
+				...tournament.toObject(),
+				statistics,
+				standings
+			}
+		}))
+
+		res.status(200).json(enrichedTournaments)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
@@ -60,7 +71,15 @@ export async function getTournament(
 			res.status(404).json({ error: 'Tournament not found' })
 			return
 		}
-		res.status(200).json(tournament)
+
+		const statistics = await tournament.calculateStatistics()
+		const standings = await tournament.getStandings()
+
+		res.status(200).json({
+			...tournament.toObject(),
+			statistics,
+			standings
+		})
 	} catch (error) {
 		next(error)
 	}
