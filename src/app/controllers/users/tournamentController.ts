@@ -39,7 +39,7 @@ export async function getAllTournaments(
 			.exec()
 
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
-			const standings = await tournament.getStandings(Number(winnerCount) || 3)
+			const standings = await tournament.getStandings(Number(winnerCount) || 30)
 			return {
 				_id: tournament.id,
 				gradings: tournament.gradings,
