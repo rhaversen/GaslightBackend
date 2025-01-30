@@ -16,7 +16,9 @@ import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 // Interfaces
 interface TournamentStanding {
     user: string
+	userName: string
     submission: string
+	submissionName: string
     grade: number
     zValue: number
 	placement: number
@@ -135,7 +137,9 @@ tournamentSchema.methods.getStandings = async function(limit?: number) {
 
 		standings.push({
 			user: submission.user.id,
+			userName: submission.user.username,
 			submission: grading.submission.toString(),
+			submissionName: submission.title,
 			grade: grading.score,
 			zValue: grading.zValue,
 			placement: grading.placement,
