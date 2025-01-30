@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { status, fromDate, toDate, type, maxAmount, startIndex } = req.query
+	const { fromDate, toDate, limit, skip, limitStandings } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -29,16 +29,27 @@ export async function getAllTournaments(
 		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
 	}
 
-	if (typeof status === 'string') query.status = { $in: status.split(',') }
-	if (typeof type === 'string') query.type = { $in: type.split(',') }
-
 	try {
 		const tournaments = await TournamentModel.find(query)
-			.limit(Number(maxAmount) || 0)
-			.skip(Number(startIndex) || 0)
+			.sort({ createdAt: -1 })
+			.limit(Number(limit) || 0)
+			.skip(Number(skip) || 0)
 			.exec()
 
-		res.status(200).json(tournaments)
+		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
+			const standings = await tournament.getStandings(Number(limitStandings) || 3)
+			return {
+				_id: tournament.id,
+				gradings: tournament.gradings,
+				disqualified: tournament.disqualified,
+				tournamentExecutionTime: tournament.tournamentExecutionTime,
+				standings,
+				createdAt: tournament.createdAt,
+				updatedAt: tournament.updatedAt
+			}
+		}))
+
+		res.status(200).json(enrichedTournaments)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
@@ -60,7 +71,39 @@ export async function getTournament(
 			res.status(404).json({ error: 'Tournament not found' })
 			return
 		}
-		res.status(200).json(tournament)
+
+		const standings = await tournament.getStandings()
+
+		res.status(200).json({
+			_id: tournament.id,
+			gradings: tournament.gradings,
+			disqualified: tournament.disqualified,
+			tournamentExecutionTime: tournament.tournamentExecutionTime,
+			standings,
+			createdAt: tournament.createdAt,
+			updatedAt: tournament.updatedAt
+		})
+	} catch (error) {
+		next(error)
+	}
+}
+
+export async function getTournamentStatistics(
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> {
+	logger.silly('Getting tournament statistics')
+	try {
+		const tournament = await TournamentModel.findById(req.params.id)
+		if (tournament === null) {
+			res.status(404).json({ error: 'Tournament not found' })
+			return
+		}
+
+		const statistics = await tournament.calculateStatistics()
+
+		res.status(200).json(statistics)
 	} catch (error) {
 		next(error)
 	}
@@ -82,6 +125,28 @@ export async function getTournamentGradings(
 			_id: { $in: tournament.gradings }
 		})
 		res.status(200).json(gradings)
+	} catch (error) {
+		next(error)
+	}
+}
+
+export async function getTournamentStandings(
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> {
+	logger.silly('Getting tournament standings')
+	try {
+		const tournament = await TournamentModel.findById(req.params.id)
+		if (tournament === null) {
+			res.status(404).json({ error: 'Tournament not found' })
+			return
+		}
+
+		const amount = Number(req.query.amount) || 3
+		const standings = await tournament.getStandings(amount)
+
+		res.status(200).json(standings)
 	} catch (error) {
 		next(error)
 	}
