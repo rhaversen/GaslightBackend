@@ -288,9 +288,23 @@ const submissionsPerTournament = 100
 logger.info('Creating tournaments...')
 
 for (let t = 0; t < tournamentCount; t++) {
-	// Select random submissions, but ensure we get enough
-	const shuffledSubmissions = allSubmissions
-		.flat()
+	// Group submissions by user
+	const submissionsByUser = allSubmissions.flat().reduce((acc, submission) => {
+		const userId = submission.user.toString()
+		if (!acc[userId]) {
+			acc[userId] = []
+		}
+		acc[userId].push(submission)
+		return acc
+	}, {} as Record<string, typeof allSubmissions[0]>)
+
+	// Select one random submission per user
+	const uniqueUserSubmissions = Object.values(submissionsByUser).map(
+		userSubmissions => userSubmissions[Math.floor(Math.random() * userSubmissions.length)]
+	)
+
+	// Select random submissions, but ensure one per user
+	const shuffledSubmissions = uniqueUserSubmissions
 		.sort(() => Math.random() - 0.5)
 		.slice(0, submissionsPerTournament)
 
@@ -356,15 +370,26 @@ if (!user1Submissions?.length) {
 		// Get a random submission from user1
 		const user1Submission = user1Submissions[Math.floor(Math.random() * user1Submissions.length)]
         
-		// Get random submissions for the rest
-		const otherSubmissions = allSubmissions
+		// Group other submissions by user and select one per user
+		const otherSubmissionsByUser = allSubmissions
 			.flat()
 			.filter(s => s.user.toString() !== user1.id)
+			.reduce((acc, submission) => {
+				const userId = submission.user.toString()
+				if (!acc[userId]) {
+					acc[userId] = []
+				}
+				acc[userId].push(submission)
+				return acc
+			}, {} as Record<string, typeof allSubmissions[0]>)
+
+		const uniqueUserSubmissions = Object.values(otherSubmissionsByUser)
+			.map(userSubmissions => userSubmissions[Math.floor(Math.random() * userSubmissions.length)])
 			.sort(() => Math.random() - 0.5)
 			.slice(0, submissionsPerTournament - 1)
 
-		const allTournamentSubmissions = [user1Submission, ...otherSubmissions]
-        
+		const allTournamentSubmissions = [user1Submission, ...uniqueUserSubmissions]
+
 		// Generate scores where user1's submission is in the specified position from top
 		const scores = allTournamentSubmissions.map((_, index) => {
 			if (index === 0) { // user1's submission
