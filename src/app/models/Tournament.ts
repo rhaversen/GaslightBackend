@@ -4,7 +4,7 @@
 import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
-import GradingModel, { IGradingStatistics } from './Grading.js'
+import GradingModel, { IGradingPopulated, IGradingStatistics } from './Grading.js'
 import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 
 // Environment variables
@@ -319,6 +319,17 @@ tournamentSchema.path('disqualified').validate(async function (v: { submission: 
 	}
 	return true
 }, 'Submissions must be unique')
+
+// Submissions users must be unique
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	const gradings = await GradingModel.find({ _id: { $in: v } }).populate('submission').exec() as IGradingPopulated[]
+	const users = gradings.map(grading => grading.submission.user)
+	const uniqueUsers = new Set(users)
+	if (users.length !== uniqueUsers.size) {
+		return false
+	}
+	return true
+}, 'All submissions must be from different users')
 
 // Adding indexes
 tournamentSchema.index({ gradings: 1 })
