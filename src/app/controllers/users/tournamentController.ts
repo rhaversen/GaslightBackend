@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { status, fromDate, toDate, type, maxAmount, startIndex, winnerCount } = req.query
+	const { fromDate, toDate, limit, skip, limitStandings } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -29,17 +29,15 @@ export async function getAllTournaments(
 		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
 	}
 
-	if (typeof status === 'string') query.status = { $in: status.split(',') }
-	if (typeof type === 'string') query.type = { $in: type.split(',') }
-
 	try {
 		const tournaments = await TournamentModel.find(query)
-			.limit(Number(maxAmount) || 0)
-			.skip(Number(startIndex) || 0)
+			.sort({ createdAt: -1 })
+			.limit(Number(limit) || 0)
+			.skip(Number(skip) || 0)
 			.exec()
 
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
-			const standings = await tournament.getStandings(Number(winnerCount) || 30)
+			const standings = await tournament.getStandings(Number(limitStandings) || 3)
 			return {
 				_id: tournament.id,
 				gradings: tournament.gradings,
