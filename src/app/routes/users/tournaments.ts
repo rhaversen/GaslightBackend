@@ -8,7 +8,8 @@ import Router from 'express'
 import {
 	getAllTournaments,
 	getTournament,
-	getTournamentGradings
+	getTournamentGradings,
+	getTournamentStatistics
 } from '../../controllers/users/tournamentController.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
@@ -34,6 +35,14 @@ router.get('/',
  */
 router.get('/:id',
 	asyncErrorHandler(getTournament)
+)
+
+/**
+ * @route GET /api/v1/tournaments/:id/statistics
+ * @description Get statistics for a tournament
+ */
+router.get('/:id/statistics',
+	asyncErrorHandler(getTournamentStatistics)
 )
 
 /**

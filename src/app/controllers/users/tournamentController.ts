@@ -38,16 +38,13 @@ export async function getAllTournaments(
 			.skip(Number(startIndex) || 0)
 			.exec()
 
-		// Calculate statistics and winners for each tournament
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
-			const statistics = await tournament.calculateStatistics()
 			const standings = await tournament.getStandings(Number(winnerCount) || 3)
 			return {
 				_id: tournament.id,
 				gradings: tournament.gradings,
 				disqualified: tournament.disqualified,
 				tournamentExecutionTime: tournament.tournamentExecutionTime,
-				statistics,
 				standings,
 				createdAt: tournament.createdAt,
 				updatedAt: tournament.updatedAt
@@ -77,7 +74,6 @@ export async function getTournament(
 			return
 		}
 
-		const statistics = await tournament.calculateStatistics()
 		const standings = await tournament.getStandings()
 
 		res.status(200).json({
@@ -85,11 +81,31 @@ export async function getTournament(
 			gradings: tournament.gradings,
 			disqualified: tournament.disqualified,
 			tournamentExecutionTime: tournament.tournamentExecutionTime,
-			statistics,
 			standings,
 			createdAt: tournament.createdAt,
 			updatedAt: tournament.updatedAt
 		})
+	} catch (error) {
+		next(error)
+	}
+}
+
+export async function getTournamentStatistics(
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> {
+	logger.silly('Getting tournament statistics')
+	try {
+		const tournament = await TournamentModel.findById(req.params.id)
+		if (tournament === null) {
+			res.status(404).json({ error: 'Tournament not found' })
+			return
+		}
+
+		const statistics = await tournament.calculateStatistics()
+
+		res.status(200).json(statistics)
 	} catch (error) {
 		next(error)
 	}
