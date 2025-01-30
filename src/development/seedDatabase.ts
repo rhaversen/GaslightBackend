@@ -255,7 +255,7 @@ const createRandomSubmissions = async (user: any, count: number) => {
 }
 
 // Create users and their submissions
-const userCount = 2000  // Increased from 10
+const userCount = 200  // Increased from 10
 logger.info('Starting database seeding...')
 logger.info('Creating users...')
 
@@ -284,7 +284,7 @@ for (let i = 0; i < users.length; i += batchSize) {
 
 // Create tournaments
 const tournamentCount = 10
-const submissionsPerTournament = 500
+const submissionsPerTournament = 100
 logger.info('Creating tournaments...')
 
 for (let t = 0; t < tournamentCount; t++) {
@@ -326,7 +326,6 @@ for (let t = 0; t < tournamentCount; t++) {
 			)
 		)
 		gradingDocs.push(...batchGradings)
-		logger.info(`Tournament ${t + 1}/${tournamentCount}: Processed gradings ${i + 1} to ${i + batchGradings.length}`)
 	}
 
 	await TournamentModel.create({
