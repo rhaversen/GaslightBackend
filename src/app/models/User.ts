@@ -6,7 +6,6 @@ import { type Document, model, Schema } from 'mongoose'
 import { nanoid } from 'nanoid'
 
 // Own modules
-import logger from '../utils/logger.js'
 import config from '../utils/setupConfig.js'
 
 // Environment variables
@@ -216,7 +215,6 @@ userSchema.pre('save', async function (next) {
 
 	// Password hashing
 	if (this.isModified('password')) {
-		logger.silly('Password modified, hashing it')
 		this.password = await hash(this.password, bcryptSaltRounds) // Using a random salt for each user
 		this.passwordResetCode = undefined
 	}

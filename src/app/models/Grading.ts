@@ -5,7 +5,6 @@ import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
 import { ISubmission } from './Submission.js'
-import logger from '../utils/logger.js'
 
 // Environment variables
 
@@ -72,7 +71,6 @@ gradingSchema.index({ submission: 1 })
 
 // Pre-save middleware
 gradingSchema.pre('save', async function (next) {
-	logger.silly('Saving grading')
 	next()
 })
 

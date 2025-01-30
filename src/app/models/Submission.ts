@@ -181,7 +181,6 @@ submissionSchema.methods.getTokenCount = function () {
 
 // Pre-save middleware
 submissionSchema.pre('save', async function (next) {
-	logger.silly('Saving submission')
 	next()
 })
 

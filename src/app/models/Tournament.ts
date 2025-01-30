@@ -5,7 +5,6 @@ import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
 import GradingModel, { IGradingStatistics } from './Grading.js'
-import logger from '../utils/logger.js'
 import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 
 // Environment variables
@@ -320,7 +319,6 @@ tournamentSchema.index({ gradings: 1 })
 
 // Pre-save middleware
 tournamentSchema.pre('save', async function (next) {
-	logger.silly('Saving tournament')
 	next()
 })
 
