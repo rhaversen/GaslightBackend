@@ -129,3 +129,25 @@ export async function getTournamentGradings(
 		next(error)
 	}
 }
+
+export async function getTournamentStandings(
+	req: Request,
+	res: Response,
+	next: NextFunction
+): Promise<void> {
+	logger.silly('Getting tournament standings')
+	try {
+		const tournament = await TournamentModel.findById(req.params.id)
+		if (tournament === null) {
+			res.status(404).json({ error: 'Tournament not found' })
+			return
+		}
+
+		const amount = Number(req.query.amount) || 3
+		const standings = await tournament.getStandings(amount)
+
+		res.status(200).json(standings)
+	} catch (error) {
+		next(error)
+	}
+}

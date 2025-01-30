@@ -9,7 +9,8 @@ import {
 	getAllTournaments,
 	getTournament,
 	getTournamentGradings,
-	getTournamentStatistics
+	getTournamentStatistics,
+	getTournamentStandings
 } from '../../controllers/users/tournamentController.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
@@ -51,6 +52,14 @@ router.get('/:id/statistics',
  */
 router.get('/:id/gradings',
 	asyncErrorHandler(getTournamentGradings)
+)
+
+/**
+ * @route GET /api/v1/tournaments/:id/standings
+ * @description Get standings for a tournament with optional amount parameter
+ */
+router.get('/:id/standings',
+	asyncErrorHandler(getTournamentStandings)
 )
 
 export default router
