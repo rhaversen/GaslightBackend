@@ -4,7 +4,7 @@
 import { Request, Response } from 'express'
 
 // Own modules
-import GradingModel from '../../models/Grading.js'
+import GradingModel, { IGrading } from '../../models/Grading.js'
 import SubmissionModel from '../../models/Submission.js'
 import TournamentModel from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
@@ -49,12 +49,17 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
 		)
 
-		const gradingsWithZ = gradings.map(grading => ({
-			...grading,
-			zValue: standardDeviation === 0 ? 0 : (grading.score - mean) / standardDeviation
-		}))
+		// Calculate placement for grading
+		const sortedScores = scores.sort((a, b) => b - a)
+		const placement = gradings.map(g => sortedScores.indexOf(g.score) + 1)
 
-		const newGradings = await GradingModel.insertMany(gradingsWithZ)
+		const enrichedGradings = gradings.map(grading => ({
+			...grading,
+			zValue: standardDeviation === 0 ? 0 : (grading.score - mean) / standardDeviation,
+			placement: placement[gradings.indexOf(grading)]
+		})) as IGrading[]
+
+		const newGradings = await GradingModel.insertMany(enrichedGradings)
 		const gradingIds = newGradings.map(grading => grading._id)
 
 		// Create tournament with essential fields only

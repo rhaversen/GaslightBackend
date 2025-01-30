@@ -305,17 +305,23 @@ for (let t = 0; t < tournamentCount; t++) {
 		scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
 	)
 
+	// Calculate placements based on scores
+	const sortedScores = [...scores].sort((a, b) => b - a)
+	const placements = scores.map(score => sortedScores.indexOf(score) + 1)
+
 	// Create gradings in batches
 	for (let i = 0; i < shuffledSubmissions.length; i += batchSize) {
 		const batchSubmissions = shuffledSubmissions.slice(i, i + batchSize)
 		const batchScores = scores.slice(i, i + batchSize)
+		const batchPlacements = placements.slice(i, i + batchSize)
         
 		const batchGradings = await Promise.all(
 			batchSubmissions.map((submission, index) => 
 				GradingModel.create({
 					submission: submission.id,
 					score: batchScores[index],
-					zValue: standardDeviation === 0 ? 0 : (batchScores[index] - mean) / standardDeviation
+					zValue: standardDeviation === 0 ? 0 : (batchScores[index] - mean) / standardDeviation,
+					placement: batchPlacements[index]
 				})
 			)
 		)
@@ -372,19 +378,22 @@ if (!user1Submissions?.length) {
 			}
 		})
 
-		// Calculate statistics for Z-values
+		// Calculate statistics and placements
 		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
 		const standardDeviation = Math.sqrt(
 			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
 		)
+		const sortedScores = [...scores].sort((a, b) => b - a)
+		const placements = scores.map(score => sortedScores.indexOf(score) + 1)
 
-		// Create gradings
+		// Create gradings with placements
 		const gradingDocs = await Promise.all(
 			allTournamentSubmissions.map((submission, index) =>
 				GradingModel.create({
 					submission: submission.id,
 					score: scores[index],
-					zValue: standardDeviation === 0 ? 0 : (scores[index] - mean) / standardDeviation
+					zValue: standardDeviation === 0 ? 0 : (scores[index] - mean) / standardDeviation,
+					placement: placements[index]
 				})
 			)
 		)

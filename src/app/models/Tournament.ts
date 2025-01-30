@@ -19,6 +19,7 @@ interface TournamentStanding {
     submission: string
     grade: number
     zValue: number
+	placement: number
 	statistics: IGradingStatistics
 }
 
@@ -137,6 +138,7 @@ tournamentSchema.methods.getStandings = async function(limit?: number) {
 			submission: grading.submission.toString(),
 			grade: grading.score,
 			zValue: grading.zValue,
+			placement: grading.placement,
 			statistics: await grading.calculateStatistics()
 		})
 	}
