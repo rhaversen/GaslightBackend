@@ -5,7 +5,7 @@
 
 import SubmissionModel from '../app/models/Submission.js'
 import TournamentModel from '../app/models/Tournament.js'
-import UserModel from '../app/models/User.js'
+import UserModel, { IUser } from '../app/models/User.js'
 import GradingModel from '../app/models/Grading.js'
 import logger from '../app/utils/logger.js'
 
@@ -195,6 +195,33 @@ const strategies = {
 	revealing: revealingStrategy
 }
 
+// Helper functions for normal distribution
+const normalRandom = () => {
+	// Box-Muller transform for normal distribution
+	const u1 = Math.random()
+	const u2 = Math.random()
+	const z = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2)
+	return z
+}
+
+const normalRandomInRange = (mean: number, stdDev: number) => {
+	const z = normalRandom()
+	return mean + stdDev * z
+}
+
+const generateScore = () => {
+	// 95% normal distribution, 5% outliers
+	if (Math.random() > 0.05) {
+		// Normal scores around 500 with stdDev 100
+		return Math.max(0, normalRandomInRange(500, 100))
+	} else {
+		// Outliers: either very low or very high
+		return Math.random() > 0.5 ? 
+			normalRandomInRange(50, 25) :  // Very low scores
+			normalRandomInRange(950, 25)  // Very high scores
+	}
+}
+
 // Helper functions
 const createRandomUser = async (index: number) => {
 	const user = await UserModel.create({
@@ -228,37 +255,132 @@ const createRandomSubmissions = async (user: any, count: number) => {
 }
 
 // Create users and their submissions
-const userCount = 10
-const users = await Promise.all(
-	Array(userCount).fill(null).map((_, i) => createRandomUser(i))
-)
+const userCount = 2000  // Increased from 10
+logger.info('Starting database seeding...')
+logger.info('Creating users...')
 
-const allSubmissions = await Promise.all(
-	users.map(user => createRandomSubmissions(user, Math.floor(Math.random() * 3) + 1))
-)
+const batchSize = 100
+const users = []
+for (let i = 0; i < userCount; i += batchSize) {
+	const batch = await Promise.all(
+		Array(Math.min(batchSize, userCount - i))
+			.fill(null)
+			.map((_, j) => createRandomUser(i + j + 1))  // +1 to skip index 1
+	)
+	users.push(...batch)
+	logger.info(`Created users ${i + 1} to ${i + batch.length}`)
+}
+
+logger.info('Creating submissions...')
+const allSubmissions = []
+for (let i = 0; i < users.length; i += batchSize) {
+	const userBatch = users.slice(i, i + batchSize)
+	const submissionBatch = await Promise.all(
+		userBatch.map(user => createRandomSubmissions(user, Math.floor(Math.random() * 5) + 1))
+	)
+	allSubmissions.push(...submissionBatch)
+	logger.info(`Created submissions for users ${i + 1} to ${i + userBatch.length}`)
+}
 
 // Create tournaments
-const tournamentCount = 5
-await Promise.all(
-	Array(tournamentCount).fill(null).map(async () => {
-		// Random selection of submissions for tournament
-		const tournamentSubmissions = allSubmissions
-			.flat()
-			.filter(() => Math.random() > 0.5)
-			.slice(0, Math.floor(Math.random() * 5) + 2)
+const tournamentCount = 10
+const submissionsPerTournament = 500
+logger.info('Creating tournaments...')
 
-		// Generate random scores first
-		const scores = tournamentSubmissions.map(() => Math.random() * 1000)
-		
+for (let t = 0; t < tournamentCount; t++) {
+	// Select random submissions, but ensure we get enough
+	const shuffledSubmissions = allSubmissions
+		.flat()
+		.sort(() => Math.random() - 0.5)
+		.slice(0, submissionsPerTournament)
+
+	// Process gradings in batches to avoid memory issues
+	const batchSize = 50
+	const gradingDocs = []
+	const scores = shuffledSubmissions.map(() => generateScore())
+    
+	// Calculate statistics for Z-values
+	const mean = scores.reduce((a, b) => a + b, 0) / scores.length
+	const standardDeviation = Math.sqrt(
+		scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
+	)
+
+	// Create gradings in batches
+	for (let i = 0; i < shuffledSubmissions.length; i += batchSize) {
+		const batchSubmissions = shuffledSubmissions.slice(i, i + batchSize)
+		const batchScores = scores.slice(i, i + batchSize)
+        
+		const batchGradings = await Promise.all(
+			batchSubmissions.map((submission, index) => 
+				GradingModel.create({
+					submission: submission.id,
+					score: batchScores[index],
+					zValue: standardDeviation === 0 ? 0 : (batchScores[index] - mean) / standardDeviation
+				})
+			)
+		)
+		gradingDocs.push(...batchGradings)
+		logger.info(`Tournament ${t + 1}/${tournamentCount}: Processed gradings ${i + 1} to ${i + batchGradings.length}`)
+	}
+
+	await TournamentModel.create({
+		gradings: gradingDocs.map(g => g.id),
+		tournamentExecutionTime: Math.floor(Math.random() * 60000) + 1000,
+		disqualified: shuffledSubmissions
+			.filter(() => Math.random() > 0.95) // 5% chance of disqualification
+			.map(sub => ({
+				submission: sub.id,
+				reason: 'Random disqualification for testing'
+			}))
+	})
+
+	logger.info(`Created tournament ${t + 1}/${tournamentCount} with ${submissionsPerTournament} submissions`)
+}
+
+// Create three special tournaments where user1 has top scores
+logger.info('Creating special tournaments for user1...')
+
+const user1 = users.find(u => u.email === 'user1@test.com') as IUser
+const user1Submissions = allSubmissions[0]
+if (!user1Submissions?.length) {
+	logger.error('No submissions found for user1')
+} else {
+	const specialTournamentPositions = [1, 2, 3] // Top 3 positions
+    
+	for (const position of specialTournamentPositions) {
+		// Get a random submission from user1
+		const user1Submission = user1Submissions[Math.floor(Math.random() * user1Submissions.length)]
+        
+		// Get random submissions for the rest
+		const otherSubmissions = allSubmissions
+			.flat()
+			.filter(s => s.user.toString() !== user1.id)
+			.sort(() => Math.random() - 0.5)
+			.slice(0, submissionsPerTournament - 1)
+
+		const allTournamentSubmissions = [user1Submission, ...otherSubmissions]
+        
+		// Generate scores where user1's submission is in the specified position from top
+		const scores = allTournamentSubmissions.map((_, index) => {
+			if (index === 0) { // user1's submission
+				return normalRandomInRange(950 - (position - 1) * 10, 5) // High score with small variance
+			} else {
+				// Other submissions get scores that ensure they don't beat user1's position
+				return index < position ? 
+					normalRandomInRange(950 - (index - 1) * 10, 5) : // Higher scores
+					normalRandomInRange(500, 100) // Normal scores
+			}
+		})
+
 		// Calculate statistics for Z-values
 		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
 		const standardDeviation = Math.sqrt(
 			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
 		)
 
-		// Create gradings with proper Z-values
+		// Create gradings
 		const gradingDocs = await Promise.all(
-			tournamentSubmissions.map((submission, index) => 
+			allTournamentSubmissions.map((submission, index) =>
 				GradingModel.create({
 					submission: submission.id,
 					score: scores[index],
@@ -267,17 +389,14 @@ await Promise.all(
 			)
 		)
 
-		return TournamentModel.create({
+		await TournamentModel.create({
 			gradings: gradingDocs.map(g => g.id),
-			tournamentExecutionTime: Math.floor(Math.random() * 60000) + 1000, // 1-60 seconds
-			disqualified: tournamentSubmissions
-				.filter(() => Math.random() > 0.9)
-				.map(sub => ({
-					submission: sub.id,
-					reason: 'Random disqualification for testing'
-				}))
+			tournamentExecutionTime: Math.floor(Math.random() * 60000) + 1000,
+			disqualified: []  // No disqualifications in these special tournaments
 		})
-	})
-)
+
+		logger.info(`Created special tournament with user1 in position ${position}`)
+	}
+}
 
 logger.info(`Seeded database with ${userCount} users, ${allSubmissions.flat().length} submissions, and ${tournamentCount} tournaments`)
