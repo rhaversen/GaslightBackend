@@ -432,4 +432,57 @@ if (!user1Submissions?.length) {
 	}
 }
 
+// Create tournaments with small numbers of submissions
+logger.info('Creating small-sized tournaments...')
+const smallSizes = [1, 2, 3, 5, 10]
+
+for (const size of smallSizes) {
+	// Select random submissions, ensuring one per user
+	const shuffledSubmissions = Object.values(
+		allSubmissions.flat().reduce((acc, submission) => {
+			const userId = submission.user.toString()
+			if (!acc[userId]) {
+				acc[userId] = [submission]
+			}
+			return acc
+		}, {} as Record<string, typeof allSubmissions[0]>)
+	)
+		.map(subs => subs[0])
+		.sort(() => Math.random() - 0.5)
+		.slice(0, size)
+
+	// Generate scores for these submissions
+	const scores = shuffledSubmissions.map(() => generateScore())
+    
+	// Calculate statistics
+	const mean = scores.reduce((a, b) => a + b, 0) / scores.length
+	const standardDeviation = Math.sqrt(
+		scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
+	)
+
+	// Calculate placements
+	const sortedScores = [...scores].sort((a, b) => b - a)
+	const placements = scores.map(score => sortedScores.indexOf(score) + 1)
+
+	// Create gradings
+	const gradingDocs = await Promise.all(
+		shuffledSubmissions.map((submission, index) =>
+			GradingModel.create({
+				submission: submission.id,
+				score: scores[index],
+				zValue: standardDeviation === 0 ? 0 : (scores[index] - mean) / standardDeviation,
+				placement: placements[index]
+			})
+		)
+	)
+
+	await TournamentModel.create({
+		gradings: gradingDocs.map(g => g.id),
+		tournamentExecutionTime: Math.floor(Math.random() * 60000) + 1000,
+		disqualified: []
+	})
+
+	logger.info(`Created tournament with ${size} submission(s)`)
+}
+
 logger.info(`Seeded database with ${userCount} users, ${allSubmissions.flat().length} submissions, and ${tournamentCount} tournaments`)
