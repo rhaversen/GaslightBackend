@@ -364,7 +364,7 @@ const user1Submissions = allSubmissions[0]
 if (!user1Submissions?.length) {
 	logger.error('No submissions found for user1')
 } else {
-	const specialTournamentPositions = [1, 2, 3, 5, 10] // Added 5th and 10th positions
+	const specialTournamentPositions = [1, 2, 3, 5, 10, 20]
     
 	for (const position of specialTournamentPositions) {
 		// Get a random submission from user1
