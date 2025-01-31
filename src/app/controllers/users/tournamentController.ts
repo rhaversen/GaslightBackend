@@ -72,7 +72,9 @@ export async function getTournament(
 			return
 		}
 
-		const standings = await tournament.getStandings()
+		const { limitStandings } = req.query
+
+		const standings = await tournament.getStandings(Number(limitStandings) || 100)
 
 		res.status(200).json({
 			_id: tournament.id,
