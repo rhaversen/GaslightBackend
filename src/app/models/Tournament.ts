@@ -81,7 +81,7 @@ export interface ITournament extends Document {
 	/** Calculate the statistics of the tournament */
     calculateStatistics(): Promise<TournamentStatistics>
 	/** Get the standings of the tournament in descending order */
-    getStandings(limit?: number): Promise<TournamentStanding[]>
+    getStandings(limit?: number, skip?: number): Promise<TournamentStanding[]>
 	/** Get the standing of a specific user */
 	getStanding(userId: string): Promise<TournamentStanding | null>
 
@@ -116,9 +116,10 @@ const tournamentSchema = new Schema<ITournament>({
 	timestamps: true
 })
 
-tournamentSchema.methods.getStandings = async function(limit?: number) {
+tournamentSchema.methods.getStandings = async function(limit?: number, skip = 0) {
 	const gradings = await GradingModel.find({ _id: { $in: this.gradings } })
 		.sort({ score: -1 })
+		.skip(skip)
 		.limit(limit || 0)
 		.exec()
 
