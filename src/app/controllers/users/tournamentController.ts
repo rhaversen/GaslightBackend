@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { fromDate, toDate, limit, skip, limitStandings } = req.query
+	const { fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -37,15 +37,33 @@ export async function getAllTournaments(
 			.exec()
 
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
-			const standings = await tournament.getStandings(Number(limitStandings) || 3)
-			return {
-				_id: tournament.id,
-				gradings: tournament.gradings,
-				disqualified: tournament.disqualified,
-				tournamentExecutionTime: tournament.tournamentExecutionTime,
-				standings,
-				createdAt: tournament.createdAt,
-				updatedAt: tournament.updatedAt
+			const standings = await tournament.getStandings(
+				Number(limitStandings) || 3,
+				Number(skipStandings) || 0
+			)
+			if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
+				const userStanding = await tournament.getStanding(userIdStanding)
+				return {
+					_id: tournament.id,
+					gradings: tournament.gradings,
+					disqualified: tournament.disqualified,
+					tournamentExecutionTime: tournament.tournamentExecutionTime,
+					standings,
+					userStanding,
+					createdAt: tournament.createdAt,
+					updatedAt: tournament.updatedAt
+				}
+			} else {
+				return {
+					_id: tournament.id,
+					gradings: tournament.gradings,
+					disqualified: tournament.disqualified,
+					tournamentExecutionTime: tournament.tournamentExecutionTime,
+					standings,
+					userStanding: null,
+					createdAt: tournament.createdAt,
+					updatedAt: tournament.updatedAt
+				}
 			}
 		}))
 
@@ -72,14 +90,20 @@ export async function getTournament(
 			return
 		}
 
-		const standings = await tournament.getStandings()
+		const { limitStandings, skipStandings, userIdStanding } = req.query
 
+		const standings = await tournament.getStandings(
+			Number(limitStandings) || 30,
+			Number(skipStandings) || 0
+		)
+		const userStanding = await tournament.getStanding(String(userIdStanding))
 		res.status(200).json({
 			_id: tournament.id,
 			gradings: tournament.gradings,
 			disqualified: tournament.disqualified,
 			tournamentExecutionTime: tournament.tournamentExecutionTime,
 			standings,
+			userStanding,
 			createdAt: tournament.createdAt,
 			updatedAt: tournament.updatedAt
 		})
@@ -144,7 +168,8 @@ export async function getTournamentStandings(
 		}
 
 		const amount = Number(req.query.amount) || 3
-		const standings = await tournament.getStandings(amount)
+		const skip = Number(req.query.skip) || 0
+		const standings = await tournament.getStandings(amount, skip)
 
 		res.status(200).json(standings)
 	} catch (error) {
