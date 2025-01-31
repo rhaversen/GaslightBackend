@@ -82,6 +82,8 @@ export interface ITournament extends Document {
     calculateStatistics(): Promise<TournamentStatistics>
 	/** Get the standings of the tournament in descending order */
     getStandings(limit?: number): Promise<TournamentStanding[]>
+	/** Get the standing of a specific user */
+	getStanding(userId: string): Promise<TournamentStanding | null>
 
     // Timestamps
     createdAt: Date
@@ -148,6 +150,38 @@ tournamentSchema.methods.getStandings = async function(limit?: number) {
 	}
 
 	return standings
+}
+
+tournamentSchema.methods.getStanding = async function(userId: string) {
+	const grading = await GradingModel.findOne({ 
+		_id: { $in: this.gradings },
+		submission: {
+			$in: await SubmissionModel
+				.find({ user: userId })
+				.select('_id')
+				.exec()
+		}
+	}).exec()
+
+	if (!grading) return null
+
+	const submission = await SubmissionModel
+		.findById(grading.submission)
+		.populate('user', 'username')
+		.exec() as ISubmissionPopulated
+
+	if (!submission?.user) return null
+
+	return {
+		user: submission.user.id,
+		userName: submission.user.username,
+		submission: grading.submission.toString(),
+		submissionName: submission.title,
+		grade: grading.score,
+		zValue: grading.zValue,
+		placement: grading.placement,
+		statistics: await grading.calculateStatistics()
+	}
 }
 
 tournamentSchema.methods.calculateStatistics = async function() {

@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { fromDate, toDate, limit, skip, limitStandings } = req.query
+	const { fromDate, toDate, limit, skip, limitStandings, userIdStanding } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -38,14 +38,29 @@ export async function getAllTournaments(
 
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
 			const standings = await tournament.getStandings(Number(limitStandings) || 3)
-			return {
-				_id: tournament.id,
-				gradings: tournament.gradings,
-				disqualified: tournament.disqualified,
-				tournamentExecutionTime: tournament.tournamentExecutionTime,
-				standings,
-				createdAt: tournament.createdAt,
-				updatedAt: tournament.updatedAt
+			if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
+				const userStanding = await tournament.getStanding(userIdStanding)
+				return {
+					_id: tournament.id,
+					gradings: tournament.gradings,
+					disqualified: tournament.disqualified,
+					tournamentExecutionTime: tournament.tournamentExecutionTime,
+					standings,
+					userStanding,
+					createdAt: tournament.createdAt,
+					updatedAt: tournament.updatedAt
+				}
+			} else {
+				return {
+					_id: tournament.id,
+					gradings: tournament.gradings,
+					disqualified: tournament.disqualified,
+					tournamentExecutionTime: tournament.tournamentExecutionTime,
+					standings,
+					userStanding: null,
+					createdAt: tournament.createdAt,
+					updatedAt: tournament.updatedAt
+				}
 			}
 		}))
 
@@ -72,16 +87,17 @@ export async function getTournament(
 			return
 		}
 
-		const { limitStandings } = req.query
+		const { limitStandings, userIdStanding } = req.query
 
 		const standings = await tournament.getStandings(Number(limitStandings) || 100)
-
+		const userStanding = await tournament.getStanding(String(userIdStanding))
 		res.status(200).json({
 			_id: tournament.id,
 			gradings: tournament.gradings,
 			disqualified: tournament.disqualified,
 			tournamentExecutionTime: tournament.tournamentExecutionTime,
 			standings,
+			userStanding,
 			createdAt: tournament.createdAt,
 			updatedAt: tournament.updatedAt
 		})
