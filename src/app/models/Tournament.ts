@@ -14,7 +14,7 @@ import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 // Destructuring and global variables
 
 // Interfaces
-interface TournamentStanding {
+export interface TournamentStanding {
     user: string
 	userName: string
     submission: string

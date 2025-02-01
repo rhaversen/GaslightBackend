@@ -6,7 +6,7 @@ import mongoose from 'mongoose'
 
 // Own modules
 import GradingModel from '../../models/Grading.js'
-import TournamentModel from '../../models/Tournament.js'
+import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
 
 // Environment variables
@@ -90,12 +90,15 @@ export async function getTournament(
 			return
 		}
 
-		const { limitStandings, skipStandings, userIdStanding } = req.query
+		const { getStandings, limitStandings, skipStandings, userIdStanding  } = req.query
 
-		const standings = await tournament.getStandings(
-			Number(limitStandings) || 30,
-			Number(skipStandings) || 0
-		)
+		let standings: TournamentStanding[] | undefined = undefined
+		if (getStandings === 'true') {
+			standings = await tournament.getStandings(
+				Number(limitStandings) || 30,
+				Number(skipStandings) || 0
+			)
+		}
 		const userStanding = await tournament.getStanding(String(userIdStanding))
 		res.status(200).json({
 			_id: tournament.id,
