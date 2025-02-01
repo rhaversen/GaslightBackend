@@ -21,6 +21,7 @@ export interface TournamentStanding {
 	submissionName: string
     grade: number
     zValue: number
+	tokenCount: number
 	placement: number
 	statistics: IGradingStatistics
 }
@@ -145,6 +146,7 @@ tournamentSchema.methods.getStandings = async function(limit?: number, skip = 0)
 			submissionName: submission.title,
 			grade: grading.score,
 			zValue: grading.zValue,
+			tokenCount: submission.getTokenCount(),
 			placement: grading.placement,
 			statistics: await grading.calculateStatistics()
 		})
