@@ -45,6 +45,7 @@ export async function getAllTournaments(
 				return {
 					_id: tournament.id,
 					disqualified: tournament.disqualified,
+					submissionCount: tournament.gradings.length,
 					tournamentExecutionTime: tournament.tournamentExecutionTime,
 					standings,
 					userStanding,
@@ -55,6 +56,7 @@ export async function getAllTournaments(
 				return {
 					_id: tournament.id,
 					disqualified: tournament.disqualified,
+					submissionCount: tournament.gradings.length,
 					tournamentExecutionTime: tournament.tournamentExecutionTime,
 					standings,
 					userStanding: null,
@@ -101,6 +103,7 @@ export async function getTournament(
 			res.status(200).json({
 				_id: tournament.id,
 				disqualified: tournament.disqualified,
+				submissionCount: tournament.gradings.length,
 				tournamentExecutionTime: tournament.tournamentExecutionTime,
 				standings,
 				userStanding,
@@ -111,6 +114,7 @@ export async function getTournament(
 			res.status(200).json({
 				_id: tournament.id,
 				disqualified: tournament.disqualified,
+				submissionCount: tournament.gradings.length,
 				tournamentExecutionTime: tournament.tournamentExecutionTime,
 				standings,
 				userStanding: null,
