@@ -1,7 +1,7 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import { type Document, model, Schema } from 'mongoose'
+import { type Document, model, Schema, SortOrder } from 'mongoose'
 
 // Own modules
 import GradingModel, { IGradingPopulated, IGradingStatistics } from './Grading.js'
@@ -82,7 +82,7 @@ export interface ITournament extends Document {
 	/** Calculate the statistics of the tournament */
     calculateStatistics(): Promise<TournamentStatistics>
 	/** Get the standings of the tournament in descending order */
-    getStandings(limit?: number, skip?: number): Promise<TournamentStanding[]>
+    getStandings(limit?: number, skip?: number, sortField?: string, sortOrder?: SortOrder): Promise<TournamentStanding[]>
 	/** Get the standing of a specific user */
 	getStanding(userId: string): Promise<TournamentStanding | null>
 
@@ -117,9 +117,9 @@ const tournamentSchema = new Schema<ITournament>({
 	timestamps: true
 })
 
-tournamentSchema.methods.getStandings = async function(limit?: number, skip = 0) {
+tournamentSchema.methods.getStandings = async function (limit: number = 0, skip: number = 0, sortField: string = 'score', sortOrder: SortOrder = -1) {
 	const gradings = await GradingModel.find({ _id: { $in: this.gradings } })
-		.sort({ score: -1 })
+		.sort({ [sortField]: sortOrder })
 		.skip(skip)
 		.limit(limit || 0)
 		.exec()

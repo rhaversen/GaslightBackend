@@ -2,7 +2,7 @@
 
 // Third-party libraries
 import { type NextFunction, type Response, type Request } from 'express'
-import mongoose from 'mongoose'
+import mongoose, { type SortOrder } from 'mongoose'
 
 // Own modules
 import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
@@ -19,7 +19,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding } = req.query
+	const { fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -38,7 +38,9 @@ export async function getAllTournaments(
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
 			const standings = await tournament.getStandings(
 				Number(limitStandings) || 3,
-				Number(skipStandings) || 0
+				Number(skipStandings) || 0,
+				sortFieldStandings as string | undefined,
+				(sortDirectionStandings as SortOrder)
 			)
 			if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
 				const userStanding = await tournament.getStanding(userIdStanding)
@@ -89,13 +91,15 @@ export async function getTournament(
 			return
 		}
 
-		const { getStandings, limitStandings, skipStandings, userIdStanding  } = req.query
+		const { getStandings, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
 
 		let standings: TournamentStanding[] | undefined = undefined
 		if (getStandings === 'true') {
 			standings = await tournament.getStandings(
 				Number(limitStandings) || 30,
-				Number(skipStandings) || 0
+				Number(skipStandings) || 0,
+				sortFieldStandings as string | undefined || 'score',
+				(sortDirectionStandings as SortOrder) || -1
 			)
 		}
 		if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
