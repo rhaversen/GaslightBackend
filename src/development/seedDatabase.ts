@@ -4,10 +4,9 @@
 // file deepcode ignore HardcodedNonCryptoSecret/test: Hardcoded credentials are only used for testing purposes
 
 import SubmissionModel from '../app/models/Submission.js'
-import TournamentModel from '../app/models/Tournament.js'
 import UserModel, { IUser } from '../app/models/User.js'
-import GradingModel from '../app/models/Grading.js'
 import logger from '../app/utils/logger.js'
+import { processTournamentGradings } from '../app/controllers/microservices/codeRunnerController.js'
 
 logger.info('Seeding database')
 
@@ -308,50 +307,24 @@ for (let t = 0; t < tournamentCount; t++) {
 		.sort(() => Math.random() - 0.5)
 		.slice(0, submissionsPerTournament)
 
-	// Process gradings in batches to avoid memory issues
-	const batchSize = 50
-	const gradingDocs = []
 	const scores = shuffledSubmissions.map(() => generateScore())
-    
-	// Calculate statistics for Z-values
-	const mean = scores.reduce((a, b) => a + b, 0) / scores.length
-	const standardDeviation = Math.sqrt(
-		scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
+	const submissionScores = shuffledSubmissions.map((sub, index) => ({
+		submission: sub.id,
+		score: scores[index]
+	}))
+
+	const disqualified = shuffledSubmissions
+		.filter(() => Math.random() > 0.95)
+		.map(sub => ({
+			submission: sub.id,
+			reason: 'Random disqualification for testing'
+		}))
+
+	await processTournamentGradings(
+		submissionScores,
+		disqualified,
+		Math.floor(Math.random() * 60000) + 1000
 	)
-
-	// Calculate placements based on scores
-	const sortedScores = [...scores].sort((a, b) => b - a)
-	const placements = scores.map(score => sortedScores.indexOf(score) + 1)
-
-	// Create gradings in batches
-	for (let i = 0; i < shuffledSubmissions.length; i += batchSize) {
-		const batchSubmissions = shuffledSubmissions.slice(i, i + batchSize)
-		const batchScores = scores.slice(i, i + batchSize)
-		const batchPlacements = placements.slice(i, i + batchSize)
-        
-		const batchGradings = await Promise.all(
-			batchSubmissions.map((submission, index) => 
-				GradingModel.create({
-					submission: submission.id,
-					score: batchScores[index],
-					zValue: standardDeviation === 0 ? 0 : (batchScores[index] - mean) / standardDeviation,
-					placement: batchPlacements[index]
-				})
-			)
-		)
-		gradingDocs.push(...batchGradings)
-	}
-
-	await TournamentModel.create({
-		gradings: gradingDocs.map(g => g.id),
-		tournamentExecutionTime: Math.floor(Math.random() * 60000) + 1000,
-		disqualified: shuffledSubmissions
-			.filter(() => Math.random() > 0.95) // 5% chance of disqualification
-			.map(sub => ({
-				submission: sub.id,
-				reason: 'Random disqualification for testing'
-			}))
-	})
 
 	logger.info(`Created tournament ${t + 1}/${tournamentCount} with ${submissionsPerTournament} submissions`)
 }
@@ -359,13 +332,12 @@ for (let t = 0; t < tournamentCount; t++) {
 // Create three special tournaments where user1 has top scores
 logger.info('Creating special tournaments for user1...')
 
+const specialTournamentPositions = [1, 2, 3, 5, 10, 20]
 const user1 = users.find(u => u.email === 'user1@test.com') as IUser
 const user1Submissions = allSubmissions[0]
 if (!user1Submissions?.length) {
 	logger.error('No submissions found for user1')
 } else {
-	const specialTournamentPositions = [1, 2, 3, 5, 10, 20]
-    
 	for (const position of specialTournamentPositions) {
 		// Get a random submission from user1
 		const user1Submission = user1Submissions[Math.floor(Math.random() * user1Submissions.length)]
@@ -402,31 +374,16 @@ if (!user1Submissions?.length) {
 			}
 		})
 
-		// Calculate statistics and placements
-		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
-		const standardDeviation = Math.sqrt(
-			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
-		)
-		const sortedScores = [...scores].sort((a, b) => b - a)
-		const placements = scores.map(score => sortedScores.indexOf(score) + 1)
+		const submissionScores = allTournamentSubmissions.map((sub, index) => ({
+			submission: sub.id,
+			score: scores[index]
+		}))
 
-		// Create gradings with placements
-		const gradingDocs = await Promise.all(
-			allTournamentSubmissions.map((submission, index) =>
-				GradingModel.create({
-					submission: submission.id,
-					score: scores[index],
-					zValue: standardDeviation === 0 ? 0 : (scores[index] - mean) / standardDeviation,
-					placement: placements[index]
-				})
-			)
+		await processTournamentGradings(
+			submissionScores,
+			[],
+			Math.floor(Math.random() * 60000) + 1000
 		)
-
-		await TournamentModel.create({
-			gradings: gradingDocs.map(g => g.id),
-			tournamentExecutionTime: Math.floor(Math.random() * 60000) + 1000,
-			disqualified: []  // No disqualifications in these special tournaments
-		})
 
 		logger.info(`Created special tournament with user1 in position ${position}`)
 	}
@@ -454,33 +411,16 @@ for (const size of smallSizes) {
 	// Generate scores for these submissions
 	const scores = shuffledSubmissions.map(() => generateScore())
     
-	// Calculate statistics
-	const mean = scores.reduce((a, b) => a + b, 0) / scores.length
-	const standardDeviation = Math.sqrt(
-		scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
+	const submissionScores = shuffledSubmissions.map((sub, index) => ({
+		submission: sub.id,
+		score: scores[index]
+	}))
+
+	await processTournamentGradings(
+		submissionScores,
+		[],
+		Math.floor(Math.random() * 60000) + 1000
 	)
-
-	// Calculate placements
-	const sortedScores = [...scores].sort((a, b) => b - a)
-	const placements = scores.map(score => sortedScores.indexOf(score) + 1)
-
-	// Create gradings
-	const gradingDocs = await Promise.all(
-		shuffledSubmissions.map((submission, index) =>
-			GradingModel.create({
-				submission: submission.id,
-				score: scores[index],
-				zValue: standardDeviation === 0 ? 0 : (scores[index] - mean) / standardDeviation,
-				placement: placements[index]
-			})
-		)
-	)
-
-	await TournamentModel.create({
-		gradings: gradingDocs.map(g => g.id),
-		tournamentExecutionTime: Math.floor(Math.random() * 60000) + 1000,
-		disqualified: []
-	})
 
 	logger.info(`Created tournament with ${size} submission(s)`)
 }
