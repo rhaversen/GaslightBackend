@@ -99,17 +99,30 @@ export async function getTournament(
 				Number(skipStandings) || 0
 			)
 		}
-		const userStanding = await tournament.getStanding(String(userIdStanding))
-		res.status(200).json({
-			_id: tournament.id,
-			gradings: tournament.gradings,
-			disqualified: tournament.disqualified,
-			tournamentExecutionTime: tournament.tournamentExecutionTime,
-			standings,
-			userStanding,
-			createdAt: tournament.createdAt,
-			updatedAt: tournament.updatedAt
-		})
+		if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
+			const userStanding = await tournament.getStanding(userIdStanding)
+			res.status(200).json({
+				_id: tournament.id,
+				gradings: tournament.gradings,
+				disqualified: tournament.disqualified,
+				tournamentExecutionTime: tournament.tournamentExecutionTime,
+				standings,
+				userStanding,
+				createdAt: tournament.createdAt,
+				updatedAt: tournament.updatedAt
+			})
+		} else {
+			res.status(200).json({
+				_id: tournament.id,
+				gradings: tournament.gradings,
+				disqualified: tournament.disqualified,
+				tournamentExecutionTime: tournament.tournamentExecutionTime,
+				standings,
+				userStanding: null,
+				createdAt: tournament.createdAt,
+				updatedAt: tournament.updatedAt
+			})
+		}
 	} catch (error) {
 		next(error)
 	}
