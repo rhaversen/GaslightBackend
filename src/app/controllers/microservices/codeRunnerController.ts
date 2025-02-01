@@ -30,17 +30,10 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 	}
 }
 
-export async function saveGradingsWithTournament(req: Request, res: Response) {
-	const {
-		gradings,
-		disqualified,
-		tournamentExecutionTime
-	} = req.body
+type Grading = { submission: string; score: number; }
+type Disqualification = { submission: string; reason: string; }
 
-	if (!Array.isArray(gradings)) {
-		return res.status(400).json({ error: 'Gradings must be an array' })
-	}
-
+export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number) {
 	try {
 		// Calculate z-values for all gradings at once
 		const scores = gradings.map(g => g.score)
@@ -69,9 +62,28 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 			tournamentExecutionTime
 		})
 
-		res.status(201).json({ tournamentId: tournament._id })
+		return tournament
 	} catch (error) {
 		logger.error(error)
+		return null
+	}
+}
+
+export async function saveGradingsWithTournament(req: Request, res: Response) {
+	const {
+		gradings,
+		disqualified,
+		tournamentExecutionTime
+	} = req.body
+
+	if (!Array.isArray(gradings)) {
+		return res.status(400).json({ error: 'Gradings must be an array' })
+	}
+
+	const tournament = await processTournamentGradings(gradings, disqualified, tournamentExecutionTime)
+	if (tournament === null) {
 		res.status(400).json({ error: 'Invalid data' })
+	} else {
+		res.status(201).json({ tournamentId: tournament._id })
 	}
 }
