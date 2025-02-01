@@ -5,7 +5,6 @@ import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
 // Own modules
-import GradingModel from '../../models/Grading.js'
 import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
 
@@ -45,7 +44,6 @@ export async function getAllTournaments(
 				const userStanding = await tournament.getStanding(userIdStanding)
 				return {
 					_id: tournament.id,
-					gradings: tournament.gradings,
 					disqualified: tournament.disqualified,
 					tournamentExecutionTime: tournament.tournamentExecutionTime,
 					standings,
@@ -56,7 +54,6 @@ export async function getAllTournaments(
 			} else {
 				return {
 					_id: tournament.id,
-					gradings: tournament.gradings,
 					disqualified: tournament.disqualified,
 					tournamentExecutionTime: tournament.tournamentExecutionTime,
 					standings,
@@ -103,7 +100,6 @@ export async function getTournament(
 			const userStanding = await tournament.getStanding(userIdStanding)
 			res.status(200).json({
 				_id: tournament.id,
-				gradings: tournament.gradings,
 				disqualified: tournament.disqualified,
 				tournamentExecutionTime: tournament.tournamentExecutionTime,
 				standings,
@@ -114,7 +110,6 @@ export async function getTournament(
 		} else {
 			res.status(200).json({
 				_id: tournament.id,
-				gradings: tournament.gradings,
 				disqualified: tournament.disqualified,
 				tournamentExecutionTime: tournament.tournamentExecutionTime,
 				standings,
@@ -144,27 +139,6 @@ export async function getTournamentStatistics(
 		const statistics = await tournament.calculateStatistics()
 
 		res.status(200).json(statistics)
-	} catch (error) {
-		next(error)
-	}
-}
-
-export async function getTournamentGradings(
-	req: Request,
-	res: Response,
-	next: NextFunction
-): Promise<void> {
-	logger.silly('Getting tournament gradings')
-	try {
-		const tournament = await TournamentModel.findById(req.params.id)
-		if (tournament === null) {
-			res.status(404).json({ error: 'Tournament not found' })
-			return
-		}
-		const gradings = await GradingModel.find({
-			_id: { $in: tournament.gradings }
-		})
-		res.status(200).json(gradings)
 	} catch (error) {
 		next(error)
 	}
