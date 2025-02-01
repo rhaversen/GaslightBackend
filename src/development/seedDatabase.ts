@@ -425,4 +425,44 @@ for (const size of smallSizes) {
 	logger.info(`Created tournament with ${size} submission(s)`)
 }
 
-logger.info(`Seeded database with ${userCount} users, ${allSubmissions.flat().length} submissions, and ${tournamentCount} tournaments`)
+// Create one final large tournament with user1
+logger.info('Creating final large tournament with user1...')
+
+const finalTournamentSize = 500 // Large tournament
+const user1FinalSubmission = user1Submissions[Math.floor(Math.random() * user1Submissions.length)]
+
+// Select random submissions from other users
+const otherSubmissionsForFinal = Object.values(
+	allSubmissions.flat()
+		.filter(s => s.user.toString() !== user1.id)
+		.reduce((acc, submission) => {
+			const userId = submission.user.toString()
+			if (!acc[userId]) {
+				acc[userId] = []
+			}
+			acc[userId].push(submission)
+			return acc
+		}, {} as Record<string, typeof allSubmissions[0]>)
+)
+	.map(userSubmissions => userSubmissions[Math.floor(Math.random() * userSubmissions.length)])
+	.sort(() => Math.random() - 0.5)
+	.slice(0, finalTournamentSize - 1)
+
+const finalTournamentSubmissions = [user1FinalSubmission, ...otherSubmissionsForFinal]
+
+// Generate scores for final tournament
+const finalScores = finalTournamentSubmissions.map(() => generateScore())
+const submissionScores = finalTournamentSubmissions.map((sub, index) => ({
+	submission: sub.id,
+	score: finalScores[index]
+}))
+
+await processTournamentGradings(
+	submissionScores,
+	[],
+	Math.floor(Math.random() * 60000) + 1000
+)
+
+logger.info(`Created final large tournament with ${finalTournamentSize} submissions`)
+
+logger.info(`Seeded database with ${userCount} users, ${allSubmissions.flat().length} submissions, and ${tournamentCount + smallSizes.length + specialTournamentPositions.length + 1} tournaments`)
