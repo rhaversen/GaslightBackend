@@ -4,7 +4,7 @@
 import { type Document, model, Schema, SortOrder } from 'mongoose'
 
 // Own modules
-import GradingModel, { IGradingPopulated, IGradingStatistics } from './Grading.js'
+import GradingModel, { IGrading, IGradingPopulated, IGradingStatistics } from './Grading.js'
 import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 
 // Environment variables
@@ -82,7 +82,7 @@ export interface ITournament extends Document {
 	/** Calculate the statistics of the tournament */
 	calculateStatistics(): Promise<TournamentStatistics>
 	/** Get the standings of the tournament in descending order */
-	getStandings(limit?: number, skip?: number, sortField?: string, sortOrder?: SortOrder): Promise<TournamentStanding[]>
+	getStandings(limit?: number, skip?: number, sortField?: keyof IGrading, sortOrder?: SortOrder): Promise<TournamentStanding[]>
 	/** Get the standing of a specific user */
 	getStanding(userId: string): Promise<TournamentStanding | null>
 

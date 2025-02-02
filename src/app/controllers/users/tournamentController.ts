@@ -7,6 +7,7 @@ import mongoose, { type SortOrder } from 'mongoose'
 // Own modules
 import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
+import { IGrading } from '../../models/Grading.js'
 
 // Environment variables
 // Config variables
@@ -39,7 +40,7 @@ export async function getAllTournaments(
 			const standings = await tournament.getStandings(
 				Number(limitStandings) || 3,
 				Number(skipStandings) || 0,
-				sortFieldStandings as string | undefined,
+				sortFieldStandings as keyof IGrading | undefined || 'score',
 				(sortDirectionStandings as SortOrder)
 			)
 
@@ -87,7 +88,7 @@ export async function getTournament(
 			standings = await tournament.getStandings(
 				Number(limitStandings) || 30,
 				Number(skipStandings) || 0,
-				sortFieldStandings as string | undefined || 'score',
+				sortFieldStandings as keyof IGrading | undefined || 'score',
 				(sortDirectionStandings as SortOrder) || -1
 			)
 		}
