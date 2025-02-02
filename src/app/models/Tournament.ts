@@ -119,7 +119,10 @@ const tournamentSchema = new Schema<ITournament>({
 
 tournamentSchema.methods.getStandings = async function (limit: number = 0, skip: number = 0, sortField: string = 'score', sortOrder: SortOrder = -1) {
 	const gradings = await GradingModel.find({ _id: { $in: this.gradings } })
-		.sort({ [sortField]: sortOrder })
+		.sort({
+			[sortField]: sortOrder,
+			submission: 1 // Secondary tiebreaker using submission ID for consistent pagination
+		})
 		.skip(skip)
 		.limit(limit || 0)
 		.exec()
