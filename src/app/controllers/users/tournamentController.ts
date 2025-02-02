@@ -42,29 +42,18 @@ export async function getAllTournaments(
 				sortFieldStandings as string | undefined,
 				(sortDirectionStandings as SortOrder)
 			)
-			if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
-				const userStanding = await tournament.getStanding(userIdStanding)
-				return {
-					_id: tournament.id,
-					disqualified: tournament.disqualified,
-					submissionCount: tournament.gradings.length,
-					tournamentExecutionTime: tournament.tournamentExecutionTime,
-					standings,
-					userStanding,
-					createdAt: tournament.createdAt,
-					updatedAt: tournament.updatedAt
-				}
-			} else {
-				return {
-					_id: tournament.id,
-					disqualified: tournament.disqualified,
-					submissionCount: tournament.gradings.length,
-					tournamentExecutionTime: tournament.tournamentExecutionTime,
-					standings,
-					userStanding: null,
-					createdAt: tournament.createdAt,
-					updatedAt: tournament.updatedAt
-				}
+
+			const shouldGetUserStanding = typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)
+
+			return {
+				_id: tournament.id,
+				disqualified: tournament.disqualified,
+				submissionCount: tournament.gradings.length,
+				tournamentExecutionTime: tournament.tournamentExecutionTime,
+				standings,
+				userStanding: shouldGetUserStanding ? await tournament.getStanding(userIdStanding) : null,
+				createdAt: tournament.createdAt,
+				updatedAt: tournament.updatedAt
 			}
 		}))
 
@@ -102,30 +91,19 @@ export async function getTournament(
 				(sortDirectionStandings as SortOrder) || -1
 			)
 		}
-		if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
-			const userStanding = await tournament.getStanding(userIdStanding)
-			res.status(200).json({
-				_id: tournament.id,
-				disqualified: tournament.disqualified,
-				submissionCount: tournament.gradings.length,
-				tournamentExecutionTime: tournament.tournamentExecutionTime,
-				standings,
-				userStanding,
-				createdAt: tournament.createdAt,
-				updatedAt: tournament.updatedAt
-			})
-		} else {
-			res.status(200).json({
-				_id: tournament.id,
-				disqualified: tournament.disqualified,
-				submissionCount: tournament.gradings.length,
-				tournamentExecutionTime: tournament.tournamentExecutionTime,
-				standings,
-				userStanding: null,
-				createdAt: tournament.createdAt,
-				updatedAt: tournament.updatedAt
-			})
-		}
+
+		const shouldGetUserStanding = typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)
+
+		res.status(200).json({
+			_id: tournament.id,
+			disqualified: tournament.disqualified,
+			submissionCount: tournament.gradings.length,
+			tournamentExecutionTime: tournament.tournamentExecutionTime,
+			standings,
+			userStanding: shouldGetUserStanding ? await tournament.getStanding(userIdStanding) : null,
+			createdAt: tournament.createdAt,
+			updatedAt: tournament.updatedAt
+		})
 	} catch (error) {
 		next(error)
 	}
