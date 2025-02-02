@@ -46,11 +46,12 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 		const sortedScores = scores.sort((a, b) => b - a)
 		const placement = gradings.map(g => sortedScores.indexOf(g.score) + 1)
 
-		const enrichedGradings = gradings.map(grading => ({
+		const enrichedGradings = await Promise.all(gradings.map(async grading => ({
 			...grading,
 			zValue: standardDeviation === 0 ? 0 : (grading.score - mean) / standardDeviation,
-			placement: placement[gradings.indexOf(grading)]
-		})) as IGrading[]
+			placement: placement[gradings.indexOf(grading)],
+			tokenCount: await SubmissionModel.findById(grading.submission).exec().then(sub => sub?.getTokenCount())
+		}))) as IGrading[]
 
 		const newGradings = await GradingModel.insertMany(enrichedGradings)
 		const gradingIds = newGradings.map(grading => grading._id)

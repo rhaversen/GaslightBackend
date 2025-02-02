@@ -146,7 +146,7 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 			submissionName: submission.title,
 			score: grading.score,
 			zValue: grading.zValue,
-			tokenCount: submission.getTokenCount(),
+			tokenCount: grading.tokenCount,
 			placement: grading.placement,
 			statistics: await grading.calculateStatistics()
 		})
@@ -182,6 +182,7 @@ tournamentSchema.methods.getStanding = async function (userId: string) {
 		submissionName: submission.title,
 		score: grading.score,
 		zValue: grading.zValue,
+		tokenCount: grading.tokenCount,
 		placement: grading.placement,
 		statistics: await grading.calculateStatistics()
 	}

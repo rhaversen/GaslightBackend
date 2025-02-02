@@ -23,6 +23,8 @@ export interface IGrading extends Document {
 	zValue: number
 	/** Placement */
 	placement: number
+	/** TokenCount at the time of grading */
+	tokenCount: number
 
     // Timestamps
     createdAt: Date
@@ -63,6 +65,10 @@ const gradingSchema = new Schema<IGrading>({
 		required: true
 	},
 	placement: {
+		type: Schema.Types.Number,
+		required: true
+	},
+	tokenCount: {
 		type: Schema.Types.Number,
 		required: true
 	}
