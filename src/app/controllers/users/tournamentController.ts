@@ -143,9 +143,15 @@ export async function getTournamentStandings(
 			return
 		}
 
-		const amount = Number(req.query.amount) || 3
-		const skip = Number(req.query.skip) || 0
-		const standings = await tournament.getStandings(amount, skip)
+		const { limitStandings, skipStandings, sortFieldStandings, sortDirectionStandings } = req.query
+
+
+		const standings = await tournament.getStandings(
+			Number(limitStandings) || 30,
+			Number(skipStandings) || 0,
+			sortFieldStandings as keyof IGrading | undefined || 'score',
+			(sortDirectionStandings as SortOrder) || -1
+		)
 
 		res.status(200).json(standings)
 	} catch (error) {
