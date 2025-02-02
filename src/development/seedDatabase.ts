@@ -215,7 +215,7 @@ const generateScore = () => {
 		return Math.max(0, normalRandomInRange(500, 100))
 	} else {
 		// Outliers: either very low or very high
-		return Math.random() > 0.5 ? 
+		return Math.random() > 0.5 ?
 			normalRandomInRange(50, 25) :  // Very low scores
 			normalRandomInRange(950, 25)  // Very high scores
 	}
@@ -235,17 +235,26 @@ const createRandomUser = async (index: number) => {
 const createRandomSubmissions = async (user: any, count: number) => {
 	const strategyNames = Object.keys(strategies)
 	const submissions = []
-  
-	// Randomly select which submission will be active (if any)
-	const activeIndex = Math.random() > 0.3 ? Math.floor(Math.random() * count) : -1
-  
-	for (let i = 0; i < count; i++) {
+
+	// First submission will be active and passed
+	const activeStrategyName = strategyNames[Math.floor(Math.random() * strategyNames.length)] as keyof typeof strategies
+	const activeSubmission = await SubmissionModel.create({
+		title: `${activeStrategyName}_${Math.random().toString(36).substring(7)}`,
+		code: strategies[activeStrategyName],
+		user: user.id,
+		active: true,
+		passedEvaluation: true
+	})
+	submissions.push(activeSubmission)
+
+	// Create remaining inactive submissions
+	for (let i = 1; i < count; i++) {
 		const strategyName = strategyNames[Math.floor(Math.random() * strategyNames.length)] as keyof typeof strategies
 		const submission = await SubmissionModel.create({
 			title: `${strategyName}_${Math.random().toString(36).substring(7)}`,
 			code: strategies[strategyName],
 			user: user.id,
-			active: i === activeIndex, // Only one submission will be active
+			active: false,
 			passedEvaluation: Math.random() > 0.3
 		})
 		submissions.push(submission)
@@ -254,7 +263,7 @@ const createRandomSubmissions = async (user: any, count: number) => {
 }
 
 // Create users and their submissions
-const userCount = 200  // Increased from 10
+const userCount = 500
 logger.info('Starting database seeding...')
 logger.info('Creating users...')
 
@@ -281,52 +290,62 @@ for (let i = 0; i < users.length; i += batchSize) {
 	logger.info(`Created submissions for users ${i + 1} to ${i + userBatch.length}`)
 }
 
+// Helper function to get valid tournament submissions
+const getValidTournamentSubmissions = (submissions: any[], size: number) => {
+	// Get only active and passed submissions
+	const validSubmissions = submissions.flat().filter(sub =>
+		sub.active && sub.passedEvaluation
+	)
+
+	// Group by user and take only one submission per user
+	const submissionsByUser = validSubmissions.reduce((acc: any, submission: any) => {
+		const userId = submission.user.toString()
+		if (!acc[userId]) {
+			acc[userId] = submission
+		}
+		return acc
+	}, {})
+
+	// Convert to array and shuffle
+	return Object.values(submissionsByUser)
+		.sort(() => Math.random() - 0.5)
+		.slice(0, size)
+}
+
 // Create tournaments
 const tournamentCount = 10
 const submissionsPerTournament = 100
 logger.info('Creating tournaments...')
 
 for (let t = 0; t < tournamentCount; t++) {
-	// Group submissions by user
-	const submissionsByUser = allSubmissions.flat().reduce((acc, submission) => {
-		const userId = submission.user.toString()
-		if (!acc[userId]) {
-			acc[userId] = []
-		}
-		acc[userId].push(submission)
-		return acc
-	}, {} as Record<string, typeof allSubmissions[0]>)
+	const tournamentSubmissions = getValidTournamentSubmissions(allSubmissions, submissionsPerTournament)
 
-	// Select one random submission per user
-	const uniqueUserSubmissions = Object.values(submissionsByUser).map(
-		userSubmissions => userSubmissions[Math.floor(Math.random() * userSubmissions.length)]
-	)
-
-	// Select random submissions, but ensure one per user
-	const shuffledSubmissions = uniqueUserSubmissions
-		.sort(() => Math.random() - 0.5)
-		.slice(0, submissionsPerTournament)
-
-	const scores = shuffledSubmissions.map(() => generateScore())
-	const submissionScores = shuffledSubmissions.map((sub, index) => ({
-		submission: sub.id,
-		score: scores[index]
-	}))
-
-	const disqualified = shuffledSubmissions
+	// Generate disqualified submissions (5% chance)
+	const disqualified = tournamentSubmissions
 		.filter(() => Math.random() > 0.95)
-		.map(sub => ({
+		.map((sub: any) => ({
 			submission: sub.id,
 			reason: 'Random disqualification for testing'
 		}))
 
+	// Filter out disqualified submissions before creating scores
+	const qualifiedSubmissions = tournamentSubmissions.filter((sub: any) => 
+		!disqualified.some(d => d.submission === sub.id)
+	)
+
+	const scores = qualifiedSubmissions.map(() => generateScore())
+	const submissionScores = qualifiedSubmissions.map((sub: any, index: number) => ({
+		submission: sub.id,
+		score: scores[index]
+	}))
+
 	await processTournamentGradings(
 		submissionScores,
-		disqualified,
+		[], // Empty array for disqualified in gradings
 		Math.floor(Math.random() * 60000) + 1000
 	)
 
-	logger.info(`Created tournament ${t + 1}/${tournamentCount} with ${submissionsPerTournament} submissions`)
+	logger.info(`Created tournament ${t + 1}/${tournamentCount} with ${qualifiedSubmissions.length} submissions (${disqualified.length} disqualified)`)
 }
 
 // Create three special tournaments where user1 has top scores
@@ -335,28 +354,35 @@ logger.info('Creating special tournaments for user1...')
 const specialTournamentPositions = [1, 2, 3, 5, 10, 20]
 const user1 = users.find(u => u.email === 'user1@test.com') as IUser
 const user1Submissions = allSubmissions[0]
-if (!user1Submissions?.length) {
-	logger.error('No submissions found for user1')
+
+// Update user1 submission selection to get only active and passed submissions
+const user1ActiveSubmissions = user1Submissions?.filter(sub => sub.active && sub.passedEvaluation)
+if (!user1ActiveSubmissions?.length) {
+	logger.error('No active and passed submissions found for user1')
 } else {
 	for (const position of specialTournamentPositions) {
-		// Get a random submission from user1
-		const user1Submission = user1Submissions[Math.floor(Math.random() * user1Submissions.length)]
-        
-		// Group other submissions by user and select one per user
-		const otherSubmissionsByUser = allSubmissions
-			.flat()
-			.filter(s => s.user.toString() !== user1.id)
-			.reduce((acc, submission) => {
-				const userId = submission.user.toString()
-				if (!acc[userId]) {
-					acc[userId] = []
-				}
-				acc[userId].push(submission)
-				return acc
-			}, {} as Record<string, typeof allSubmissions[0]>)
+		// Get the active and passed submission from user1
+		const user1Submission = user1ActiveSubmissions[0] // Use first valid submission
 
-		const uniqueUserSubmissions = Object.values(otherSubmissionsByUser)
-			.map(userSubmissions => userSubmissions[Math.floor(Math.random() * userSubmissions.length)])
+		// Get other valid submissions
+		const otherValidSubmissions = allSubmissions
+			.flat()
+			.filter(s => 
+				s.user.toString() !== user1.id && 
+				s.active && 
+				s.passedEvaluation
+			)
+
+		// Group by user and take one submission per user
+		const submissionsByUser = otherValidSubmissions.reduce((acc, submission) => {
+			const userId = submission.user.toString()
+			if (!acc[userId]) {
+				acc[userId] = submission
+			}
+			return acc
+		}, {} as Record<string, any>)
+
+		const uniqueUserSubmissions = Object.values(submissionsByUser)
 			.sort(() => Math.random() - 0.5)
 			.slice(0, submissionsPerTournament - 1)
 
@@ -368,7 +394,7 @@ if (!user1Submissions?.length) {
 				return normalRandomInRange(950 - (position - 1) * 10, 5) // High score with small variance
 			} else {
 				// Other submissions get scores that ensure they don't beat user1's position
-				return index < position ? 
+				return index < position ?
 					normalRandomInRange(950 - (index - 1) * 10, 5) : // Higher scores
 					normalRandomInRange(500, 100) // Normal scores
 			}
@@ -410,7 +436,7 @@ for (const size of smallSizes) {
 
 	// Generate scores for these submissions
 	const scores = shuffledSubmissions.map(() => generateScore())
-    
+
 	const submissionScores = shuffledSubmissions.map((sub, index) => ({
 		submission: sub.id,
 		score: scores[index]
@@ -429,40 +455,45 @@ for (const size of smallSizes) {
 logger.info('Creating final large tournament with user1...')
 
 const finalTournamentSize = 500 // Large tournament
-const user1FinalSubmission = user1Submissions[Math.floor(Math.random() * user1Submissions.length)]
+const user1FinalSubmission = user1ActiveSubmissions?.[0]
+if (!user1FinalSubmission) {
+	logger.error('No active and passed submission found for user1 final tournament')
+} else {
+	// Select random active and passed submissions from other users
+	const otherValidSubmissions = Object.values(
+		allSubmissions.flat()
+			.filter(s => 
+				s.user.toString() !== user1.id &&
+				s.active &&
+				s.passedEvaluation
+			)
+			.reduce((acc, submission) => {
+				const userId = submission.user.toString()
+				if (!acc[userId]) {
+					acc[userId] = submission
+				}
+				return acc
+			}, {} as Record<string, any>)
+	)
+		.sort(() => Math.random() - 0.5)
+		.slice(0, finalTournamentSize - 1)
 
-// Select random submissions from other users
-const otherSubmissionsForFinal = Object.values(
-	allSubmissions.flat()
-		.filter(s => s.user.toString() !== user1.id)
-		.reduce((acc, submission) => {
-			const userId = submission.user.toString()
-			if (!acc[userId]) {
-				acc[userId] = []
-			}
-			acc[userId].push(submission)
-			return acc
-		}, {} as Record<string, typeof allSubmissions[0]>)
-)
-	.map(userSubmissions => userSubmissions[Math.floor(Math.random() * userSubmissions.length)])
-	.sort(() => Math.random() - 0.5)
-	.slice(0, finalTournamentSize - 1)
+	const finalTournamentSubmissions = [user1FinalSubmission, ...otherValidSubmissions]
 
-const finalTournamentSubmissions = [user1FinalSubmission, ...otherSubmissionsForFinal]
+	// Generate scores for final tournament
+	const finalScores = finalTournamentSubmissions.map(() => generateScore())
+	const submissionScores = finalTournamentSubmissions.map((sub, index) => ({
+		submission: sub.id,
+		score: finalScores[index]
+	}))
 
-// Generate scores for final tournament
-const finalScores = finalTournamentSubmissions.map(() => generateScore())
-const submissionScores = finalTournamentSubmissions.map((sub, index) => ({
-	submission: sub.id,
-	score: finalScores[index]
-}))
+	await processTournamentGradings(
+		submissionScores,
+		[],
+		Math.floor(Math.random() * 60000) + 1000
+	)
 
-await processTournamentGradings(
-	submissionScores,
-	[],
-	Math.floor(Math.random() * 60000) + 1000
-)
-
-logger.info(`Created final large tournament with ${finalTournamentSize} submissions`)
+	logger.info(`Created final large tournament with ${finalTournamentSize} submissions`)
+}
 
 logger.info(`Seeded database with ${userCount} users, ${allSubmissions.flat().length} submissions, and ${tournamentCount + smallSizes.length + specialTournamentPositions.length + 1} tournaments`)
