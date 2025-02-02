@@ -35,32 +35,48 @@ type Disqualification = { submission: string; reason: string; }
 
 export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number) {
 	try {
-		// Remove disqualified submissions
-		const disqualifiedSubmissionIds = disqualified.map(d => d.submission)
-		const gradingsWithoutDisqualified = gradings.filter(g => !disqualifiedSubmissionIds.includes(g.submission))
+		// Create a Set of disqualified IDs for O(1) lookup
+		const disqualifiedSet = new Set(disqualified.map(d => d.submission))
 
-		// Remove gradings whoms submissions no longer exist
-		const submissionIds = gradingsWithoutDisqualified.map(g => g.submission)
-		const submissions = await SubmissionModel.find({ _id: { $in: submissionIds } }).exec()
-		const validSubmissionIds = gradingsWithoutDisqualified.filter(g => submissions.map(s => s.id).includes(g.submission))
+		// Filter gradings in a single pass
+		const validGradings = gradings.filter(g => !disqualifiedSet.has(g.submission))
 
-		// Calculate z-values for all gradings at once
-		const scores = validSubmissionIds.map(g => g.score)
-		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
-		const standardDeviation = Math.sqrt(
-			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
+		// Get all submissions in one query
+		const submissions = await SubmissionModel.find(
+			{ _id: { $in: validGradings.map(g => g.submission) } }
+		).exec()
+
+		// Create submission map for O(1) lookup
+		const submissionMap = new Map(submissions.map(s => [s.id, s]))
+
+		// Filter and prepare scores in a single pass
+		const validSubmissionGradings = validGradings.filter(g => submissionMap.has(g.submission))
+		const scores = validSubmissionGradings.map(g => g.score)
+
+		// Calculate statistics in a single pass
+		let sum = 0
+		let sumSquared = 0
+		for (const score of scores) {
+			sum += score
+			sumSquared += score * score
+		}
+		const count = scores.length
+		const mean = sum / count
+		const standardDeviation = Math.sqrt((sumSquared / count) - (mean * mean))
+
+		// Create score to placement map
+		const scoreToPlacement = new Map([...new Set(scores)]
+			.sort((a, b) => b - a)
+			.map((score, index) => [score, index + 1])
 		)
 
-		// Calculate placement for grading
-		const sortedScores = scores.sort((a, b) => b - a)
-		const placement = validSubmissionIds.map(g => sortedScores.indexOf(g.score) + 1)
-
-		const enrichedGradings = await Promise.all(validSubmissionIds.map(async grading => ({
+		// Prepare all gradings in parallel
+		const enrichedGradings = validSubmissionGradings.map(grading => ({
 			...grading,
 			zValue: standardDeviation === 0 ? 0 : (grading.score - mean) / standardDeviation,
-			placement: placement[validSubmissionIds.indexOf(grading)],
-			tokenCount: await SubmissionModel.findById(grading.submission).exec().then(sub => sub?.getTokenCount())
-		}))) as IGrading[]
+			placement: scoreToPlacement.get(grading.score)!,
+			tokenCount: submissionMap.get(grading.submission)?.getTokenCount()
+		})) as IGrading[]
 
 		const newGradings = await GradingModel.insertMany(enrichedGradings)
 		const gradingIds = newGradings.map(grading => grading._id)
