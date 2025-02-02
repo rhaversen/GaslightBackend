@@ -19,7 +19,7 @@ export interface TournamentStanding {
 	userName: string
 	submission: string
 	submissionName: string
-	grade: number
+	score: number
 	zValue: number
 	tokenCount: number
 	placement: number
@@ -144,7 +144,7 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 			userName: submission.user.username,
 			submission: grading.submission.toString(),
 			submissionName: submission.title,
-			grade: grading.score,
+			score: grading.score,
 			zValue: grading.zValue,
 			tokenCount: submission.getTokenCount(),
 			placement: grading.placement,
@@ -180,7 +180,7 @@ tournamentSchema.methods.getStanding = async function (userId: string) {
 		userName: submission.user.username,
 		submission: grading.submission.toString(),
 		submissionName: submission.title,
-		grade: grading.score,
+		score: grading.score,
 		zValue: grading.zValue,
 		placement: grading.placement,
 		statistics: await grading.calculateStatistics()
