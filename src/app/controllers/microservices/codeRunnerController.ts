@@ -35,8 +35,17 @@ type Disqualification = { submission: string; reason: string; }
 
 export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number) {
 	try {
+		// Remove disqualified submissions
+		const disqualifiedSubmissionIds = disqualified.map(d => d.submission)
+		const gradingsWithoutDisqualified = gradings.filter(g => !disqualifiedSubmissionIds.includes(g.submission))
+
+		// Remove gradings whoms submissions no longer exist
+		const submissionIds = gradingsWithoutDisqualified.map(g => g.submission)
+		const submissions = await SubmissionModel.find({ _id: { $in: submissionIds } }).exec()
+		const validSubmissionIds = gradingsWithoutDisqualified.filter(g => submissions.map(s => s.id).includes(g.submission))
+
 		// Calculate z-values for all gradings at once
-		const scores = gradings.map(g => g.score)
+		const scores = validSubmissionIds.map(g => g.score)
 		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
 		const standardDeviation = Math.sqrt(
 			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
@@ -44,12 +53,12 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 
 		// Calculate placement for grading
 		const sortedScores = scores.sort((a, b) => b - a)
-		const placement = gradings.map(g => sortedScores.indexOf(g.score) + 1)
+		const placement = validSubmissionIds.map(g => sortedScores.indexOf(g.score) + 1)
 
-		const enrichedGradings = await Promise.all(gradings.map(async grading => ({
+		const enrichedGradings = await Promise.all(validSubmissionIds.map(async grading => ({
 			...grading,
 			zValue: standardDeviation === 0 ? 0 : (grading.score - mean) / standardDeviation,
-			placement: placement[gradings.indexOf(grading)],
+			placement: placement[validSubmissionIds.indexOf(grading)],
 			tokenCount: await SubmissionModel.findById(grading.submission).exec().then(sub => sub?.getTokenCount())
 		}))) as IGrading[]
 
