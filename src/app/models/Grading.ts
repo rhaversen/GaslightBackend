@@ -25,6 +25,8 @@ export interface IGrading extends Document {
 	placement: number
 	/** TokenCount at the time of grading */
 	tokenCount: number
+	/** Average execution time */
+	avgExecutionTime: number
 
     // Timestamps
     createdAt: Date
@@ -65,6 +67,10 @@ const gradingSchema = new Schema<IGrading>({
 		required: true
 	},
 	placement: {
+		type: Schema.Types.Number,
+		required: true
+	},
+	avgExecutionTime: {
 		type: Schema.Types.Number,
 		required: true
 	},

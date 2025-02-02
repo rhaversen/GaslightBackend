@@ -30,7 +30,7 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 	}
 }
 
-type Grading = { submission: string; score: number; }
+type Grading = { submission: string; score: number; avgExecutionTime: number; }
 type Disqualification = { submission: string; reason: string; }
 
 export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number) {
@@ -75,7 +75,8 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 			...grading,
 			zValue: standardDeviation === 0 ? 0 : (grading.score - mean) / standardDeviation,
 			placement: scoreToPlacement.get(grading.score)!,
-			tokenCount: submissionMap.get(grading.submission)?.getTokenCount()
+			tokenCount: submissionMap.get(grading.submission)?.getTokenCount(),
+			avgExecutionTime: grading.avgExecutionTime,
 		})) as IGrading[]
 
 		const newGradings = await GradingModel.insertMany(enrichedGradings)

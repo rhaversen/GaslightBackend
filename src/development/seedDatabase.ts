@@ -222,6 +222,11 @@ const generateScore = () => {
 }
 
 // Helper functions
+const generateExecutionTime = () => {
+	// Random time between 0.1ms and 1ms
+	return Math.random() * 0.9 + 0.1
+}
+
 const createRandomUser = async (index: number) => {
 	const user = await UserModel.create({
 		email: `user${index}@test.com`,
@@ -336,7 +341,8 @@ for (let t = 0; t < tournamentCount; t++) {
 	const scores = qualifiedSubmissions.map(() => generateScore())
 	const submissionScores = qualifiedSubmissions.map((sub: any, index: number) => ({
 		submission: sub.id,
-		score: scores[index]
+		score: scores[index],
+		avgExecutionTime: generateExecutionTime()
 	}))
 
 	await processTournamentGradings(
@@ -402,7 +408,8 @@ if (!user1ActiveSubmissions?.length) {
 
 		const submissionScores = allTournamentSubmissions.map((sub, index) => ({
 			submission: sub.id,
-			score: scores[index]
+			score: scores[index],
+			avgExecutionTime: generateExecutionTime()
 		}))
 
 		await processTournamentGradings(
@@ -439,7 +446,8 @@ for (const size of smallSizes) {
 
 	const submissionScores = shuffledSubmissions.map((sub, index) => ({
 		submission: sub.id,
-		score: scores[index]
+		score: scores[index],
+		avgExecutionTime: generateExecutionTime()
 	}))
 
 	await processTournamentGradings(
@@ -484,7 +492,8 @@ if (!user1FinalSubmission) {
 	const finalScores = finalTournamentSubmissions.map(() => generateScore())
 	const submissionScores = finalTournamentSubmissions.map((sub, index) => ({
 		submission: sub.id,
-		score: finalScores[index]
+		score: finalScores[index],
+		avgExecutionTime: generateExecutionTime()
 	}))
 
 	await processTournamentGradings(
