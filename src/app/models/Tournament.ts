@@ -329,6 +329,41 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'Gradings must be unique')
 
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if all gradings are from different users
+	const gradings = await GradingModel.find({ _id: { $in: v } }).populate('submission').exec() as IGradingPopulated[]
+	const users = gradings.map(grading => grading.submission.user)
+	const uniqueUsers = new Set(users)
+	if (users.length !== uniqueUsers.size) {
+		return false
+	}
+	return true
+}, 'All gradings must be from different users')
+
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if all gradings are from active and passed evaluation submissions
+	const gradings = await GradingModel.find({ _id: { $in: v } }).populate({
+		path: 'submission',
+		populate: { path: 'user' }
+	}).exec() as IGradingPopulated[]
+	const submissions = gradings.map(grading => grading.submission) as ISubmissionPopulated[]
+	const isValidSubmission = (submission: ISubmissionPopulated) => submission.active && submission.passedEvaluation
+	if (submissions.some(submission => !isValidSubmission(submission))) {
+		return false
+	}
+	return true
+}, 'All gradings must be from active and passed evaluation submissions')
+
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if some grading is in the disqualified array
+	const gradings = await GradingModel.find({ _id: { $in: v } }).exec()
+	const disqualifiedSubmissions = this.disqualified?.map(disqualification => disqualification.submission.toString()) || []
+	if (gradings.some(grading => disqualifiedSubmissions.includes(grading.submission.toString()))) {
+		return false
+	}
+	return true
+}, 'All gradings must not be disqualified')
+
 tournamentSchema.path('disqualified').validate(async function (v: { submission: Schema.Types.ObjectId, reason: string }[]) {
 	// Check if all submissions exist
 	const submissions = v.map(disqualification => disqualification.submission)
