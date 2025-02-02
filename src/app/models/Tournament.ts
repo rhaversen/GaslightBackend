@@ -135,9 +135,9 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 
 	const standings: TournamentStanding[] = []
 
-	for (const grading of gradings) {
+	await Promise.all(gradings.map(async (grading) => {
 		const submission = submissionMap.get(grading.submission.toString())
-		if (!submission?.user) continue
+		if (!submission?.user) return
 
 		standings.push({
 			user: submission.user.id,
@@ -150,7 +150,7 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 			placement: grading.placement,
 			statistics: await grading.calculateStatistics()
 		})
-	}
+	}))
 
 	return standings
 }
