@@ -146,7 +146,6 @@ export async function getTournamentStandings(
 
 		const { limitStandings, skipStandings, sortFieldStandings, sortDirectionStandings } = req.query
 
-
 		const standings = await tournament.getStandings(
 			Number(limitStandings) || 30,
 			Number(skipStandings) || 0,
