@@ -2,12 +2,12 @@
 
 // Third-party libraries
 import { type NextFunction, type Response, type Request } from 'express'
-import mongoose from 'mongoose'
+import mongoose, { type SortOrder } from 'mongoose'
 
 // Own modules
-import GradingModel from '../../models/Grading.js'
-import TournamentModel from '../../models/Tournament.js'
+import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
+import { IGrading } from '../../models/Grading.js'
 
 // Environment variables
 // Config variables
@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding } = req.query
+	const { getStandings, fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -35,35 +35,29 @@ export async function getAllTournaments(
 			.limit(Number(limit) || 0)
 			.skip(Number(skip) || 0)
 			.exec()
-
+	
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
-			const standings = await tournament.getStandings(
-				Number(limitStandings) || 3,
-				Number(skipStandings) || 0
-			)
-			if (typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)) {
-				const userStanding = await tournament.getStanding(userIdStanding)
-				return {
-					_id: tournament.id,
-					gradings: tournament.gradings,
-					disqualified: tournament.disqualified,
-					tournamentExecutionTime: tournament.tournamentExecutionTime,
-					standings,
-					userStanding,
-					createdAt: tournament.createdAt,
-					updatedAt: tournament.updatedAt
-				}
-			} else {
-				return {
-					_id: tournament.id,
-					gradings: tournament.gradings,
-					disqualified: tournament.disqualified,
-					tournamentExecutionTime: tournament.tournamentExecutionTime,
-					standings,
-					userStanding: null,
-					createdAt: tournament.createdAt,
-					updatedAt: tournament.updatedAt
-				}
+			let standings: TournamentStanding[] | undefined = undefined
+			if (getStandings === 'true') {
+				standings = await tournament.getStandings(
+					Number(limitStandings) || 3,
+					Number(skipStandings) || 0,
+					sortFieldStandings as keyof IGrading | undefined || 'score',
+					(sortDirectionStandings as SortOrder)
+				)
+			}
+
+			const shouldGetUserStanding = typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)
+
+			return {
+				_id: tournament.id,
+				disqualified: tournament.disqualified,
+				submissionCount: tournament.gradings.length,
+				tournamentExecutionTime: tournament.tournamentExecutionTime,
+				standings,
+				userStanding: shouldGetUserStanding ? await tournament.getStanding(userIdStanding) : null,
+				createdAt: tournament.createdAt,
+				updatedAt: tournament.updatedAt
 			}
 		}))
 
@@ -90,20 +84,27 @@ export async function getTournament(
 			return
 		}
 
-		const { limitStandings, skipStandings, userIdStanding } = req.query
+		const { getStandings, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
 
-		const standings = await tournament.getStandings(
-			Number(limitStandings) || 30,
-			Number(skipStandings) || 0
-		)
-		const userStanding = await tournament.getStanding(String(userIdStanding))
+		let standings: TournamentStanding[] | undefined = undefined
+		if (getStandings === 'true') {
+			standings = await tournament.getStandings(
+				Number(limitStandings) || 30,
+				Number(skipStandings) || 0,
+				sortFieldStandings as keyof IGrading | undefined || 'score',
+				(sortDirectionStandings as SortOrder) || -1
+			)
+		}
+
+		const shouldGetUserStanding = typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)
+
 		res.status(200).json({
 			_id: tournament.id,
-			gradings: tournament.gradings,
 			disqualified: tournament.disqualified,
+			submissionCount: tournament.gradings.length,
 			tournamentExecutionTime: tournament.tournamentExecutionTime,
 			standings,
-			userStanding,
+			userStanding: shouldGetUserStanding ? await tournament.getStanding(userIdStanding) : null,
 			createdAt: tournament.createdAt,
 			updatedAt: tournament.updatedAt
 		})
@@ -133,27 +134,6 @@ export async function getTournamentStatistics(
 	}
 }
 
-export async function getTournamentGradings(
-	req: Request,
-	res: Response,
-	next: NextFunction
-): Promise<void> {
-	logger.silly('Getting tournament gradings')
-	try {
-		const tournament = await TournamentModel.findById(req.params.id)
-		if (tournament === null) {
-			res.status(404).json({ error: 'Tournament not found' })
-			return
-		}
-		const gradings = await GradingModel.find({
-			_id: { $in: tournament.gradings }
-		})
-		res.status(200).json(gradings)
-	} catch (error) {
-		next(error)
-	}
-}
-
 export async function getTournamentStandings(
 	req: Request,
 	res: Response,
@@ -167,9 +147,14 @@ export async function getTournamentStandings(
 			return
 		}
 
-		const amount = Number(req.query.amount) || 3
-		const skip = Number(req.query.skip) || 0
-		const standings = await tournament.getStandings(amount, skip)
+		const { limitStandings, skipStandings, sortFieldStandings, sortDirectionStandings } = req.query
+
+		const standings = await tournament.getStandings(
+			Number(limitStandings) || 30,
+			Number(skipStandings) || 0,
+			sortFieldStandings as keyof IGrading | undefined || 'score',
+			(sortDirectionStandings as SortOrder) || -1
+		)
 
 		res.status(200).json(standings)
 	} catch (error) {
