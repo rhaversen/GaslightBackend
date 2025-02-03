@@ -17,8 +17,23 @@ import { submission } from '../../services/CodeRunner.js'
 // Destructuring and global variables
 
 export async function getActiveSubmissions(req: Request, res: Response) {
+	const { excludeUser } = req.query
+
 	try {
-		const submissions = await SubmissionModel.find({ active: true, passedEvaluation: true }).exec()
+		// Build dynamic filter object based on query params
+		const filter: any = {
+			active: true,
+			passedEvaluation: true,
+		}
+
+		if (excludeUser) {
+			filter.user = { $ne: excludeUser } // Exclude the user if provided
+		}
+
+		// Fetch submissions based on the dynamic filter
+		const submissions = await SubmissionModel.find(filter)
+
+		// Map the submissions to a specific format
 		const mappedSubmissions: submission[] = submissions.map(sub => ({
 			submissionId: sub.id,
 			files: { 'main.ts': sub.code }
