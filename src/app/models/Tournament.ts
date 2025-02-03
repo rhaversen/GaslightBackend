@@ -1,10 +1,10 @@
 // Node.js built-in modules
 
 // Third-party libraries
-import { type Document, model, Schema } from 'mongoose'
+import { type Document, model, Schema, SortOrder } from 'mongoose'
 
 // Own modules
-import GradingModel, { IGradingPopulated, IGradingStatistics } from './Grading.js'
+import GradingModel, { IGrading, IGradingPopulated, IGradingStatistics } from './Grading.js'
 import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 
 // Environment variables
@@ -14,80 +14,82 @@ import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 // Destructuring and global variables
 
 // Interfaces
-interface TournamentStanding {
-    user: string
+export interface TournamentStanding {
+	user: string
 	userName: string
-    submission: string
+	submission: string
 	submissionName: string
-    grade: number
-    zValue: number
+	score: number
+	zValue: number
+	tokenCount: number
 	placement: number
 	statistics: IGradingStatistics
+	avgExecutionTime: number
 }
 
 interface TournamentStatistics {
-    sampleSize: number
-    centralTendency: {
-        /** Simple average of all scores */
-        arithmeticMean: number
-        /** Only calculated for non-zero scores. Useful for averaging rates */
-        harmonicMean: number | null
-        /** Most frequent score(s) */
-        mode: number[]
-    }
-    dispersion: {
-        /** Average squared deviation from the mean */
-        variance: number
-        /** Square root of variance, indicates spread of scores */
-        standardDeviation: number
-        /** Difference between 75th and 25th percentiles */
-        interquartileRange: number
-    }
-    distribution: {
-        /** Measure of asymmetry. Positive means tail on right, negative means tail on left */
-        skewness: number | null
-        /** Measure of outliers. Higher values mean more extreme outliers */
-        kurtosis: number | null
-    }
-    percentiles: {
-        p10: number
-        p25: number
-        p50: number
-        p75: number
-        p90: number
-    }
-    extrema: {
-        minimum: number
-        maximum: number
-        range: number
-    }
-    tukeyCriteria: {
-        lowerBound: number
-        upperBound: number
-    }
-    outlierValues: number[]
+	sampleSize: number
+	centralTendency: {
+		/** Simple average of all scores */
+		arithmeticMean: number
+		/** Only calculated for non-zero scores. Useful for averaging rates */
+		harmonicMean: number | null
+		/** Most frequent score(s) */
+		mode: number[]
+	}
+	dispersion: {
+		/** Average squared deviation from the mean */
+		variance: number
+		/** Square root of variance, indicates spread of scores */
+		standardDeviation: number
+		/** Difference between 75th and 25th percentiles */
+		interquartileRange: number
+	}
+	distribution: {
+		/** Measure of asymmetry. Positive means tail on right, negative means tail on left */
+		skewness: number | null
+		/** Measure of outliers. Higher values mean more extreme outliers */
+		kurtosis: number | null
+	}
+	percentiles: {
+		p10: number
+		p25: number
+		p50: number
+		p75: number
+		p90: number
+	}
+	extrema: {
+		minimum: number
+		maximum: number
+		range: number
+	}
+	tukeyCriteria: {
+		lowerBound: number
+		upperBound: number
+	}
+	outlierValues: number[]
 }
 
 export interface ITournament extends Document {
-    // Properties
-    gradings: string[]
-    disqualified?: [{
-        submission: string
-        reason: string
-    }]
-    tournamentExecutionTime: number
+	// Properties
+	gradings: string[]
+	disqualified?: [{
+		submission: string
+		reason: string
+	}]
+	tournamentExecutionTime: number
 
-    // Methods
+	// Methods
 	/** Calculate the statistics of the tournament */
-    calculateStatistics(): Promise<TournamentStatistics>
+	calculateStatistics(): Promise<TournamentStatistics>
 	/** Get the standings of the tournament in descending order */
-    getStandings(limit?: number, skip?: number): Promise<TournamentStanding[]>
+	getStandings(limit?: number, skip?: number, sortField?: keyof IGrading, sortOrder?: SortOrder): Promise<TournamentStanding[]>
 	/** Get the standing of a specific user */
 	getStanding(userId: string): Promise<TournamentStanding | null>
 
-    // Timestamps
-    createdAt: Date
-    updatedAt: Date
+	// Timestamps
+	createdAt: Date
+	updatedAt: Date
 }
 
 // Schema
@@ -116,9 +118,12 @@ const tournamentSchema = new Schema<ITournament>({
 	timestamps: true
 })
 
-tournamentSchema.methods.getStandings = async function(limit?: number, skip = 0) {
+tournamentSchema.methods.getStandings = async function (limit: number = 0, skip: number = 0, sortField: string = 'score', sortOrder: SortOrder = -1) {
 	const gradings = await GradingModel.find({ _id: { $in: this.gradings } })
-		.sort({ score: -1 })
+		.sort({
+			[sortField]: sortOrder,
+			submission: 1 // Secondary tiebreaker using submission ID for consistent pagination
+		})
 		.skip(skip)
 		.limit(limit || 0)
 		.exec()
@@ -133,28 +138,30 @@ tournamentSchema.methods.getStandings = async function(limit?: number, skip = 0)
 	)
 
 	const standings: TournamentStanding[] = []
-    
-	for (const grading of gradings) {
+
+	await Promise.all(gradings.map(async (grading) => {
 		const submission = submissionMap.get(grading.submission.toString())
-		if (!submission?.user) continue
+		if (!submission?.user) return
 
 		standings.push({
 			user: submission.user.id,
 			userName: submission.user.username,
 			submission: grading.submission.toString(),
 			submissionName: submission.title,
-			grade: grading.score,
+			score: grading.score,
 			zValue: grading.zValue,
+			tokenCount: grading.tokenCount,
 			placement: grading.placement,
-			statistics: await grading.calculateStatistics()
+			statistics: await grading.calculateStatistics(),
+			avgExecutionTime: grading.avgExecutionTime,
 		})
-	}
+	}))
 
 	return standings
 }
 
-tournamentSchema.methods.getStanding = async function(userId: string) {
-	const grading = await GradingModel.findOne({ 
+tournamentSchema.methods.getStanding = async function (userId: string) {
+	const grading = await GradingModel.findOne({
 		_id: { $in: this.gradings },
 		submission: {
 			$in: await SubmissionModel
@@ -178,14 +185,15 @@ tournamentSchema.methods.getStanding = async function(userId: string) {
 		userName: submission.user.username,
 		submission: grading.submission.toString(),
 		submissionName: submission.title,
-		grade: grading.score,
+		score: grading.score,
 		zValue: grading.zValue,
+		tokenCount: grading.tokenCount,
 		placement: grading.placement,
 		statistics: await grading.calculateStatistics()
 	}
 }
 
-tournamentSchema.methods.calculateStatistics = async function() {
+tournamentSchema.methods.calculateStatistics = async function () {
 	const gradings = await GradingModel.find({ _id: { $in: this.gradings } }).exec()
 	const scores = gradings.map(g => g.score).sort((a, b) => a - b)
 	const sampleSize = scores.length
@@ -196,7 +204,7 @@ tournamentSchema.methods.calculateStatistics = async function() {
 
 	// Central tendency measures
 	const arithmeticMean = scores.reduce((a, b) => a + b, 0) / sampleSize
-    
+
 	// Harmonic mean (only for non-zero numbers)
 	const harmonicMean = scores.every(score => score !== 0)
 		? sampleSize / scores.reduce((a, b) => a + (1 / b), 0)
@@ -222,14 +230,14 @@ tournamentSchema.methods.calculateStatistics = async function() {
 
 	// Distribution shape
 	const skewness = sampleSize > 2 && standardDeviation !== 0
-		? (scores.reduce((a, b) => a + Math.pow((b - arithmeticMean) / standardDeviation, 3), 0) * sampleSize) 
-          / ((sampleSize - 1) * (sampleSize - 2))
+		? (scores.reduce((a, b) => a + Math.pow((b - arithmeticMean) / standardDeviation, 3), 0) * sampleSize)
+		/ ((sampleSize - 1) * (sampleSize - 2))
 		: null
 
 	const kurtosis = sampleSize > 3 && standardDeviation !== 0
 		? ((scores.reduce((a, b) => a + Math.pow((b - arithmeticMean) / standardDeviation, 4), 0) * sampleSize * (sampleSize + 1))
-           / ((sampleSize - 1) * (sampleSize - 2) * (sampleSize - 3)))
-          - (3 * Math.pow(sampleSize - 1, 2)) / ((sampleSize - 2) * (sampleSize - 3))
+			/ ((sampleSize - 1) * (sampleSize - 2) * (sampleSize - 3)))
+		- (3 * Math.pow(sampleSize - 1, 2)) / ((sampleSize - 2) * (sampleSize - 3))
 		: null
 
 	// Percentile calculation using linear interpolation
@@ -264,7 +272,7 @@ tournamentSchema.methods.calculateStatistics = async function() {
 
 	const outlierValues = scores.filter(score =>
 		score < tukeyCriteria.lowerBound ||
-        score > tukeyCriteria.upperBound
+		score > tukeyCriteria.upperBound
 	)
 
 	return {
@@ -326,6 +334,41 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	}
 	return true
 }, 'Gradings must be unique')
+
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if all gradings are from different users
+	const gradings = await GradingModel.find({ _id: { $in: v } }).populate('submission').exec() as IGradingPopulated[]
+	const users = gradings.map(grading => grading.submission.user)
+	const uniqueUsers = new Set(users)
+	if (users.length !== uniqueUsers.size) {
+		return false
+	}
+	return true
+}, 'All gradings must be from different users')
+
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if all gradings are from active and passed evaluation submissions
+	const gradings = await GradingModel.find({ _id: { $in: v } }).populate({
+		path: 'submission',
+		populate: { path: 'user' }
+	}).exec() as IGradingPopulated[]
+	const submissions = gradings.map(grading => grading.submission) as ISubmissionPopulated[]
+	const isValidSubmission = (submission: ISubmissionPopulated) => submission.active && submission.passedEvaluation
+	if (submissions.some(submission => !isValidSubmission(submission))) {
+		return false
+	}
+	return true
+}, 'All gradings must be from active and passed evaluation submissions')
+
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	// Check if some grading is in the disqualified array
+	const gradings = await GradingModel.find({ _id: { $in: v } }).exec()
+	const disqualifiedSubmissions = this.disqualified?.map(disqualification => disqualification.submission.toString()) || []
+	if (gradings.some(grading => disqualifiedSubmissions.includes(grading.submission.toString()))) {
+		return false
+	}
+	return true
+}, 'All gradings must not be disqualified')
 
 tournamentSchema.path('disqualified').validate(async function (v: { submission: Schema.Types.ObjectId, reason: string }[]) {
 	// Check if all submissions exist

@@ -43,6 +43,23 @@ export interface ProcessedEvaluationResults {
   evaluation: ISubmissionEvaluation;
 }
 
+function calculatePercentile(numbers: number[], percentile: number): number {
+	const sorted = [...numbers].sort((a, b) => a - b)
+	const index = Math.ceil((percentile / 100) * sorted.length) - 1
+	return sorted[index]
+}
+
+function filterByPercentile(timings: number[], percentile: number): number[] {
+	if (!timings || timings.length === 0) return []
+	const p95 = calculatePercentile(timings, percentile)
+	return timings.filter(timing => timing <= p95)
+}
+
+function calculateAverage(numbers: number[]): number {
+	if (!numbers || numbers.length === 0) return 0
+	return numbers.reduce((sum, num) => sum + num, 0) / numbers.length
+}
+
 export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<ProcessedEvaluationResults | false> {
 	try {
 		let otherSubmissions
@@ -86,11 +103,12 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 			loadingTimeExceeded = true
 		}
 
-		// Check if average strategy execution time exceeded
+		 // Filter and check execution timings
 		const executionTimings = response.data.strategyExecutionTimings
-		const averageExecutionTime = executionTimings ? executionTimings.reduce((a, b) => a + b, 0) / executionTimings.length : null
+		const filteredTimings = executionTimings ? filterByPercentile(executionTimings, 95) : null
+		const averageExecutionTime = filteredTimings?.length ? calculateAverage(filteredTimings) : null
 
-		if (executionTimings && averageExecutionTime !== null && averageExecutionTime > strategyExecutionTimeout) {
+		if (filteredTimings?.length && averageExecutionTime !== null && averageExecutionTime > strategyExecutionTimeout) {
 			submissionPass = false
 			executionTimeExceeded = true
 		}
@@ -116,7 +134,7 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 				executionTimeExceeded,
 				loadingTimeExceeded,
 				strategyLoadingTimings: response.data.strategyLoadingTimings ?? undefined,
-				strategyExecutionTimings: response.data.strategyExecutionTimings ?? undefined,
+				strategyExecutionTimings: executionTimings ?? undefined,
 				averageExecutionTime: averageExecutionTime ?? undefined
 			}
 		}

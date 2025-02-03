@@ -30,33 +30,53 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 	}
 }
 
-export async function saveGradingsWithTournament(req: Request, res: Response) {
-	const {
-		gradings,
-		disqualified,
-		tournamentExecutionTime
-	} = req.body
+type Grading = { submission: string; score: number; avgExecutionTime: number; }
+type Disqualification = { submission: string; reason: string; }
 
-	if (!Array.isArray(gradings)) {
-		return res.status(400).json({ error: 'Gradings must be an array' })
-	}
-
+export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number) {
 	try {
-		// Calculate z-values for all gradings at once
-		const scores = gradings.map(g => g.score)
-		const mean = scores.reduce((a, b) => a + b, 0) / scores.length
-		const standardDeviation = Math.sqrt(
-			scores.map(x => Math.pow(x - mean, 2)).reduce((a, b) => a + b, 0) / scores.length
+		// Create a Set of disqualified IDs for O(1) lookup
+		const disqualifiedSet = new Set(disqualified.map(d => d.submission))
+
+		// Filter gradings in a single pass
+		const validGradings = gradings.filter(g => !disqualifiedSet.has(g.submission))
+
+		// Get all submissions in one query
+		const submissions = await SubmissionModel.find(
+			{ _id: { $in: validGradings.map(g => g.submission) } }
+		).exec()
+
+		// Create submission map for O(1) lookup
+		const submissionMap = new Map(submissions.map(s => [s.id, s]))
+
+		// Filter and prepare scores in a single pass
+		const validSubmissionGradings = validGradings.filter(g => submissionMap.has(g.submission))
+		const scores = validSubmissionGradings.map(g => g.score)
+
+		// Calculate statistics in a single pass
+		let sum = 0
+		let sumSquared = 0
+		for (const score of scores) {
+			sum += score
+			sumSquared += score * score
+		}
+		const count = scores.length
+		const mean = sum / count
+		const standardDeviation = Math.sqrt((sumSquared / count) - (mean * mean))
+
+		// Create score to placement map
+		const scoreToPlacement = new Map([...new Set(scores)]
+			.sort((a, b) => b - a)
+			.map((score, index) => [score, index + 1])
 		)
 
-		// Calculate placement for grading
-		const sortedScores = scores.sort((a, b) => b - a)
-		const placement = gradings.map(g => sortedScores.indexOf(g.score) + 1)
-
-		const enrichedGradings = gradings.map(grading => ({
+		// Prepare all gradings in parallel
+		const enrichedGradings = validSubmissionGradings.map(grading => ({
 			...grading,
 			zValue: standardDeviation === 0 ? 0 : (grading.score - mean) / standardDeviation,
-			placement: placement[gradings.indexOf(grading)]
+			placement: scoreToPlacement.get(grading.score)!,
+			tokenCount: submissionMap.get(grading.submission)?.getTokenCount(),
+			avgExecutionTime: grading.avgExecutionTime,
 		})) as IGrading[]
 
 		const newGradings = await GradingModel.insertMany(enrichedGradings)
@@ -69,9 +89,28 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 			tournamentExecutionTime
 		})
 
-		res.status(201).json({ tournamentId: tournament._id })
+		return tournament
 	} catch (error) {
 		logger.error(error)
+		return null
+	}
+}
+
+export async function saveGradingsWithTournament(req: Request, res: Response) {
+	const {
+		gradings,
+		disqualified,
+		tournamentExecutionTime
+	} = req.body
+
+	if (!Array.isArray(gradings)) {
+		return res.status(400).json({ error: 'Gradings must be an array' })
+	}
+
+	const tournament = await processTournamentGradings(gradings, disqualified, tournamentExecutionTime)
+	if (tournament === null) {
 		res.status(400).json({ error: 'Invalid data' })
+	} else {
+		res.status(201).json({ tournamentId: tournament._id })
 	}
 }

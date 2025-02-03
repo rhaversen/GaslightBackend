@@ -8,7 +8,6 @@ import Router from 'express'
 import {
 	getAllTournaments,
 	getTournament,
-	getTournamentGradings,
 	getTournamentStatistics,
 	getTournamentStandings
 } from '../../controllers/users/tournamentController.js'
@@ -32,6 +31,8 @@ const router = Router()
  * @query {number} [limitStandings] - Limit number of standings per tournament
  * @query {number} [skipStandings] - Number of standings to skip
  * @query {string} [userIdStanding] - Get specific user standing
+ * @query {string} [sortFieldStandings] - Field to sort standings by
+ * @query {string} [sortDirectionStandings] - Sort direction (1 for ascending, -1 for descending)
  */
 router.get('/',
 	asyncErrorHandler(getAllTournaments)
@@ -40,9 +41,14 @@ router.get('/',
 /**
  * @route GET /api/v1/tournaments/:id
  * @description Get a specific tournament
- * @query {number} [limitStandings] - Limit number of standings returned
- * @query {number} [skipStandings] - Number of standings to skip
+ * @access Public
+ * @param {string} id - Tournament ID
+ * @query {boolean} [getStandings] - Whether to include standings in response
+ * @query {number} [limitStandings] - Limit number of standings returned (default: 30)
+ * @query {number} [skipStandings] - Number of standings to skip (default: 0)
  * @query {string} [userIdStanding] - Get specific user standing
+ * @query {string} [sortFieldStandings] - Field to sort standings by (default: 'score')
+ * @query {string} [sortDirectionStandings] - Sort direction (1 for ascending, -1 for descending)
  */
 router.get('/:id',
 	asyncErrorHandler(getTournament)
@@ -57,18 +63,14 @@ router.get('/:id/statistics',
 )
 
 /**
- * @route GET /api/v1/tournaments/:id/gradings
- * @description Get all gradings for a tournament
- */
-router.get('/:id/gradings',
-	asyncErrorHandler(getTournamentGradings)
-)
-
-/**
  * @route GET /api/v1/tournaments/:id/standings
- * @description Get standings for a tournament with optional amount parameter
- * @query {number} [amount] - Number of standings to return (default: 3)
- * @query {number} [skip] - Number of standings to skip (default: 0)
+ * @description Get standings for a tournament
+ * @access Public
+ * @param {string} id - Tournament ID
+ * @query {number} [limitStandings] - Limit number of standings returned (default: 30)
+ * @query {number} [skipStandings] - Number of standings to skip (default: 0)
+ * @query {string} [sortFieldStandings] - Field to sort standings by (default: 'score')
+ * @query {string} [sortDirectionStandings] - Sort direction (1 for ascending, -1 for descending)
  */
 router.get('/:id/standings',
 	asyncErrorHandler(getTournamentStandings)
