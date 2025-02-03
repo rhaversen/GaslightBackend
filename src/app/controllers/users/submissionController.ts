@@ -56,7 +56,7 @@ export async function getSubmissions(
 ): Promise<void> {
 	logger.silly('Getting submissions')
 
-	const maxAmount = Number(req.query.maxAmount) || 100
+	const maxAmount = Number(req.query.maxAmount) || 0
 	const startIndex = Number(req.query.startIndex) || 0
 	const user = req.user
 
