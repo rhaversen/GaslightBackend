@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
+	const { getStandings, fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -35,14 +35,17 @@ export async function getAllTournaments(
 			.limit(Number(limit) || 0)
 			.skip(Number(skip) || 0)
 			.exec()
-
+	
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
-			const standings = await tournament.getStandings(
-				Number(limitStandings) || 3,
-				Number(skipStandings) || 0,
-				sortFieldStandings as keyof IGrading | undefined || 'score',
-				(sortDirectionStandings as SortOrder)
-			)
+			let standings: TournamentStanding[] | undefined = undefined
+			if (getStandings === 'true') {
+				standings = await tournament.getStandings(
+					Number(limitStandings) || 3,
+					Number(skipStandings) || 0,
+					sortFieldStandings as keyof IGrading | undefined || 'score',
+					(sortDirectionStandings as SortOrder)
+				)
+			}
 
 			const shouldGetUserStanding = typeof userIdStanding === 'string' && mongoose.Types.ObjectId.isValid(userIdStanding)
 
