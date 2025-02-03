@@ -4,7 +4,7 @@
 import axios from 'axios'
 
 // Own modules
-import SubmissionModel, { ISubmission, ISubmissionEvaluation } from '../models/Submission.js'
+import { ISubmission, ISubmissionEvaluation } from '../models/Submission.js'
 import logger from '../utils/logger.js'
 import AppConfig from '../utils/setupConfig.js'
 import { EvaluationResults } from '../types/CodeRunnerTypes.js'
@@ -35,12 +35,12 @@ export interface submission {
 
 interface EvaluationRequestBody {
 	candidateSubmission: submission;
-	otherSubmissions: submission[];
+	excludeUser: string;
 }
 
 export interface ProcessedEvaluationResults {
-  passedEvaluation: boolean;
-  evaluation: ISubmissionEvaluation;
+	passedEvaluation: boolean;
+	evaluation: ISubmissionEvaluation;
 }
 
 function calculatePercentile(numbers: number[], percentile: number): number {
@@ -62,29 +62,16 @@ function calculateAverage(numbers: number[]): number {
 
 export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<ProcessedEvaluationResults | false> {
 	try {
-		let otherSubmissions
-		otherSubmissions = await SubmissionModel.find({ _id: { $ne: candidateSubmission._id }, active: true, passedEvaluation: true })
-
-		// If the candidate is the only submission, evaluate it against itself
-		if (otherSubmissions.length === 0) {
-			otherSubmissions = [{ id: 'other', code: candidateSubmission.code }]
-		}
-
 		const mappedCandidateSubmission: submission = {
 			submissionId: candidateSubmission.id,
 			files: { 'main.ts': candidateSubmission.code }
 		}
 
-		const mappedOtherSubmissions: submission[] = otherSubmissions.map(sub => ({
-			submissionId: sub.id,
-			files: { 'main.ts': sub.code }
-		}))
-
 		const response = await axios.post<EvaluationResults>(
 			`${evaluationRunnerHost}/api/v1/evaluate-submission`,
 			{
 				candidateSubmission: mappedCandidateSubmission,
-				otherSubmissions: mappedOtherSubmissions
+				excludeUser: candidateSubmission.user
 			} as EvaluationRequestBody,
 			{
 				headers: {
@@ -103,7 +90,7 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 			loadingTimeExceeded = true
 		}
 
-		 // Filter and check execution timings
+		// Filter and check execution timings
 		const executionTimings = response.data.strategyExecutionTimings
 		const filteredTimings = executionTimings ? filterByPercentile(executionTimings, 95) : null
 		const averageExecutionTime = filteredTimings?.length ? calculateAverage(filteredTimings) : null
