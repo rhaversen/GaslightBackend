@@ -2,8 +2,8 @@
 # code will be run in, along with what files are needed
 # for production
 
-# Use an official Node.js runtime as the base image
-FROM node:iron-bookworm-slim
+# Use 22 LTS version of Node.js and Debian as the base image and slim for ARM64 compatibility
+FROM node:lts-bookworm-slim
 
 # Use a non-interactive frontend for debconf
 ENV DEBIAN_FRONTEND=noninteractive
