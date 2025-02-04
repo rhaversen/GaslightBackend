@@ -43,23 +43,6 @@ export interface ProcessedEvaluationResults {
 	evaluation: ISubmissionEvaluation;
 }
 
-function calculatePercentile(numbers: number[], percentile: number): number {
-	const sorted = [...numbers].sort((a, b) => a - b)
-	const index = Math.ceil((percentile / 100) * sorted.length) - 1
-	return sorted[index]
-}
-
-function filterByPercentile(timings: number[], percentile: number): number[] {
-	if (!timings || timings.length === 0) return []
-	const p95 = calculatePercentile(timings, percentile)
-	return timings.filter(timing => timing <= p95)
-}
-
-function calculateAverage(numbers: number[]): number {
-	if (!numbers || numbers.length === 0) return 0
-	return numbers.reduce((sum, num) => sum + num, 0) / numbers.length
-}
-
 export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<ProcessedEvaluationResults | false> {
 	try {
 		const mappedCandidateSubmission: submission = {
@@ -80,28 +63,25 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 			}
 		)
 
+		const { results, disqualified, strategyLoadingTimings, strategyExecutionTimings, averageExecutionTime } = response.data
+
 		let submissionPass = true
 		let executionTimeExceeded = false
 		let loadingTimeExceeded = false
 
 		// Check if strategy loading time exceeded
-		if (response.data.strategyLoadingTimings !== null && response.data.strategyLoadingTimings > strategyLoadingTimeout) {
+		if (strategyLoadingTimings != undefined && strategyLoadingTimings > strategyLoadingTimeout) {
 			submissionPass = false
 			loadingTimeExceeded = true
 		}
 
-		// Filter and check execution timings
-		const executionTimings = response.data.strategyExecutionTimings
-		const filteredTimings = executionTimings ? filterByPercentile(executionTimings, 95) : null
-		const averageExecutionTime = filteredTimings?.length ? calculateAverage(filteredTimings) : null
-
-		if (filteredTimings?.length && averageExecutionTime !== null && averageExecutionTime > strategyExecutionTimeout) {
+		if (averageExecutionTime != undefined && averageExecutionTime > strategyExecutionTimeout) {
 			submissionPass = false
 			executionTimeExceeded = true
 		}
 
 		// Check if disqualified
-		if (response.data.disqualified !== null) {
+		if (disqualified != undefined) {
 			submissionPass = false
 		}
 
@@ -113,15 +93,12 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 		return {
 			passedEvaluation: submissionPass,
 			evaluation: {
-				results: {
-					candidate: response.data.results?.candidate ?? 0,
-					average: response.data.results?.average ?? 0
-				},
-				disqualified: response.data.disqualified,
+				results,
+				disqualified: disqualified ?? undefined,
 				executionTimeExceeded,
 				loadingTimeExceeded,
-				strategyLoadingTimings: response.data.strategyLoadingTimings ?? undefined,
-				strategyExecutionTimings: executionTimings ?? undefined,
+				strategyLoadingTimings: strategyLoadingTimings ?? undefined,
+				strategyExecutionTimings: strategyExecutionTimings ?? undefined,
 				averageExecutionTime: averageExecutionTime ?? undefined
 			}
 		}
