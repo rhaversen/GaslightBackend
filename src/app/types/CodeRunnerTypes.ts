@@ -1,13 +1,14 @@
 /* eslint-disable local/enforce-comment-order */
 export interface EvaluationResults {
 	error?: string
-	results?: {
+	results: {
 		candidate: number // Candidate's average
 		average: number // Total average of other players
 	},
 	disqualified: string | null // Error or null
-	strategyExecutionTimings: number[] | null // Timings
 	strategyLoadingTimings: number | null // Timings
+	strategyExecutionTimings: number[] | null // Timings
+	averageExecutionTime: number | null // Average execution time of candidate
 }
 
 export interface TournamentResults {

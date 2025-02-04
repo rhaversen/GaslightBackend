@@ -23,9 +23,9 @@ export interface ISubmissionEvaluation {
 		candidate: number
 		/** Average score of all submissions */
 		average: number
-	} | undefined
+	}
 	/** Reason for disqualification */
-	disqualified: string | null
+	disqualified?: string
 	/** If the execution time exceeded the limit */
 	executionTimeExceeded: boolean
 	/** If the loading time exceeded the limit */
@@ -76,7 +76,7 @@ const evaluationSubSchema = new Schema<ISubmissionEvaluation>({
 		}
 	},
 	disqualified: {
-		type: Schema.Types.Mixed
+		type: Schema.Types.String
 	},
 	executionTimeExceeded: {
 		type: Schema.Types.Boolean,
