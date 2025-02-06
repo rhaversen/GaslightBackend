@@ -318,7 +318,7 @@ const getValidTournamentSubmissions = (submissions: any[], size: number) => {
 }
 
 // Create tournaments
-const tournamentCount = 10
+const tournamentCount = 5
 const submissionsPerTournament = 100
 logger.info('Creating tournaments...')
 
@@ -347,7 +347,7 @@ for (let t = 0; t < tournamentCount; t++) {
 
 	await processTournamentGradings(
 		submissionScores,
-		[], // Empty array for disqualified in gradings
+		disqualified,
 		Math.floor(Math.random() * 60000) + 1000
 	)
 
@@ -357,7 +357,7 @@ for (let t = 0; t < tournamentCount; t++) {
 // Create three special tournaments where user1 has top scores
 logger.info('Creating special tournaments for user1...')
 
-const specialTournamentPositions = [1, 2, 3, 5, 10, 20]
+const specialTournamentPositions = [1, 2, 3, 5, 20]
 const user1 = users.find(u => u.email === 'user1@test.com') as IUser
 const user1Submissions = allSubmissions[0]
 
@@ -424,7 +424,7 @@ if (!user1ActiveSubmissions?.length) {
 
 // Create tournaments with small numbers of submissions
 logger.info('Creating small-sized tournaments...')
-const smallSizes = [1, 2, 3, 5, 10]
+const smallSizes = [1, 2, 3, 5, 20]
 
 for (const size of smallSizes) {
 	// Select random submissions, ensuring one per user
