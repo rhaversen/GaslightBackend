@@ -5,6 +5,7 @@ import { type Document, model, Schema } from 'mongoose'
 
 // Own modules
 import { ISubmission } from './Submission.js'
+import TournamentModel, { ITournament } from './Tournament.js'
 
 // Environment variables
 
@@ -104,7 +105,9 @@ gradingSchema.pre('deleteMany', async function (next) {
 
 // Add method to schema
 gradingSchema.methods.calculateStatistics = async function(): Promise<IGradingStatistics> {
-	const allGradings = await GradingModel.find({}).select('score').exec()
+	// Find all gradings that was in the same tournament as this grading
+	const tournament = await TournamentModel.findOne({ gradings: this._id }).exec() as ITournament
+	const allGradings = await GradingModel.find({ _id: { $in: tournament.gradings } }).exec()
 	const scores = allGradings.map(g => g.score)
     
 	// Calculate mean and standard deviation
@@ -114,8 +117,8 @@ gradingSchema.methods.calculateStatistics = async function(): Promise<IGradingSt
 	)
     
 	// Calculate percentile rank
-	const belowCount = scores.filter(score => score < this.score).length
-	const percentileRank = (belowCount / scores.length) * 100
+	const belowOrEqualCount = scores.filter(score => score <= this.score).length
+	const percentileRank = (belowOrEqualCount / scores.length) * 100
     
 	// Calculate normalized score (-1 to 1 scale)
 	const maxScore = Math.max(...scores)
