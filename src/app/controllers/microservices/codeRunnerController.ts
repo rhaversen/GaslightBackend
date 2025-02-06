@@ -9,6 +9,7 @@ import SubmissionModel from '../../models/Submission.js'
 import TournamentModel from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
 import { submission } from '../../services/CodeRunner.js'
+import { emitTournamentCreated } from '../../webSockets/TournamentHandlers.js'
 
 // Environment variables
 
@@ -103,6 +104,8 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 			disqualified,
 			tournamentExecutionTime
 		})
+
+		emitTournamentCreated(tournament)
 
 		return tournament
 	} catch (error) {

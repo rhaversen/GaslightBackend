@@ -189,7 +189,8 @@ tournamentSchema.methods.getStanding = async function (userId: string) {
 		zValue: grading.zValue,
 		tokenCount: grading.tokenCount,
 		placement: grading.placement,
-		statistics: await grading.calculateStatistics()
+		statistics: await grading.calculateStatistics(),
+		avgExecutionTime: grading.avgExecutionTime
 	}
 }
 
