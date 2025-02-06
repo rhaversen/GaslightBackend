@@ -4,7 +4,7 @@
 import { type Document, model, Schema, SortOrder } from 'mongoose'
 
 // Own modules
-import GradingModel, { IGrading, IGradingPopulated, IGradingStatistics } from './Grading.js'
+import GradingModel, { IGrading, IGradingPopulated } from './Grading.js'
 import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 
 // Environment variables
@@ -20,10 +20,9 @@ export interface TournamentStanding {
 	submission: string
 	submissionName: string
 	score: number
-	zValue: number
 	tokenCount: number
 	placement: number
-	statistics: IGradingStatistics
+	percentileRank: number
 	avgExecutionTime: number
 }
 
@@ -149,10 +148,9 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 			submission: grading.submission.toString(),
 			submissionName: submission.title,
 			score: grading.score,
-			zValue: grading.zValue,
 			tokenCount: grading.tokenCount,
 			placement: grading.placement,
-			statistics: await grading.calculateStatistics(),
+			percentileRank: grading.percentileRank,
 			avgExecutionTime: grading.avgExecutionTime,
 		})
 	}))
@@ -186,10 +184,9 @@ tournamentSchema.methods.getStanding = async function (userId: string) {
 		submission: grading.submission.toString(),
 		submissionName: submission.title,
 		score: grading.score,
-		zValue: grading.zValue,
 		tokenCount: grading.tokenCount,
 		placement: grading.placement,
-		statistics: await grading.calculateStatistics(),
+		percentileRank: grading.percentileRank,
 		avgExecutionTime: grading.avgExecutionTime
 	}
 }
