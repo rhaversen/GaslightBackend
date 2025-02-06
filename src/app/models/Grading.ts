@@ -117,8 +117,8 @@ gradingSchema.methods.calculateStatistics = async function(): Promise<IGradingSt
 	)
     
 	// Calculate percentile rank
-	const belowCount = scores.filter(score => score < this.score).length
-	const percentileRank = (belowCount / scores.length) * 100
+	const belowOrEqualCount = scores.filter(score => score <= this.score).length
+	const percentileRank = (belowOrEqualCount / scores.length) * 100
     
 	// Calculate normalized score (-1 to 1 scale)
 	const maxScore = Math.max(...scores)
