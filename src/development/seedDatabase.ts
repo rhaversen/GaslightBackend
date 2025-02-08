@@ -17,7 +17,7 @@ const game = await GameModel.create({
 	name: 'Meyer',
 	description: 'Meyer game built from GaslightCodeRunner source files',
 	files: meyerFiles,
-	batchSize: 100
+	batchSize: 10
 })
 const gameId = game.id as string
 
