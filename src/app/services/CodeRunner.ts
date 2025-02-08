@@ -46,7 +46,7 @@ export interface ProcessedEvaluationResults {
 	evaluation: ISubmissionEvaluation;
 }
 
-export async function submitCodeForEvaluation(candidateSubmission: ISubmission, game: IGame): Promise<ProcessedEvaluationResults | false> {
+export async function submitCodeForEvaluation(candidateUser: string, candidateSubmission: ISubmission, game: IGame): Promise<ProcessedEvaluationResults | false> {
 	try {
 		const mappedCandidateSubmission: submission = {
 			submissionId: candidateSubmission.id,
@@ -59,7 +59,8 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission, 
 				gameFiles: game.files,
 				gameId: game.id,
 				batchSize: game.batchSize,
-				candidateSubmission: mappedCandidateSubmission
+				candidateSubmission: mappedCandidateSubmission,
+				candidateUser
 			} as EvaluationRequestBody,
 			{
 				headers: {

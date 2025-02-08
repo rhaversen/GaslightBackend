@@ -151,7 +151,7 @@ export async function updateSubmission(
 				res.status(404).json({ error: 'Game not found' })
 				return
 			}
-			const evaluationResult = await submitCodeForEvaluation(submission, game)
+			const evaluationResult = await submitCodeForEvaluation(user.id, submission, game)
 
 			if (evaluationResult === false) {
 				res.status(500).json({ error: 'Server Error' })
@@ -294,7 +294,7 @@ export async function reEvaluateSubmission(
 			return
 		}
 
-		const evaluationResult = await submitCodeForEvaluation(submission, game)
+		const evaluationResult = await submitCodeForEvaluation(user.id, submission, game)
 		if (evaluationResult === false) {
 			res.status(500).json({ error: 'Server Error' })
 			return
