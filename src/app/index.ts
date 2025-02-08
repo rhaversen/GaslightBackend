@@ -32,6 +32,7 @@ import authRouter from './routes/users/auth.js'
 import submissionRouter from './routes/users/submissions.js'
 import tournamentRouter from './routes/users/tournaments.js'
 import userRouter from './routes/users/users.js'
+import gameRouter from './routes/users/games.js'
 
 // Service routes
 import serviceRoutes from './routes/service.js'
@@ -101,6 +102,7 @@ app.use('/api/v1/auth', authRouter)
 app.use('/api/v1/submissions', submissionRouter)
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/tournaments', tournamentRouter)
+app.use('/api/v1/games', gameRouter)
 app.use('/api/v1/microservices', microservicesRouter)
 app.use('/api/service', serviceRoutes)
 
