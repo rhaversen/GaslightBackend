@@ -72,6 +72,8 @@ interface TournamentStatistics {
 export interface ITournament extends Document {
 	// Properties
 	gradings: string[]
+	/** Foreign key referencing game for which the tournament is held */
+	game: Schema.Types.ObjectId
 	disqualified?: [{
 		submission: string
 		reason: string
@@ -98,6 +100,11 @@ const tournamentSchema = new Schema<ITournament>({
 		ref: 'Grading',
 		required: true
 	}],
+	game: { 
+		type: Schema.Types.ObjectId,
+		ref: 'Game',
+		required: true
+	},
 	disqualified: [{
 		submission: {
 			type: Schema.Types.ObjectId,
@@ -367,6 +374,18 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	}
 	return true
 }, 'All gradings must not be disqualified')
+
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	const gradings = await GradingModel.find({ _id: { $in: v } })
+		.populate({ path: 'submission', select: 'game' })
+		.exec() as { submission: { game: Schema.Types.ObjectId } }[]
+	for (const grading of gradings) {
+		if (grading.submission.game.toString() !== this.game.toString()) {
+			return false
+		}
+	}
+	return true
+}, 'All gradings must be from submissions of the same game as the tournament')
 
 tournamentSchema.path('disqualified').validate(async function (v: { submission: Schema.Types.ObjectId, reason: string }[]) {
 	// Check if all submissions exist

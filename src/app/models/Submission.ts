@@ -46,6 +46,8 @@ export interface ISubmission extends Document {
 	code: string
 	/** User who submitted the code */
     user: Schema.Types.ObjectId | string | IUser
+	/** Foreign key referencing game */
+	game: Schema.Types.ObjectId | string
 	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
     active: boolean
 	/** Decides if the submission has passed an evaluation and is ready for tournaments. Null if not evaluated yet */
@@ -114,6 +116,11 @@ const submissionSchema = new Schema<ISubmission>({
 	user: {
 		type: Schema.Types.ObjectId,
 		ref: 'User',
+		required: true
+	},
+	game: {
+		type: Schema.Types.ObjectId,
+		ref: 'Game',
 		required: true
 	},
 	active: {

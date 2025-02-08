@@ -8,6 +8,7 @@ import { ISubmission, ISubmissionEvaluation } from '../models/Submission.js'
 import logger from '../utils/logger.js'
 import AppConfig from '../utils/setupConfig.js'
 import { EvaluationResults } from '../types/CodeRunnerTypes.js'
+import { IGame } from '../models/Game.js'
 
 // Environment variables
 const {
@@ -35,7 +36,9 @@ export interface submission {
 
 interface EvaluationRequestBody {
 	candidateSubmission: submission;
-	excludeUser: string;
+	gameFiles: FileMap;
+	batchSize: number;
+	gameId: string;
 }
 
 export interface ProcessedEvaluationResults {
@@ -43,7 +46,7 @@ export interface ProcessedEvaluationResults {
 	evaluation: ISubmissionEvaluation;
 }
 
-export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<ProcessedEvaluationResults | false> {
+export async function submitCodeForEvaluation(candidateSubmission: ISubmission, game: IGame): Promise<ProcessedEvaluationResults | false> {
 	try {
 		const mappedCandidateSubmission: submission = {
 			submissionId: candidateSubmission.id,
@@ -53,8 +56,10 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 		const response = await axios.post<EvaluationResults>(
 			`${evaluationRunnerHost}/api/v1/evaluate-submission`,
 			{
-				candidateSubmission: mappedCandidateSubmission,
-				excludeUser: candidateSubmission.user
+				gameFiles: game.files,
+				gameId: game.id,
+				batchSize: game.batchSize,
+				candidateSubmission: mappedCandidateSubmission
 			} as EvaluationRequestBody,
 			{
 				headers: {

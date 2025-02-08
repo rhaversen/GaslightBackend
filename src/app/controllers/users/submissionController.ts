@@ -8,6 +8,7 @@ import mongoose from 'mongoose'
 import SubmissionModel from '../../models/Submission.js'
 import { submitCodeForEvaluation } from '../../services/CodeRunner.js'
 import logger from '../../utils/logger.js'
+import GameModel from '../../models/Game.js'
 
 // Environment variables
 
@@ -29,16 +30,15 @@ export async function createSubmission(
 		return
 	}
 
-	const allowedFields = {
+	const fields = {
 		title: req.body.title,
 		code: req.body.code,
+		game: req.body.game,
+		user: user.id
 	}
 
 	try {
-		const newSubmission = await SubmissionModel.create({
-			...allowedFields,
-			user: user.id
-		})
+		const newSubmission = await SubmissionModel.create(fields)
 		res.status(201).json(newSubmission)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
@@ -72,6 +72,7 @@ export async function getSubmissions(
 	if (req.query.active !== undefined) query.active = req.query.adjective
 	if (req.query.passedEvaluation !== undefined) query.passedEvaluation = req.query.passedEvaluation
 	if (req.query.user !== undefined) query.user = req.query.user
+	if (req.query.game !== undefined) query.game = req.query.game
 
 	try {
 		const submissions = await SubmissionModel
@@ -89,6 +90,7 @@ export async function getSubmissions(
 			passedEvaluation: submission.passedEvaluation,
 			tokenCount: submission.getTokenCount(),
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}))
@@ -144,7 +146,12 @@ export async function updateSubmission(
 		
 		// If the code was updated or the submission was not evaluated yet, re-evaluate it
 		if (codeUpdated || submission.passedEvaluation === null) {
-			const evaluationResult = await submitCodeForEvaluation(submission)
+			const game = await GameModel.findById(submission.game)
+			if (game === null) {
+				res.status(404).json({ error: 'Game not found' })
+				return
+			}
+			const evaluationResult = await submitCodeForEvaluation(submission, game)
 
 			if (evaluationResult === false) {
 				res.status(500).json({ error: 'Server Error' })
@@ -171,6 +178,7 @@ export async function updateSubmission(
 			passedEvaluation: submission.passedEvaluation,
 			tokenCount: submission.getTokenCount(),
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}
@@ -211,6 +219,7 @@ export async function getSubmission(
 			passedEvaluation: submission.passedEvaluation,
 			tokenCount: submission.getTokenCount(),
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}
@@ -279,8 +288,13 @@ export async function reEvaluateSubmission(
 			return
 		}
 
-		const evaluationResult = await submitCodeForEvaluation(submission)
+		const game = await GameModel.findById(submission.game)
+		if (game === null) {
+			res.status(404).json({ error: 'Game not found' })
+			return
+		}
 
+		const evaluationResult = await submitCodeForEvaluation(submission, game)
 		if (evaluationResult === false) {
 			res.status(500).json({ error: 'Server Error' })
 			return
@@ -305,6 +319,7 @@ export async function reEvaluateSubmission(
 			passedEvaluation: submission.passedEvaluation,
 			tokenCount: submission.getTokenCount(),
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}

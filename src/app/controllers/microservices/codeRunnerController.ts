@@ -10,6 +10,7 @@ import TournamentModel from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
 import { submission } from '../../services/CodeRunner.js'
 import { emitTournamentCreated } from '../../webSockets/TournamentHandlers.js'
+import GameModel from '../../models/Game.js'
 
 // Environment variables
 
@@ -18,7 +19,7 @@ import { emitTournamentCreated } from '../../webSockets/TournamentHandlers.js'
 // Destructuring and global variables
 
 export async function getActiveSubmissions(req: Request, res: Response) {
-	const { excludeUser } = req.query
+	const { excludeUser, game } = req.query
 
 	try {
 		// Build dynamic filter object based on query params
@@ -29,6 +30,10 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 
 		if (excludeUser) {
 			filter.user = { $ne: excludeUser } // Exclude the user if provided
+		}
+
+		if (game) {
+			filter.game = game // Filter by game if provided
 		}
 
 		// Fetch submissions based on the dynamic filter
@@ -46,10 +51,25 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 	}
 }
 
+export async function getGames(req: Request, res: Response) {
+	try {
+		const games = await GameModel.find()
+		const mappedGames = games.map(game => ({
+			id: game.id,
+			gameFiles: game.files,
+			batchSize: game.batchSize
+		}))
+		res.status(200).json(mappedGames)
+	} catch (error) {
+		logger.error(error)
+		res.status(500).json({ error: 'Server error' })
+	}
+}
+
 type Grading = { submission: string; score: number; avgExecutionTime: number; }
 type Disqualification = { submission: string; reason: string; }
 
-export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number) {
+export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number, game: string) {
 	try {
 		const disqualifiedSet = new Set(disqualified.map(d => d.submission))
 		const validGradings = gradings.filter(g => !disqualifiedSet.has(g.submission))
@@ -85,7 +105,8 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 		const tournament = await TournamentModel.create({
 			gradings: newGradings.map(gr => gr._id),
 			disqualified,
-			tournamentExecutionTime
+			tournamentExecutionTime,
+			game
 		})
 
 		emitTournamentCreated(tournament)
@@ -100,14 +121,15 @@ export async function saveGradingsWithTournament(req: Request, res: Response) {
 	const {
 		gradings,
 		disqualified,
-		tournamentExecutionTime
+		tournamentExecutionTime,
+		game
 	} = req.body
 
 	if (!Array.isArray(gradings)) {
 		return res.status(400).json({ error: 'Gradings must be an array' })
 	}
 
-	const tournament = await processTournamentGradings(gradings, disqualified, tournamentExecutionTime)
+	const tournament = await processTournamentGradings(gradings, disqualified, tournamentExecutionTime, game)
 	if (tournament === null) {
 		res.status(400).json({ error: 'Invalid data' })
 	} else {
