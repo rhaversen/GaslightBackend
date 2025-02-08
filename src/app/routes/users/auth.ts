@@ -6,7 +6,8 @@ import Router from 'express'
 // Own modules
 import {
 	loginUserLocal,
-	logoutLocal
+	logoutLocal,
+	getMe
 } from '../../controllers/users/authController.js'
 import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 import { ensureAuthenticated } from '../../middleware/auth.js'
@@ -40,6 +41,18 @@ router.post('/login-user-local',
  */
 router.post('/logout-local',
 	asyncErrorHandler(logoutLocal)
+)
+
+/**
+ * @route GET /api/v1/auth/user
+ * @description Get current user.
+ * @access Private
+ * @returns {number} res.status - The status code of the HTTP response.
+ * @returns {Object} res.body - The user object.
+ */
+router.get('/user',
+	ensureAuthenticated,
+	asyncErrorHandler(getMe)
 )
 
 /**

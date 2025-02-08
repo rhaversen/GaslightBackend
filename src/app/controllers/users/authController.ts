@@ -7,6 +7,7 @@ import passport from 'passport'
 // Own modules
 import { type IUser } from '../../models/User.js'
 import config from '../../utils/setupConfig.js'
+import SubmissionModel from '../../models/Submission.js'
 
 // Environment variables
 
@@ -93,4 +94,27 @@ export async function logoutLocal (req: Request, res: Response, next: NextFuncti
 			res.status(200).json({ message: 'Logged out' })
 		})
 	})
+}
+
+export async function getMe(req: Request, res: Response): Promise<void> {
+	const user = req.user
+
+	if (user === undefined) {
+		res.status(401).json({ error: 'Unauthorized' })
+		return
+	}
+
+	const mappedUser = {
+		_id: user.id,
+		username: user.username,
+		email: user.email,
+		expirationDate: user.expirationDate,
+		confirmed: user.confirmed,
+		submissionCount: await SubmissionModel.countDocuments({ user: user.id }),
+		activeSubmission: (await SubmissionModel.findOne({ user: user.id, active: true }).exec())?.title || null,
+		createdAt: user.createdAt,
+		updatedAt: user.updatedAt
+	}
+
+	res.status(200).json(mappedUser)
 }

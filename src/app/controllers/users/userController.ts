@@ -80,29 +80,6 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
 	res.status(200).json(mappedUsers)
 }
 
-export async function getMe(req: Request, res: Response): Promise<void> {
-	const user = req.user
-
-	if (user === undefined) {
-		res.status(401).json({ error: 'Unauthorized' })
-		return
-	}
-
-	const mappedUser = {
-		_id: user.id,
-		username: user.username,
-		email: user.email,
-		expirationDate: user.expirationDate,
-		confirmed: user.confirmed,
-		submissionCount: await SubmissionModel.countDocuments({ user: user.id }),
-		activeSubmission: (await SubmissionModel.findOne({ user: user.id, active: true }).exec())?.title || null,
-		createdAt: user.createdAt,
-		updatedAt: user.updatedAt
-	}
-
-	res.status(200).json(mappedUser)
-}
-
 export async function getUser(req: Request, res: Response): Promise<void> {
 	const user = req.user
 	const paramUser = await UserModel.findById(req.params.id).exec()
