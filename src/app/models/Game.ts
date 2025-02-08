@@ -12,6 +12,7 @@ import { Document, model, Schema } from 'mongoose'
 // Destructuring and global variables
 export interface FileMap {
 	'main.ts': string;
+	'apiTypes.ts': string;
 	[key: string]: string;
 }
 
@@ -34,9 +35,9 @@ const gameSchema = new Schema<IGame>({
 		required: true,
 		validate: {
 			validator: function (v: Record<string, string>) {
-				return v && typeof v['main.ts'] === 'string'
+				return v && typeof v['main.ts'] === 'string' && typeof v['apiTypes.ts'] === 'string'
 			},
-			message: 'files must contain a \'main.ts\' property'
+			message: 'files must contain a \'main.ts\' and a \'apiTypes.ts\' property'
 		}
 	},
 	batchSize: { type: Number, required: true }
