@@ -7,8 +7,19 @@ import SubmissionModel from '../app/models/Submission.js'
 import UserModel, { IUser } from '../app/models/User.js'
 import logger from '../app/utils/logger.js'
 import { processTournamentGradings } from '../app/controllers/microservices/codeRunnerController.js'
+import GameModel from '../app/models/Game.js'
+import meyerFiles from './gamefiles.js'
 
 logger.info('Seeding database')
+
+// Create a single game using the source files from the external module
+const game = await GameModel.create({
+	name: 'Meyer',
+	description: 'Meyer game built from GaslightCodeRunner source files',
+	files: meyerFiles,
+	batchSize: 100
+})
+const gameId = game.id as string
 
 const dumbStrategy = `const main = (api: MeyerStrategyAPI) => {
 	// If we're first in the round, we need to roll
@@ -248,7 +259,8 @@ const createRandomSubmissions = async (user: any, count: number) => {
 		code: strategies[activeStrategyName],
 		user: user.id,
 		active: true,
-		passedEvaluation: true
+		passedEvaluation: true,
+		game: gameId
 	})
 	submissions.push(activeSubmission)
 
@@ -260,7 +272,8 @@ const createRandomSubmissions = async (user: any, count: number) => {
 			code: strategies[strategyName],
 			user: user.id,
 			active: false,
-			passedEvaluation: Math.random() > 0.3
+			passedEvaluation: Math.random() > 0.3,
+			game: gameId
 		})
 		submissions.push(submission)
 	}
@@ -348,7 +361,8 @@ for (let t = 0; t < tournamentCount; t++) {
 	await processTournamentGradings(
 		submissionScores,
 		disqualified,
-		Math.floor(Math.random() * 60000) + 1000
+		Math.floor(Math.random() * 60000) + 1000,
+		gameId
 	)
 
 	logger.info(`Created tournament ${t + 1}/${tournamentCount} with ${qualifiedSubmissions.length} submissions (${disqualified.length} disqualified)`)
@@ -415,7 +429,8 @@ if (!user1ActiveSubmissions?.length) {
 		await processTournamentGradings(
 			submissionScores,
 			[],
-			Math.floor(Math.random() * 60000) + 1000
+			Math.floor(Math.random() * 60000) + 1000,
+			gameId
 		)
 
 		logger.info(`Created special tournament with user1 in position ${position}`)
@@ -453,7 +468,8 @@ for (const size of smallSizes) {
 	await processTournamentGradings(
 		submissionScores,
 		[],
-		Math.floor(Math.random() * 60000) + 1000
+		Math.floor(Math.random() * 60000) + 1000,
+		gameId
 	)
 
 	logger.info(`Created tournament with ${size} submission(s)`)
@@ -499,7 +515,8 @@ if (!user1FinalSubmission) {
 	await processTournamentGradings(
 		submissionScores,
 		[],
-		Math.floor(Math.random() * 60000) + 1000
+		Math.floor(Math.random() * 60000) + 1000,
+		gameId
 	)
 
 	logger.info(`Created final large tournament with ${finalTournamentSize} submissions`)
