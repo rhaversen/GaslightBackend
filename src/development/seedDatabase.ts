@@ -8,7 +8,7 @@ import UserModel, { IUser } from '../app/models/User.js'
 import logger from '../app/utils/logger.js'
 import { processTournamentGradings } from '../app/controllers/microservices/codeRunnerController.js'
 import GameModel from '../app/models/Game.js'
-import meyerFiles from './gamefiles.js'
+import meyerFiles, { apiTypes, exampleStrategy } from './gamefiles.js'
 
 logger.info('Seeding database')
 
@@ -17,6 +17,8 @@ const game = await GameModel.create({
 	name: 'Meyer',
 	description: 'Meyer game built from GaslightCodeRunner source files',
 	files: meyerFiles,
+	apiTypes,
+	exampleStrategy,
 	batchSize: 10
 })
 const gameId = game.id as string

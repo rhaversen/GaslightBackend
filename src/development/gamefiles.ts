@@ -359,7 +359,94 @@ export interface Action {
 	playerIndex: number;
 }`,
 
-	'apiTypes.ts': `/**
+	'utils.ts': `export function rollDice(): [number, number] {
+	const randomDie = () => Math.floor(Math.random() * 6) + 1
+	return [randomDie(), randomDie()]
+}
+
+export function calculateScore(dice: [number, number]): number {
+	const [die1, die2] = dice.sort((a, b) => b - a)
+	if ((die1 === 2 && die2 === 1)) return 1000 // Meyer
+	if ((die1 === 3 && die2 === 1)) return 999  // Lille-meyer
+	if (die1 === die2) return die1 * 100        // Pairs
+	return die1 * 10 + die2                     // Regular scores
+}
+
+const validScores = new Set<number>([
+	1000, 999,
+	600, 500, 400, 300, 200, 100,
+	65, 64, 63, 62, 61,
+	54, 53, 52, 51,
+	43, 42, 41,
+	32,
+])
+
+export function isValidScore(score: number): boolean {
+	return validScores.has(score)
+}
+
+export function roundUpToValidScore(score: number): number {
+	const validScoresAscending = [...validScores].sort((a, b) => a - b)
+	for (const validScore of validScoresAscending) { 
+		if (score <= validScore) return validScore
+	}
+	return 0
+}`
+}
+
+export const exampleStrategy = `const main = (api: MeyerStrategyAPI) => {
+	// YOUR CODE HERE
+
+	// This is an example strategy
+	// It will make some naive decisions based on the current state of the game
+	// You can use this as a starting point for your own strategy or write your own from scratch
+
+	// If we're first in the round, we need to roll
+	if (api.isFirstInRound()) {
+		api.roll()
+		// We can't make any more actions the first turn, so we return
+		return
+	}
+
+	// Get previous announced values
+	const lastScores = api.getPreviousActions()
+
+	// If the last score is a pair or larger, reveal
+	if (lastScores !== null && lastScores[0] >= 100) {
+		api.reveal()
+		// We can't make any more actions after revealing, so we return
+		return
+	}
+
+	// If the previous player called the same score as the player before them, reveal
+	if (lastScores !== null && lastScores[0] === lastScores[1]) {
+		api.reveal()
+		return
+	}
+
+	// Roll the dice
+	const currentScore = api.roll()
+
+	// If our score is higher or equal, finish the turn
+	if (lastScores === null || currentScore >= lastScores[0]) {
+		return
+	}
+
+	// If our score is lower, we can either lie or call "det eller derover"
+	if (Math.random() > 0.5) {
+		api.lie(lastScores[0])
+		// We cant make any more actions after lying
+	} else {
+		api.detEllerDerover()
+		// We cant make any more actions after calling "det eller derover"
+	}
+
+	// END CODE
+}
+
+export default main`
+
+export const apiTypes = `/**
  * Possible scores in Meyer:
  *
  * Special scores
@@ -441,41 +528,6 @@ interface MeyerStrategyAPI {
 	 * Can only be called once per turn. Can only be called after the player has rolled the dice.
 	 */
 	lie: (value: number) => void;
-}`,
-
-	'utils.ts': `export function rollDice(): [number, number] {
-	const randomDie = () => Math.floor(Math.random() * 6) + 1
-	return [randomDie(), randomDie()]
-}
-
-export function calculateScore(dice: [number, number]): number {
-	const [die1, die2] = dice.sort((a, b) => b - a)
-	if ((die1 === 2 && die2 === 1)) return 1000 // Meyer
-	if ((die1 === 3 && die2 === 1)) return 999  // Lille-meyer
-	if (die1 === die2) return die1 * 100        // Pairs
-	return die1 * 10 + die2                     // Regular scores
-}
-
-const validScores = new Set<number>([
-	1000, 999,
-	600, 500, 400, 300, 200, 100,
-	65, 64, 63, 62, 61,
-	54, 53, 52, 51,
-	43, 42, 41,
-	32,
-])
-
-export function isValidScore(score: number): boolean {
-	return validScores.has(score)
-}
-
-export function roundUpToValidScore(score: number): number {
-	const validScoresAscending = [...validScores].sort((a, b) => a - b)
-	for (const validScore of validScoresAscending) { 
-		if (score <= validScore) return validScore
-	}
-	return 0
 }`
-}
 
 export default meyerFiles

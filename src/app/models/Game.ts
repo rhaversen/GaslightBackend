@@ -12,8 +12,7 @@ import { Document, model, Schema } from 'mongoose'
 // Destructuring and global variables
 export interface FileMap {
 	'main.ts': string;
-	'apiTypes.ts': string;
-	[key: string]: string;
+	[key: string]: string | undefined;
 }
 
 export interface IGame extends Document {
@@ -21,6 +20,8 @@ export interface IGame extends Document {
 	name: string
 	description?: string
 	files: FileMap
+	apiTypes: string
+	exampleStrategy: string
 	batchSize: number
 	// Timestamps
 	createdAt: Date
@@ -35,11 +36,13 @@ const gameSchema = new Schema<IGame>({
 		required: true,
 		validate: {
 			validator: function (v: Record<string, string>) {
-				return v && typeof v['main.ts'] === 'string' && typeof v['apiTypes.ts'] === 'string'
+				return v && typeof v['main.ts'] === 'string'
 			},
-			message: 'files must contain a \'main.ts\' and a \'apiTypes.ts\' property'
+			message: 'files must have a main.ts file'
 		}
 	},
+	apiTypes: { type: String, required: true },
+	exampleStrategy: { type: String, required: true },
 	batchSize: { type: Number, required: true }
 }, {
 	timestamps: true
