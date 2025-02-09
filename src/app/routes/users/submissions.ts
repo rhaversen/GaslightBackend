@@ -52,7 +52,7 @@ router.post('/',
 /**
  * @route GET /api/v1/submissions
  * @description Get all submissions for authenticated user
- * @access Private
+ * @access Public
  * @param {string} [req.query.game] - Filter by game ID
  * @param {boolean} [req.query.active] - Filter by active status
  * @param {boolean} [req.query.passedEvaluation] - Filter by passed evaluation status
@@ -75,7 +75,6 @@ router.post('/',
  * }>} res.body - Array of submissions
  */
 router.get('/',
-	ensureAuthenticated,
 	asyncErrorHandler(getSubmissions)
 )
 
@@ -110,7 +109,7 @@ router.patch('/:id',
 /**
  * @route GET /api/v1/submissions/:id
  * @description Get a specific submission
- * @access Private
+ * @access Public
  * @param {string} req.params.id - Submission ID
  * @returns {number} res.status - HTTP status code
  * @returns {{
@@ -129,7 +128,6 @@ router.patch('/:id',
  * }|{error: string}} res.body - Submission with optional gradings or error message
  */
 router.get('/:id',
-	ensureAuthenticated,
 	asyncErrorHandler(getSubmission)
 )
 
