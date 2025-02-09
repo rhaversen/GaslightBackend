@@ -28,6 +28,8 @@ const router = Router()
  *   name: string,
  *   description: string,
  *   files: {[key: string]: string},
+ * 	 apiType: string
+ *   exampleStrategy: string
  *   batchSize: number,
  *   createdAt: Date,
  *   updatedAt: Date
@@ -48,6 +50,8 @@ router.get('/',
  *   name: string,
  *   description: string,
  *   files: {[key: string]: string},
+ * 	 apiType: string
+ *   exampleStrategy: string,
  *   batchSize: number,
  *   createdAt: Date,
  *   updatedAt: Date
