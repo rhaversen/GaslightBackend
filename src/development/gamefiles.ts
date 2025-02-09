@@ -446,7 +446,7 @@ export const exampleStrategy = `const main = (api: MeyerStrategyAPI) => {
 
 export default main`
 
-export const apiTypes = `/**
+export const apiType = `/**
  * Possible scores in Meyer:
  *
  * Special scores

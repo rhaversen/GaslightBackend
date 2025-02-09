@@ -20,7 +20,7 @@ export interface IGame extends Document {
 	name: string
 	description?: string
 	files: FileMap
-	apiTypes: string
+	apiType: string
 	exampleStrategy: string
 	batchSize: number
 	// Timestamps
@@ -41,7 +41,7 @@ const gameSchema = new Schema<IGame>({
 			message: 'files must have a main.ts file'
 		}
 	},
-	apiTypes: { type: String, required: true },
+	apiType: { type: String, required: true },
 	exampleStrategy: { type: String, required: true },
 	batchSize: { type: Number, required: true }
 }, {
