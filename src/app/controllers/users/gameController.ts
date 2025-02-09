@@ -5,7 +5,6 @@ import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
 // Own modules
-import TournamentModel from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
 import GameModel from '../../models/Game.js'
 
@@ -18,14 +17,14 @@ export async function getAllGames(
 	res: Response,
 	next: NextFunction
 ): Promise<void> {
-	logger.silly('Getting tournaments')
+	logger.silly('Getting games')
 
 	try {
-		const tournaments = await GameModel.find()
+		const games = await GameModel.find()
 			.sort({ createdAt: -1 })
 			.exec()
 
-		res.status(200).json(tournaments)
+		res.status(200).json(games)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
@@ -40,14 +39,14 @@ export async function getGame(
 	res: Response,
 	next: NextFunction
 ): Promise<void> {
-	logger.silly('Getting tournament')
+	logger.silly('Getting game')
 	try {
-		const tournament = await TournamentModel.findById(req.params.id)
-		if (tournament === null) {
-			res.status(404).json({ error: 'Tournament not found' })
+		const game = await GameModel.findById(req.params.id)
+		if (game === null) {
+			res.status(404).json({ error: 'Game not found' })
 			return
 		}
-		res.status(200).json(tournament)
+		res.status(200).json(game)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
