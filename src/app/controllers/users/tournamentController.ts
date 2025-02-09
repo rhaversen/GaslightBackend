@@ -7,7 +7,7 @@ import mongoose, { type SortOrder } from 'mongoose'
 // Own modules
 import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
-import { IGrading } from '../../models/Grading.js'
+import GradingModel, { IGrading } from '../../models/Grading.js'
 
 // Environment variables
 // Config variables
@@ -20,7 +20,7 @@ export async function getAllTournaments(
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { getStandings, fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
+	const { getStandings, includesUser, game, fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
@@ -29,12 +29,30 @@ export async function getAllTournaments(
 		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
 	}
 
+	if (typeof game === 'string') {
+		query.game = game
+	}
+
+	if (typeof includesUser === 'string') {
+		const gradingDocs = await GradingModel.find()
+			.populate({ path: 'submission', select: 'user', match: { user: new mongoose.Types.ObjectId(includesUser) } })
+			.select('_id')
+			.exec()
+		const filteredGradingIds = gradingDocs.filter(g => g.submission).map(g => g._id)
+		query.gradings = { $in: filteredGradingIds }
+	}
+
 	try {
 		const tournaments = await TournamentModel.find(query)
 			.sort({ createdAt: -1 })
 			.limit(Number(limit) || 0)
 			.skip(Number(skip) || 0)
 			.exec()
+
+		if (tournaments.length === 0) {
+			res.status(200).json([])
+			return
+		}
 	
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
 			let standings: TournamentStanding[] | undefined = undefined

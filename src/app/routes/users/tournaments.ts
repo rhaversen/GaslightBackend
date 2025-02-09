@@ -29,6 +29,8 @@ const router = Router()
  * @param {number} [req.query.limit] - Limit number of tournaments returned
  * @param {number} [req.query.skip] - Number of tournaments to skip
  * @param {boolean} [req.query.getStandings] - Whether to include standings
+ * @param {string} [req.query.includesUser] - Filter tournaments to include only those with gradings for the specified user
+ * @param {string} [req.query.game] - Filter tournaments by game ID
  * @param {number} [req.query.limitStandings] - Limit number of standings per tournament (default: 3)
  * @param {number} [req.query.skipStandings] - Number of standings to skip
  * @param {string} [req.query.userIdStanding] - Get specific user standing
