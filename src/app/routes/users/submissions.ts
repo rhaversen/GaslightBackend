@@ -55,6 +55,10 @@ router.post('/',
  * @access Private
  * @param {string} [req.query.game] - Filter by game ID
  * @param {boolean} [req.query.active] - Filter by active status
+ * @param {boolean} [req.query.passedEvaluation] - Filter by passed evaluation status
+ * @param {string} [req.query.user] - Filter by user ID
+ * @param {number} [req.query.maxAmount] - Limit number of submissions returned
+ * @param {number} [req.query.startIndex] - Number of submissions to skip
  * @returns {number} res.status - HTTP status code
  * @returns {Array<{
  *   _id: string,
