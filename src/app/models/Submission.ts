@@ -141,13 +141,9 @@ submissionSchema.path('active').validate(async function (v: boolean) {
 	if (!v) {
 		return true
 	}
-	const foundActiveSubmission = await SubmissionModel.findOne({
-		user: this.user,
-		active: true,
-		_id: { $ne: this._id }
-	})
-	return foundActiveSubmission === null
-}, 'User already has an active submission')
+	const foundSubmission = await SubmissionModel.findOne({ user: this.user, game: this.game, active: true })
+	return foundSubmission === null
+}, 'User already has an active submission for this game')
 
 submissionSchema.path('user').validate(async function (v: Schema.Types.ObjectId) {
 	const foundUser = await UserModel.findById(v)
