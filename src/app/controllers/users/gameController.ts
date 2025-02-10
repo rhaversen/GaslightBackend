@@ -7,6 +7,7 @@ import mongoose from 'mongoose'
 // Own modules
 import logger from '../../utils/logger.js'
 import GameModel from '../../models/Game.js'
+import TournamentModel from '../../models/Tournament.js'
 
 // Environment variables
 // Config variables
@@ -24,7 +25,32 @@ export async function getAllGames(
 			.sort({ createdAt: -1 })
 			.exec()
 
-		res.status(200).json(games)
+		// Get the latest tournament of each game
+		const tournaments = await Promise.all(
+			games.map((game) =>
+				TournamentModel
+					.findOne({ game: game._id })
+					.sort({ createdAt: -1 })
+					.exec()
+			)
+		)
+		// Sort by amount of submissions in games latest tournament
+		const sortedGames = games.sort((a, b) => {
+			const tournamentA = tournaments.find(t => t?.game?.toString() === a.id)
+			const tournamentB = tournaments.find(t => t?.game?.toString() === b.id)
+			return (tournamentB?.gradings?.length || 0) - (tournamentA?.gradings?.length || 0)
+		})
+
+		// Add the latest tournament submission count to the game object
+		const mappedGames = sortedGames.map((game) => {
+			const tournament = tournaments.find(t => t?.game?.toString() === game.id)
+			return {
+				...game.toObject(),
+				submissionCount: tournament?.gradings?.length || 0
+			}
+		})
+
+		res.status(200).json(mappedGames)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })
@@ -46,7 +72,20 @@ export async function getGame(
 			res.status(404).json({ error: 'Game not found' })
 			return
 		}
-		res.status(200).json(game)
+
+		// Get the latest tournament of the game
+		const tournament = await TournamentModel
+			.findOne({ game: game._id })
+			.sort({ createdAt: -1 })
+			.exec()
+		
+		// Add the latest tournament submission count to the game object
+		const mappedGame = {
+			...game.toObject(),
+			submissionCount: tournament?.gradings?.length || 0
+		}
+
+		res.status(200).json(mappedGame)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
 			res.status(400).json({ error: error.message })

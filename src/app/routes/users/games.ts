@@ -31,6 +31,7 @@ const router = Router()
  * 	 apiType: string
  *   exampleStrategy: string
  *   batchSize: number,
+ * 	 submissionCount: number,
  *   createdAt: Date,
  *   updatedAt: Date
  * }>} res.body - Array of games
@@ -53,6 +54,7 @@ router.get('/',
  * 	 apiType: string
  *   exampleStrategy: string,
  *   batchSize: number,
+ * 	 submissionCount: number,
  *   createdAt: Date,
  *   updatedAt: Date
  * }|{error: string}} res.body - Game object or error message
