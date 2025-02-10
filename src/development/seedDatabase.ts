@@ -16,7 +16,8 @@ logger.info('Seeding database')
 const games = await Promise.all([
 	GameModel.create({
 		name: 'Meyer1',
-		description: 'Meyer1 game built from GaslightCodeRunner source files',
+		summary: 'Meyer 1 game from GaslightCodeRunner source files. This line is 100 chars long for testing purposes.',
+		description: 'Meyer1 game from GaslightCodeRunner source file. This line is 5000 chars long for testing purposes. '.repeat(50),
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
@@ -24,7 +25,8 @@ const games = await Promise.all([
 	}),
 	GameModel.create({
 		name: 'Meyer2',
-		description: 'Meyer2 game built from GaslightCodeRunner source files',
+		summary: 'Meyer2 game built from GaslightCodeRunner source files. 65 chars.',
+		description: 'Meyer2 game built from GaslightCodeRunner source files. This is 240 chars long. '.repeat(3),
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
@@ -32,7 +34,8 @@ const games = await Promise.all([
 	}),
 	GameModel.create({
 		name: 'Meyer3',
-		description: 'Meyer3 game built from GaslightCodeRunner source files',
+		summary: '8 chars.',
+		description: 'Meyer3 game built from GaslightCodeRunner source files. 65 chars.',
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,

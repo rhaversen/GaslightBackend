@@ -27,6 +27,7 @@ const router = Router()
  *   _id: string,
  *   name: string,
  *   description: string,
+ *   summary: string,
  *   files: {[key: string]: string},
  * 	 apiType: string
  *   exampleStrategy: string
@@ -50,6 +51,7 @@ router.get('/',
  *   _id: string,
  *   name: string,
  *   description: string,
+ *   summary: string,
  *   files: {[key: string]: string},
  * 	 apiType: string
  *   exampleStrategy: string,

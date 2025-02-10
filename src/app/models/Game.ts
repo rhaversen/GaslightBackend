@@ -18,7 +18,8 @@ export interface FileMap {
 export interface IGame extends Document {
 	// Game properties
 	name: string
-	description?: string
+	description: string
+	summary: string
 	files: FileMap
 	apiType: string
 	exampleStrategy: string
@@ -30,7 +31,8 @@ export interface IGame extends Document {
 
 const gameSchema = new Schema<IGame>({
 	name: { type: String, required: true },
-	description: { type: String },
+	description: { type: String, required: true, trim: true, maxlength: 5000 },
+	summary: { type: String, required: true, trim: true, maxlength: 100 },
 	files: {
 		type: Object,
 		required: true,
