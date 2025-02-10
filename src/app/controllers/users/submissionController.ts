@@ -69,7 +69,7 @@ export async function getSubmissions(
 		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
 	}
 
-	if (req.query.active !== undefined) query.active = req.query.adjective
+	if (req.query.active !== undefined) query.active = req.query.active
 	if (req.query.passedEvaluation !== undefined) query.passedEvaluation = req.query.passedEvaluation
 	if (req.query.user !== undefined) query.user = req.query.user
 	if (req.query.game !== undefined) query.game = req.query.game
