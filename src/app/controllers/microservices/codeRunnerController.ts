@@ -97,7 +97,7 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 		const enrichedGradings = validSubmissionGradings.map(g => ({
 			...g,
 			placement: scoreToPlacement.get(g.score)!,
-			tokenCount: submissionMap.get(g.submission)?.getTokenCount(),
+			tokenCount: submissionMap.get(g.submission)?.tokenCount,
 			percentileRank: (scoreToCumulative.get(g.score)! / scores.length) * 100,
 		})) as IGrading[]
 

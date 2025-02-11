@@ -54,10 +54,8 @@ export interface ISubmission extends Document {
 	passedEvaluation: boolean | null
 	/** Evaluation results */
 	evaluation: ISubmissionEvaluation
-
-	// Methods
-	/** Get the number of tokens in the submission code */
-	getTokenCount: () => number
+	/** Token count of the submission */
+	tokenCount: number
 
     // Timestamps
     createdAt: Date
@@ -131,6 +129,9 @@ const submissionSchema = new Schema<ISubmission>({
 		type: Schema.Types.Boolean,
 		default: null
 	},
+	tokenCount: {
+		type: Schema.Types.Number
+	},
 	evaluation: evaluationSubSchema
 }, {
 	timestamps: true
@@ -155,9 +156,9 @@ submissionSchema.index({ user: 1 })
 submissionSchema.index({ active: 1 })
 
 // Methods
-submissionSchema.methods.getTokenCount = function () {
+function getTokenCount (code: string): number {
 	try {
-		const tokens = esprima.tokenize(this.code)
+		const tokens = esprima.tokenize(code)
 		// Filter out comments, whitespace, and punctuation
 		return tokens.filter(token => 
 			token.type !== 'Punctuator' && 
@@ -167,7 +168,7 @@ submissionSchema.methods.getTokenCount = function () {
 	} catch (error) {
 		logger.error('Error parsing code for token count:', error)
 		// Fallback to simple line counting if parsing fails
-		return this.code.split('\n').filter((line: string): boolean => {
+		return code.split('\n').filter((line: string): boolean => {
 			const trimmed = line.trim()
 			return trimmed !== '' 
                 && trimmed !== ' '
@@ -184,6 +185,9 @@ submissionSchema.methods.getTokenCount = function () {
 
 // Pre-save middleware
 submissionSchema.pre('save', async function (next) {
+	if (this.isModified('code')) {
+		this.tokenCount = getTokenCount(this.code)
+	}
 	next()
 })
 
