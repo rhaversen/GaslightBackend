@@ -40,7 +40,34 @@ const games = await Promise.all([
 		apiType,
 		exampleStrategy,
 		batchSize: 15
-	})
+	}),
+	GameModel.create({
+		name: 'Two player meyer',
+		summary: 'Meyer 1 game from GaslightCodeRunner source files. This line is 100 chars long for testing purposes.',
+		description: 'Meyer1 game from GaslightCodeRunner source file. This line is 5000 chars long for testing purposes. '.repeat(50),
+		files: meyerFiles,
+		apiType,
+		exampleStrategy,
+		batchSize: 2
+	}),
+	GameModel.create({
+		name: 'Three player meyer',
+		summary: 'Meyer 1 game from GaslightCodeRunner source files. This line is 100 chars long for testing purposes.',
+		description: 'Meyer1 game from GaslightCodeRunner source file. This line is 5000 chars long for testing purposes. '.repeat(50),
+		files: meyerFiles,
+		apiType,
+		exampleStrategy,
+		batchSize: 3
+	}),
+	GameModel.create({
+		name: 'Single player meyer',
+		summary: 'Meyer 1 game from GaslightCodeRunner source files. This line is 100 chars long for testing purposes.',
+		description: 'Meyer1 game from GaslightCodeRunner source file. This line is 5000 chars long for testing purposes. '.repeat(50),
+		files: meyerFiles,
+		apiType,
+		exampleStrategy,
+		batchSize: 1
+	})	
 ])
 const gameIds = games.map(game => game.id as string)
 
