@@ -7,6 +7,7 @@ import mongoose from 'mongoose'
 // Own modules
 import logger from '../../utils/logger.js'
 import GameModel from '../../models/Game.js'
+import SubmissionModel from '../../models/Submission.js'
 import TournamentModel from '../../models/Tournament.js'
 
 // Environment variables
@@ -21,32 +22,57 @@ export async function getAllGames(
 	logger.silly('Getting games')
 
 	try {
+		const { getTournaments } = req.query
+
 		const games = await GameModel.find()
 			.sort({ createdAt: -1 })
 			.exec()
 
-		// Get the latest tournament of each game
-		const tournaments = await Promise.all(
+		// Get the count of active strategies for each game
+		const strategyCounts = await Promise.all(
 			games.map((game) =>
-				TournamentModel
-					.findOne({ game: game._id })
-					.sort({ createdAt: -1 })
+				SubmissionModel
+					.countDocuments({ game: game._id, active: true })
 					.exec()
 			)
 		)
-		// Sort by amount of submissions in games latest tournament
+
+		// Get latest tournaments if requested
+		const tournaments = getTournaments === 'true'
+			? await Promise.all(
+				games.map((game) =>
+					TournamentModel
+						.findOne({ game: game._id })
+						.sort({ createdAt: -1 })
+						.exec()
+				)
+			)
+			: games.map(() => undefined)
+
+		// Sort by amount of active strategies
 		const sortedGames = games.sort((a, b) => {
-			const tournamentA = tournaments.find(t => t?.game?.toString() === a.id)
-			const tournamentB = tournaments.find(t => t?.game?.toString() === b.id)
-			return (tournamentB?.gradings?.length || 0) - (tournamentA?.gradings?.length || 0)
+			const indexA = games.findIndex(g => g.id === a.id)
+			const indexB = games.findIndex(g => g.id === b.id)
+			return strategyCounts[indexB] - strategyCounts[indexA]
 		})
 
-		// Add the latest tournament submission count to the game object
+		// Add the strategy count and tournament to the game object
 		const mappedGames = sortedGames.map((game) => {
-			const tournament = tournaments.find(t => t?.game?.toString() === game.id)
+			const index = games.findIndex(g => g.id === game.id)
+
 			return {
-				...game.toObject(),
-				submissionCount: tournament?.gradings?.length || 0
+				_id: game.id,
+				name: game.name,
+				description: game.description,
+				summary: game.summary,
+				files: game.files,
+				apiType: game.apiType,
+				exampleStrategy: game.exampleStrategy,
+				batchSize: game.batchSize,
+				createdAt: game.createdAt,
+				updatedAt: game.updatedAt,
+				submissionCount: strategyCounts[index],
+				latestTournament: tournaments[index]
 			}
 		})
 
@@ -67,22 +93,41 @@ export async function getGame(
 ): Promise<void> {
 	logger.silly('Getting game')
 	try {
+		const { getTournaments } = req.query
+
 		const game = await GameModel.findById(req.params.id)
 		if (game === null) {
 			res.status(404).json({ error: 'Game not found' })
 			return
 		}
 
-		// Get the latest tournament of the game
-		const tournament = await TournamentModel
-			.findOne({ game: game._id })
-			.sort({ createdAt: -1 })
+		// Get the count of active strategies for the game
+		const strategyCount = await SubmissionModel
+			.countDocuments({ game: game._id, active: true })
 			.exec()
-		
-		// Add the latest tournament submission count to the game object
+
+		// Get latest tournament if requested
+		const tournament = getTournaments === 'true'
+			? await TournamentModel
+				.findOne({ game: game._id })
+				.sort({ createdAt: -1 })
+				.exec()
+			: undefined
+
+		// Add the strategy count and tournament to the game object
 		const mappedGame = {
-			...game.toObject(),
-			submissionCount: tournament?.gradings?.length || 0
+			_id: game.id,
+			name: game.name,
+			description: game.description,
+			summary: game.summary,
+			files: game.files,
+			apiType: game.apiType,
+			exampleStrategy: game.exampleStrategy,
+			batchSize: game.batchSize,
+			createdAt: game.createdAt,
+			updatedAt: game.updatedAt,
+			submissionCount: strategyCount,
+			latestTournament: tournament
 		}
 
 		res.status(200).json(mappedGame)
