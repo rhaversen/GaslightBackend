@@ -1,18 +1,9 @@
-// Node.js built-in modules
 import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
-// Third-party libraries
 import { Logtail } from '@logtail/node'
 import { createLogger, format as _format, transports as _transports } from 'winston'
 
-// Own modules
-
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const _filename = fileURLToPath(import.meta.url)
 const _dirname = dirname(_filename)
 const logDirectory = join(_dirname, (['production', 'staging'].includes(process.env.NODE_ENV ?? '') ? './logs/' : '../../logs/'))

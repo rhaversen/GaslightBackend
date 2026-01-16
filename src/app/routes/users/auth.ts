@@ -1,22 +1,12 @@
-// Node.js built-in modules
+import { Router } from 'express'
 
-// Third-party libraries
-import Router from 'express'
-
-// Own modules
 import {
 	loginUserLocal,
 	logoutLocal,
 	getMe
 } from '../../controllers/users/authController.js'
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 import { ensureAuthenticated } from '../../middleware/auth.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const router = Router()
 
 /**
@@ -30,7 +20,7 @@ const router = Router()
  * @returns {string} res.headers['set-cookie'] - The session cookie.
  */
 router.post('/login-user-local',
-	asyncErrorHandler(loginUserLocal)
+	loginUserLocal
 )
 
 /**
@@ -40,7 +30,7 @@ router.post('/login-user-local',
  * @returns {number} res.status - The status code of the HTTP response.
  */
 router.post('/logout-local',
-	asyncErrorHandler(logoutLocal)
+	logoutLocal
 )
 
 /**
@@ -52,7 +42,7 @@ router.post('/logout-local',
  */
 router.get('/user',
 	ensureAuthenticated,
-	asyncErrorHandler(getMe)
+	getMe
 )
 
 /**

@@ -1,21 +1,11 @@
-// Node.js built-in modules
-
-// Third-party libraries
-import { type Document, model, Schema } from 'mongoose'
 import * as esprima from 'esprima'
+import { type Document, model, Schema } from 'mongoose'
 
-// Own modules
-import GradingModel from './Grading.js'
-import UserModel, { IUser } from './User.js'
 import logger from '../utils/logger.js'
 
-// Environment variables
+import GradingModel from './Grading.js'
+import UserModel, { IUser } from './User.js'
 
-// Config variables
-
-// Destructuring and global variables
-
-// Interfaces
 export interface ISubmissionEvaluation {
 	// Properties
 	results: {
@@ -39,17 +29,17 @@ export interface ISubmissionEvaluation {
 }
 
 export interface ISubmission extends Document {
-    // Properties
+	// Properties
 	/** Title of the submission */
-    title: string
-    /** Code submitted by the user */
+	title: string
+	/** Code submitted by the user */
 	code: string
 	/** User who submitted the code */
-    user: Schema.Types.ObjectId | string | IUser
+	user: Schema.Types.ObjectId | string | IUser
 	/** Foreign key referencing game */
 	game: Schema.Types.ObjectId | string
 	/** Decides if the submission is part of the tournament (Can only have one active submission per user) */
-    active: boolean
+	active: boolean
 	/** Decides if the submission has passed an evaluation and is ready for tournaments. Null if not evaluated yet */
 	passedEvaluation: boolean | null
 	/** Evaluation results */
@@ -57,9 +47,9 @@ export interface ISubmission extends Document {
 	/** Token count of the submission */
 	tokenCount: number
 
-    // Timestamps
-    createdAt: Date
-    updatedAt: Date
+	// Timestamps
+	createdAt: Date
+	updatedAt: Date
 }
 
 export interface ISubmissionPopulated extends ISubmission {
@@ -160,9 +150,9 @@ function getTokenCount (code: string): number {
 	try {
 		const tokens = esprima.tokenize(code)
 		// Filter out comments, whitespace, and punctuation
-		return tokens.filter(token => 
-			token.type !== 'Punctuator' && 
-            token.type !== 'BlockComment' && 
+		return tokens.filter(token =>
+			token.type !== 'Punctuator' &&
+            token.type !== 'BlockComment' &&
             token.type !== 'LineComment'
 		).length
 	} catch (error) {
@@ -170,7 +160,7 @@ function getTokenCount (code: string): number {
 		// Fallback to simple line counting if parsing fails
 		return code.split('\n').filter((line: string): boolean => {
 			const trimmed = line.trim()
-			return trimmed !== '' 
+			return trimmed !== ''
                 && trimmed !== ' '
                 && trimmed !== '\t'
                 && !trimmed.startsWith('//')

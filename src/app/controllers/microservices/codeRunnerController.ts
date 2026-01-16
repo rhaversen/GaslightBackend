@@ -1,31 +1,21 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { Request, Response } from 'express'
 
-// Own modules
+import GameModel from '../../models/Game.js'
 import GradingModel, { IGrading } from '../../models/Grading.js'
 import SubmissionModel from '../../models/Submission.js'
 import TournamentModel from '../../models/Tournament.js'
-import logger from '../../utils/logger.js'
 import { submission } from '../../services/CodeRunner.js'
+import logger from '../../utils/logger.js'
 import { emitTournamentCreated } from '../../webSockets/TournamentHandlers.js'
-import GameModel from '../../models/Game.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
-
-export async function getActiveSubmissions(req: Request, res: Response) {
+export async function getActiveSubmissions (req: Request, res: Response) {
 	const { excludeUser, game } = req.query
 
 	try {
 		// Build dynamic filter object based on query params
 		const filter: any = {
 			active: true,
-			passedEvaluation: true,
+			passedEvaluation: true
 		}
 
 		if (excludeUser) {
@@ -51,7 +41,7 @@ export async function getActiveSubmissions(req: Request, res: Response) {
 	}
 }
 
-export async function getGames(req: Request, res: Response) {
+export async function getGames (req: Request, res: Response) {
 	try {
 		const games = await GameModel.find()
 		const mappedGames = games.map(game => ({
@@ -69,7 +59,7 @@ export async function getGames(req: Request, res: Response) {
 type Grading = { submission: string; score: number; avgExecutionTime: number; }
 type Disqualification = { submission: string; reason: string; }
 
-export async function processTournamentGradings(gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number, game: string) {
+export async function processTournamentGradings (gradings: Grading[], disqualified: Disqualification[], tournamentExecutionTime: number, game: string) {
 	try {
 		const disqualifiedSet = new Set(disqualified.map(d => d.submission))
 		const validGradings = gradings.filter(g => !disqualifiedSet.has(g.submission))
@@ -98,7 +88,7 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 			...g,
 			placement: scoreToPlacement.get(g.score)!,
 			tokenCount: submissionMap.get(g.submission)?.tokenCount,
-			percentileRank: (scoreToCumulative.get(g.score)! / scores.length) * 100,
+			percentileRank: (scoreToCumulative.get(g.score)! / scores.length) * 100
 		})) as IGrading[]
 
 		const newGradings = await GradingModel.insertMany(enrichedGradings)
@@ -117,7 +107,7 @@ export async function processTournamentGradings(gradings: Grading[], disqualifie
 	}
 }
 
-export async function saveGradingsWithTournament(req: Request, res: Response) {
+export async function saveGradingsWithTournament (req: Request, res: Response) {
 	const {
 		gradings,
 		disqualified,

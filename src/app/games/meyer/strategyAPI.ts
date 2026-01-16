@@ -1,12 +1,9 @@
-/* eslint-disable local/enforce-comment-order */
-
 import gameState from './gameState.js'
 import { DiePair, StrategyAPI } from './types.js'
 import { rollDice , calculateScore } from './utils.js'
 
-
-export function createStrategyAPI(playerIndex: number): StrategyAPI {
-	function ensureTurnActive() {
+export function createStrategyAPI (playerIndex: number): StrategyAPI {
+	function ensureTurnActive () {
 		if (gameState.getCurrentPlayerIndex() !== playerIndex) {
 			throw new Error('Turn has ended, no further API calls are allowed.')
 		}
@@ -24,15 +21,14 @@ export function createStrategyAPI(playerIndex: number): StrategyAPI {
 		detEllerDerover: () => {
 			ensureTurnActive()
 			if(gameState.getHasRolled()){
-				//remove previous action and roll again
-				gameState.removePreviousAction()	
+				// remove previous action and roll again
+				gameState.removePreviousAction()
 			}
 			const dice = rollDice()
 			const score = calculateScore(dice)
 			const previousAnnouncedValue = gameState.getPreviousActions()[0].announcedValue
 			gameState.addAction({ type: 'detEllerDerover', value: score, playerIndex, announcedValue: previousAnnouncedValue })
 			gameState.endTurn()
-
 		},
 		reveal: () => {
 			ensureTurnActive()
@@ -57,12 +53,10 @@ export function createStrategyAPI(playerIndex: number): StrategyAPI {
 				gameState.modifyPlayerLife(previousPlayerIndex, -1)
 				gameState.setCurrentPlayerIndex(previousPlayerIndex)
 				gameState.endRound()
-				
 			} else {
 				gameState.modifyPlayerLife(playerIndex, -1)
 				gameState.setCurrentPlayerIndex(playerIndex)
 				gameState.endRound()
-
 			}
 		},
 		roll: () => {
@@ -84,6 +78,6 @@ export function createStrategyAPI(playerIndex: number): StrategyAPI {
 			gameState.removePreviousAction()
 			gameState.addAction({ type: 'roll', value: realValue, playerIndex, announcedValue: lieValue })
 			gameState.endTurn()
-		},
+		}
 	}
 }

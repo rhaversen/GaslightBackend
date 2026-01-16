@@ -1,16 +1,7 @@
-// Node.js built-in modules
 import 'process'
 
-// Third-party libraries
-
-// Own modules
 import logger from './logger.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const envSecrets = [
 	// Database
 	'DB_NAME',

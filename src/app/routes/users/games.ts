@@ -1,21 +1,10 @@
-// Node.js built-in modules
+import { Router } from 'express'
 
-// Third-party libraries
-
-import Router from 'express'
-
-// Own modules
 import {
 	getAllGames,
-	getGame,
+	getGame
 } from '../../controllers/users/gameController.js'
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const router = Router()
 
 /**
@@ -38,7 +27,7 @@ const router = Router()
  * }>} res.body - Array of games
  */
 router.get('/',
-	asyncErrorHandler(getAllGames)
+	getAllGames
 )
 
 /**
@@ -62,7 +51,7 @@ router.get('/',
  * }|{error: string}} res.body - Game object or error message
  */
 router.get('/:id',
-	asyncErrorHandler(getGame)
+	getGame
 )
 
 export default router

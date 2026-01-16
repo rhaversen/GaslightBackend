@@ -1,6 +1,3 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type Server as HttpServer } from 'http'
 
 import { createAdapter } from '@socket.io/redis-adapter'
@@ -10,20 +7,15 @@ import { Server } from 'socket.io'
 import logger from './logger.js'
 import config from './setupConfig.js'
 
-// Own modules
-
-// Environment variables
 const redisHost = process.env.REDIS_HOST
 const redisPort = process.env.REDIS_PORT
 const redisPassword = process.env.REDIS_PASSWORD
 
-// Config variables
 const {
 	corsConfig,
 	redisPrefix
 } = config
 
-// Destructuring and global variables
 let io: Server | undefined
 
 export async function initSocket (server: HttpServer): Promise<void> {

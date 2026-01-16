@@ -1,23 +1,13 @@
-// Node.js built-in modules
+import { Router } from 'express'
 
-// Third-party libraries
-import Router from 'express'
-
-// Own modules
 import {
 	register,
 	getAllUsers,
 	getUser,
-	updateUser,
+	updateUser
 } from '../../controllers/users/userController.js'
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 import { ensureAuthenticated } from '../../middleware/auth.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const router = Router()
 
 /**
@@ -32,7 +22,7 @@ const router = Router()
  * @returns {string} res.headers['set-cookie'] - Session cookie
  */
 router.post('/',
-	asyncErrorHandler(register)
+	register
 )
 
 /**
@@ -53,7 +43,7 @@ router.post('/',
  * }>} res.body - Array of user objects with sensitive data only included for requesting user
  */
 router.get('/',
-	asyncErrorHandler(getAllUsers)
+	getAllUsers
 )
 
 /**
@@ -75,7 +65,7 @@ router.get('/',
  * }|{error: string}} res.body - User object with sensitive data only included for requesting user, or error
  */
 router.get('/:id',
-	asyncErrorHandler(getUser)
+	getUser
 )
 
 /**
@@ -102,7 +92,7 @@ router.get('/:id',
  */
 router.patch('/:id',
 	ensureAuthenticated,
-	asyncErrorHandler(updateUser)
+	updateUser
 )
 
 export default router

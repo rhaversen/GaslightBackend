@@ -1,15 +1,5 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { Document, model, Schema } from 'mongoose'
 
-// Own modules
-
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 export interface FileMap {
 	'main.ts': string;
 	[key: string]: string | undefined;

@@ -1,19 +1,10 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Request, type Response } from 'express'
 
-// Own modules
 import logger from '../utils/logger.js'
 
-// Environment variables
 const { MICROSERVICE_AUTHORIZATION } = process.env
 
-// Config variables
-
-// Destructuring and global variables
-
-export function authenticateMicroservice(req: Request, res: Response, next: NextFunction) {
+export function authenticateMicroservice (req: Request, res: Response, next: NextFunction) {
 	const authHeader = req.headers.authorization
 
 	if (!authHeader) {

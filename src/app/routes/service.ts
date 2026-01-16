@@ -1,16 +1,6 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { Router } from 'express'
 import mongoose from 'mongoose'
 
-// Own modules
-
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const router = Router()
 
 /**

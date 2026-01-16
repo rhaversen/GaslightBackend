@@ -1,9 +1,5 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { Router } from 'express'
 
-// Own modules
 import {
 	getActiveSubmissions,
 	saveGradingsWithTournament,
@@ -11,11 +7,6 @@ import {
 } from '../../controllers/microservices/codeRunnerController.js'
 import { authenticateMicroservice } from '../../middleware/auth.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const router = Router()
 
 // Apply microservice authentication to all routes
@@ -61,7 +52,7 @@ router.get('/games',
  * @returns {number} res.status - HTTP status code
  * @returns {{tournamentId: string}} res.body - ID of the created tournament
  */
-router.post('/tournament', 
+router.post('/tournament',
 	authenticateMicroservice,
 	saveGradingsWithTournament
 )

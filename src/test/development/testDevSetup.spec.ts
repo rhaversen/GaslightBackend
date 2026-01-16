@@ -1,5 +1,3 @@
-/* eslint-disable local/enforce-comment-order */
-
 before(async function () {
 	this.timeout(10000)
 	// Setting environment
