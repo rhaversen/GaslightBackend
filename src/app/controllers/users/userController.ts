@@ -1,21 +1,12 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Request, type Response } from 'express'
 import mongoose from 'mongoose'
 
-// Own modules
-import { loginUserLocal } from './authController.js'
-import UserModel from '../../models/User.js'
 import SubmissionModel from '../../models/Submission.js'
+import UserModel from '../../models/User.js'
 
-// Environment variables
+import { loginUserLocal } from './authController.js'
 
-// Config variables
-
-// Destructuring and global variables
-
-export async function register(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function register (req: Request, res: Response, next: NextFunction): Promise<void> {
 	const body: Record<string, unknown> = {
 		email: req.body.email,
 		password: req.body.password,
@@ -36,7 +27,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
 		// User doesn't exist, create a new user
 		const newUser = await UserModel.create({
 			email: body.email,
-			password: body.password,
+			password: body.password
 		})
 		newUser.confirmUser() // TODO: Implement confirmation logic later
 		await newUser.save()
@@ -45,7 +36,7 @@ export async function register(req: Request, res: Response, next: NextFunction):
 	loginUserLocal(req, res, next)
 }
 
-export async function getAllUsers(req: Request, res: Response): Promise<void> {
+export async function getAllUsers (req: Request, res: Response): Promise<void> {
 	const reqUser = req.user
 	const users = await UserModel.find().exec()
 
@@ -80,7 +71,7 @@ export async function getAllUsers(req: Request, res: Response): Promise<void> {
 	res.status(200).json(mappedUsers)
 }
 
-export async function getUser(req: Request, res: Response): Promise<void> {
+export async function getUser (req: Request, res: Response): Promise<void> {
 	const user = req.user
 	const paramUser = await UserModel.findById(req.params.id).exec()
 
@@ -106,7 +97,7 @@ export async function getUser(req: Request, res: Response): Promise<void> {
 	res.status(200).json(mappedUser)
 }
 
-export async function updateUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+export async function updateUser (req: Request, res: Response, next: NextFunction): Promise<void> {
 	const user = req.user
 
 	if (user === undefined) {
@@ -135,9 +126,9 @@ export async function updateUser(req: Request, res: Response, next: NextFunction
 			return
 		}
 
-		if (req.body.username !== undefined) paramUser.username = req.body.username
-		if (req.body.email !== undefined) paramUser.email = req.body.email
-		if (req.body.password !== undefined) paramUser.password = req.body.password
+		if (req.body.username !== undefined) { paramUser.username = req.body.username }
+		if (req.body.email !== undefined) { paramUser.email = req.body.email }
+		if (req.body.password !== undefined) { paramUser.password = req.body.password }
 
 		await paramUser.validate()
 		await paramUser.save({ session })

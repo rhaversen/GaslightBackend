@@ -1,18 +1,8 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { compare, hash } from 'bcrypt'
 import { type Document, model, Schema } from 'mongoose'
 import { nanoid } from 'nanoid'
 
-// Own modules
 import config from '../utils/setupConfig.js'
-
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 
 const funnyAdjectives = [
 	'Sleepy', 'Dancing', 'Quirky', 'Sparkly', 'Wobbly',
@@ -44,7 +34,7 @@ const funnyPostfixes = [
 	'The Great', 'Prime', 'Universe', '3000', 'Supreme'
 ]
 
-function generateFunnyUsername(): string {
+function generateFunnyUsername (): string {
 	const usePrefix = Math.random() < 0.5
 	const useAdjective = Math.random() < 0.5
 	const usePostfix = Math.random() < 0.5
@@ -166,7 +156,7 @@ userSchema.methods.confirmUser = function () {
 
 type CodeFields = 'confirmationCode' | 'passwordResetCode'
 
-async function generateUniqueCodeForField(field: CodeFields): Promise<string> {
+async function generateUniqueCodeForField (field: CodeFields): Promise<string> {
 	let generatedCode: string
 	let existingUser: IUser | null
 

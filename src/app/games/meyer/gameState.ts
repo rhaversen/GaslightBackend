@@ -1,5 +1,3 @@
-/* eslint-disable local/enforce-comment-order */
-
 import { Action, StrategyFunction } from './types.js'
 
 const gameState = (() => {

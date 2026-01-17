@@ -1,21 +1,12 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
-// Own modules
+import GameModel from '../../models/Game.js'
 import SubmissionModel from '../../models/Submission.js'
 import { submitCodeForEvaluation } from '../../services/CodeRunner.js'
 import logger from '../../utils/logger.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
-
-export async function createSubmission(
+export async function createSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -29,16 +20,15 @@ export async function createSubmission(
 		return
 	}
 
-	const allowedFields = {
+	const fields = {
 		title: req.body.title,
 		code: req.body.code,
+		game: req.body.game,
+		user: user.id
 	}
 
 	try {
-		const newSubmission = await SubmissionModel.create({
-			...allowedFields,
-			user: user.id
-		})
+		const newSubmission = await SubmissionModel.create(fields)
 		res.status(201).json(newSubmission)
 	} catch (error) {
 		if (error instanceof mongoose.Error.ValidationError) {
@@ -49,7 +39,7 @@ export async function createSubmission(
 	}
 }
 
-export async function getSubmissions(
+export async function getSubmissions (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -65,13 +55,14 @@ export async function getSubmissions(
 	const { fromDate, toDate } = req.query
 	if ((typeof fromDate === 'string') && (typeof toDate === 'string')) {
 		query.createdAt = {}
-		if (typeof fromDate === 'string') query.createdAt.$gte = new Date(fromDate)
-		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
+		if (typeof fromDate === 'string') { query.createdAt.$gte = new Date(fromDate) }
+		if (typeof toDate === 'string') { query.createdAt.$lte = new Date(toDate) }
 	}
 
-	if (req.query.active !== undefined) query.active = req.query.adjective
-	if (req.query.passedEvaluation !== undefined) query.passedEvaluation = req.query.passedEvaluation
-	if (req.query.user !== undefined) query.user = req.query.user
+	if (req.query.active !== undefined) { query.active = req.query.active }
+	if (req.query.passedEvaluation !== undefined) { query.passedEvaluation = req.query.passedEvaluation }
+	if (req.query.user !== undefined) { query.user = req.query.user }
+	if (req.query.game !== undefined) { query.game = req.query.game }
 
 	try {
 		const submissions = await SubmissionModel
@@ -87,8 +78,9 @@ export async function getSubmissions(
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
-			tokenCount: submission.getTokenCount(),
+			tokenCount: submission.tokenCount,
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}))
@@ -103,7 +95,7 @@ export async function getSubmissions(
 	}
 }
 
-export async function updateSubmission(
+export async function updateSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -141,10 +133,15 @@ export async function updateSubmission(
 		if (req.body.active !== undefined) { submission.active = req.body.active }
 
 		await submission.validate()
-		
+
 		// If the code was updated or the submission was not evaluated yet, re-evaluate it
 		if (codeUpdated || submission.passedEvaluation === null) {
-			const evaluationResult = await submitCodeForEvaluation(submission)
+			const game = await GameModel.findById(submission.game)
+			if (game === null) {
+				res.status(404).json({ error: 'Game not found' })
+				return
+			}
+			const evaluationResult = await submitCodeForEvaluation(user.id, submission, game)
 
 			if (evaluationResult === false) {
 				res.status(500).json({ error: 'Server Error' })
@@ -169,8 +166,9 @@ export async function updateSubmission(
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
-			tokenCount: submission.getTokenCount(),
+			tokenCount: submission.tokenCount,
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}
@@ -188,7 +186,7 @@ export async function updateSubmission(
 	}
 }
 
-export async function getSubmission(
+export async function getSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -209,8 +207,9 @@ export async function getSubmission(
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
-			tokenCount: submission.getTokenCount(),
+			tokenCount: submission.tokenCount,
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}
@@ -221,7 +220,7 @@ export async function getSubmission(
 	}
 }
 
-export async function deleteSubmission(
+export async function deleteSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -244,13 +243,12 @@ export async function deleteSubmission(
 		}
 		await submission.deleteOne()
 		res.status(204).end()
-	}
-	catch (error) {
+	} catch (error) {
 		next(error)
 	}
 }
 
-export async function reEvaluateSubmission(
+export async function reEvaluateSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -279,8 +277,13 @@ export async function reEvaluateSubmission(
 			return
 		}
 
-		const evaluationResult = await submitCodeForEvaluation(submission)
+		const game = await GameModel.findById(submission.game)
+		if (game === null) {
+			res.status(404).json({ error: 'Game not found' })
+			return
+		}
 
+		const evaluationResult = await submitCodeForEvaluation(user.id, submission, game)
 		if (evaluationResult === false) {
 			res.status(500).json({ error: 'Server Error' })
 			return
@@ -303,8 +306,9 @@ export async function reEvaluateSubmission(
 			user: submission.user,
 			active: submission.active,
 			passedEvaluation: submission.passedEvaluation,
-			tokenCount: submission.getTokenCount(),
+			tokenCount: submission.tokenCount,
 			evaluation: submission.evaluation,
+			game: submission.game,
 			createdAt: submission.createdAt,
 			updatedAt: submission.updatedAt
 		}

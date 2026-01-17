@@ -1,29 +1,17 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type Document, model, Schema, SortOrder } from 'mongoose'
 
-// Own modules
-import GradingModel, { IGrading, IGradingPopulated, IGradingStatistics } from './Grading.js'
+import GradingModel, { IGrading, IGradingPopulated } from './Grading.js'
 import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
-
-// Interfaces
 export interface TournamentStanding {
 	user: string
 	userName: string
 	submission: string
 	submissionName: string
 	score: number
-	zValue: number
 	tokenCount: number
 	placement: number
-	statistics: IGradingStatistics
+	percentileRank: number
 	avgExecutionTime: number
 }
 
@@ -73,6 +61,8 @@ interface TournamentStatistics {
 export interface ITournament extends Document {
 	// Properties
 	gradings: string[]
+	/** Foreign key referencing game for which the tournament is held */
+	game: Schema.Types.ObjectId
 	disqualified?: [{
 		submission: string
 		reason: string
@@ -99,6 +89,11 @@ const tournamentSchema = new Schema<ITournament>({
 		ref: 'Grading',
 		required: true
 	}],
+	game: {
+		type: Schema.Types.ObjectId,
+		ref: 'Game',
+		required: true
+	},
 	disqualified: [{
 		submission: {
 			type: Schema.Types.ObjectId,
@@ -108,7 +103,7 @@ const tournamentSchema = new Schema<ITournament>({
 		reason: {
 			type: Schema.Types.String,
 			required: true
-		},
+		}
 	}],
 	tournamentExecutionTime: {
 		type: Schema.Types.Number,
@@ -141,7 +136,7 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 
 	await Promise.all(gradings.map(async (grading) => {
 		const submission = submissionMap.get(grading.submission.toString())
-		if (!submission?.user) return
+		if (!submission?.user) { return }
 
 		standings.push({
 			user: submission.user.id,
@@ -149,11 +144,10 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 			submission: grading.submission.toString(),
 			submissionName: submission.title,
 			score: grading.score,
-			zValue: grading.zValue,
 			tokenCount: grading.tokenCount,
 			placement: grading.placement,
-			statistics: await grading.calculateStatistics(),
-			avgExecutionTime: grading.avgExecutionTime,
+			percentileRank: grading.percentileRank,
+			avgExecutionTime: grading.avgExecutionTime
 		})
 	}))
 
@@ -171,14 +165,14 @@ tournamentSchema.methods.getStanding = async function (userId: string) {
 		}
 	}).exec()
 
-	if (!grading) return null
+	if (!grading) { return null }
 
 	const submission = await SubmissionModel
 		.findById(grading.submission)
 		.populate('user', 'username')
 		.exec() as ISubmissionPopulated
 
-	if (!submission?.user) return null
+	if (!submission?.user) { return null }
 
 	return {
 		user: submission.user.id,
@@ -186,10 +180,9 @@ tournamentSchema.methods.getStanding = async function (userId: string) {
 		submission: grading.submission.toString(),
 		submissionName: submission.title,
 		score: grading.score,
-		zValue: grading.zValue,
 		tokenCount: grading.tokenCount,
 		placement: grading.placement,
-		statistics: await grading.calculateStatistics(),
+		percentileRank: grading.percentileRank,
 		avgExecutionTime: grading.avgExecutionTime
 	}
 }
@@ -246,7 +239,7 @@ tournamentSchema.methods.calculateStatistics = async function () {
 		const rank = p * (sampleSize - 1)
 		const floor = Math.floor(rank)
 		const ceil = Math.ceil(rank)
-		if (floor === ceil) return scores[floor]
+		if (floor === ceil) { return scores[floor] }
 		const fraction = rank - floor
 		return scores[floor] * (1 - fraction) + scores[ceil] * fraction
 	}
@@ -370,6 +363,18 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	}
 	return true
 }, 'All gradings must not be disqualified')
+
+tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+	const gradings = await GradingModel.find({ _id: { $in: v } })
+		.populate({ path: 'submission', select: 'game' })
+		.exec() as { submission: { game: Schema.Types.ObjectId } }[]
+	for (const grading of gradings) {
+		if (grading.submission.game.toString() !== this.game.toString()) {
+			return false
+		}
+	}
+	return true
+}, 'All gradings must be from submissions of the same game as the tournament')
 
 tournamentSchema.path('disqualified').validate(async function (v: { submission: Schema.Types.ObjectId, reason: string }[]) {
 	// Check if all submissions exist

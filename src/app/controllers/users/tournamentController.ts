@@ -1,32 +1,37 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Response, type Request } from 'express'
 import mongoose, { type SortOrder } from 'mongoose'
 
-// Own modules
+import GradingModel, { IGrading } from '../../models/Grading.js'
 import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
-import { IGrading } from '../../models/Grading.js'
 
-// Environment variables
-// Config variables
-// Destructuring and global variables
-
-export async function getAllTournaments(
+export async function getAllTournaments (
 	req: Request,
 	res: Response,
 	next: NextFunction
 ): Promise<void> {
 	logger.silly('Getting tournaments')
 
-	const { getStandings, fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
+	const { getStandings, includesUser, game, fromDate, toDate, limit, skip, limitStandings, skipStandings, userIdStanding, sortFieldStandings, sortDirectionStandings } = req.query
 	const query: any = {}
 
 	if (fromDate || toDate) {
 		query.createdAt = {}
-		if (typeof fromDate === 'string') query.createdAt.$gte = new Date(fromDate)
-		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
+		if (typeof fromDate === 'string') { query.createdAt.$gte = new Date(fromDate) }
+		if (typeof toDate === 'string') { query.createdAt.$lte = new Date(toDate) }
+	}
+
+	if (typeof game === 'string') {
+		query.game = game
+	}
+
+	if (typeof includesUser === 'string') {
+		const gradingDocs = await GradingModel.find()
+			.populate({ path: 'submission', select: 'user', match: { user: new mongoose.Types.ObjectId(includesUser) } })
+			.select('_id')
+			.exec()
+		const filteredGradingIds = gradingDocs.filter(g => g.submission).map(g => g._id)
+		query.gradings = { $in: filteredGradingIds }
 	}
 
 	try {
@@ -35,7 +40,12 @@ export async function getAllTournaments(
 			.limit(Number(limit) || 0)
 			.skip(Number(skip) || 0)
 			.exec()
-	
+
+		if (tournaments.length === 0) {
+			res.status(200).json([])
+			return
+		}
+
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
 			let standings: TournamentStanding[] | undefined = undefined
 			if (getStandings === 'true') {
@@ -54,6 +64,7 @@ export async function getAllTournaments(
 				disqualified: tournament.disqualified,
 				submissionCount: tournament.gradings.length,
 				tournamentExecutionTime: tournament.tournamentExecutionTime,
+				game: tournament.game,
 				standings,
 				userStanding: shouldGetUserStanding ? await tournament.getStanding(userIdStanding) : null,
 				createdAt: tournament.createdAt,
@@ -71,7 +82,7 @@ export async function getAllTournaments(
 	}
 }
 
-export async function getTournament(
+export async function getTournament (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -103,6 +114,7 @@ export async function getTournament(
 			disqualified: tournament.disqualified,
 			submissionCount: tournament.gradings.length,
 			tournamentExecutionTime: tournament.tournamentExecutionTime,
+			game: tournament.game,
 			standings,
 			userStanding: shouldGetUserStanding ? await tournament.getStanding(userIdStanding) : null,
 			createdAt: tournament.createdAt,
@@ -113,7 +125,7 @@ export async function getTournament(
 	}
 }
 
-export async function getTournamentStatistics(
+export async function getTournamentStatistics (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -134,7 +146,7 @@ export async function getTournamentStatistics(
 	}
 }
 
-export async function getTournamentStandings(
+export async function getTournamentStandings (
 	req: Request,
 	res: Response,
 	next: NextFunction
