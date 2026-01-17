@@ -1,7 +1,5 @@
-/* eslint-disable local/enforce-comment-order */
-
-export type DiePair = [number, number];
-type ActionTypes = 'detEllerDerover' | 'roll';
+export type DiePair = [number, number]
+type ActionTypes = 'detEllerDerover' | 'roll'
 
 export interface StrategyAPI {
 	getPreviousActions(): Action[];
@@ -24,4 +22,4 @@ export interface PublicAction {
 	announcedValue: number
 }
 
-export type StrategyFunction = (api: StrategyAPI) => void;
+export type StrategyFunction = (api: StrategyAPI) => void

@@ -1,20 +1,12 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
-// Own modules
-import logger from '../../utils/logger.js'
 import GameModel from '../../models/Game.js'
 import SubmissionModel from '../../models/Submission.js'
 import TournamentModel from '../../models/Tournament.js'
+import logger from '../../utils/logger.js'
 
-// Environment variables
-// Config variables
-// Destructuring and global variables
-
-export async function getAllGames(
+export async function getAllGames (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -86,7 +78,7 @@ export async function getAllGames(
 	}
 }
 
-export async function getGame(
+export async function getGame (
 	req: Request,
 	res: Response,
 	next: NextFunction

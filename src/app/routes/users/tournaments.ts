@@ -1,23 +1,12 @@
-// Node.js built-in modules
+import { Router } from 'express'
 
-// Third-party libraries
-
-import Router from 'express'
-
-// Own modules
 import {
 	getAllTournaments,
 	getTournament,
 	getTournamentStatistics,
 	getTournamentStandings
 } from '../../controllers/users/tournamentController.js'
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const router = Router()
 
 /**
@@ -50,7 +39,7 @@ const router = Router()
  * }>} res.body - Array of tournaments
  */
 router.get('/',
-	asyncErrorHandler(getAllTournaments)
+	getAllTournaments
 )
 
 /**
@@ -78,7 +67,7 @@ router.get('/',
  * }|{error: string}} res.body - Tournament data or error message
  */
 router.get('/:id',
-	asyncErrorHandler(getTournament)
+	getTournament
 )
 
 /**
@@ -96,7 +85,7 @@ router.get('/:id',
  * }|{error: string}} res.body - Tournament statistics or error message
  */
 router.get('/:id/statistics',
-	asyncErrorHandler(getTournamentStatistics)
+	getTournamentStatistics
 )
 
 /**
@@ -112,7 +101,7 @@ router.get('/:id/statistics',
  * @returns {Array<TournamentStanding>|{error: string}} res.body - Tournament standings or error message
  */
 router.get('/:id/standings',
-	asyncErrorHandler(getTournamentStandings)
+	getTournamentStandings
 )
 
 export default router

@@ -1,13 +1,7 @@
-/* eslint-disable local/enforce-comment-order */
-
-// Node.js built-in modules
-
-// Third-party libraries
 import type MongoStore from 'connect-mongo'
 import { MongoMemoryReplSet } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 
-// Own modules
 import logger from '../app/utils/logger.js'
 import config from '../app/utils/setupConfig.js'
 

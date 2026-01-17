@@ -1,4 +1,3 @@
-/* eslint-disable local/enforce-comment-order */
 export interface EvaluationResults {
 	error?: string
 	results: {

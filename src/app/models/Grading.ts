@@ -1,24 +1,13 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type Document, model, Schema } from 'mongoose'
 
-// Own modules
 import { ISubmission } from './Submission.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
-
-// Interfaces
 export interface IGrading extends Document {
-    // Properties
+	// Properties
 	/** Submission being graded */
-    submission: string | ISubmission
+	submission: string | ISubmission
 	/** Score given to the submission */
-    score: number
+	score: number
 	/** Percentile rank of the submission */
 	percentileRank: number
 	/** Placement */
@@ -28,9 +17,9 @@ export interface IGrading extends Document {
 	/** Average execution time */
 	avgExecutionTime: number
 
-    // Timestamps
-    createdAt: Date
-    updatedAt: Date
+	// Timestamps
+	createdAt: Date
+	updatedAt: Date
 }
 
 export interface IGradingPopulated extends IGrading {

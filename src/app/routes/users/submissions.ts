@@ -1,9 +1,5 @@
-// Node.js built-in modules
+import { Router } from 'express'
 
-// Third-party libraries
-import Router from 'express'
-
-// Own modules
 import {
 	createSubmission,
 	getSubmissions,
@@ -13,13 +9,7 @@ import {
 	reEvaluateSubmission
 } from '../../controllers/users/submissionController.js'
 import { ensureAuthenticated } from '../../middleware/auth.js'
-import asyncErrorHandler from '../../utils/asyncErrorHandler.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
 const router = Router()
 
 /**
@@ -46,7 +36,7 @@ const router = Router()
  */
 router.post('/',
 	ensureAuthenticated,
-	asyncErrorHandler(createSubmission)
+	createSubmission
 )
 
 /**
@@ -75,7 +65,7 @@ router.post('/',
  * }>} res.body - Array of submissions
  */
 router.get('/',
-	asyncErrorHandler(getSubmissions)
+	getSubmissions
 )
 
 /**
@@ -103,7 +93,7 @@ router.get('/',
  */
 router.patch('/:id',
 	ensureAuthenticated,
-	asyncErrorHandler(updateSubmission)
+	updateSubmission
 )
 
 /**
@@ -128,7 +118,7 @@ router.patch('/:id',
  * }|{error: string}} res.body - Submission with optional gradings or error message
  */
 router.get('/:id',
-	asyncErrorHandler(getSubmission)
+	getSubmission
 )
 
 /**
@@ -141,7 +131,7 @@ router.get('/:id',
  */
 router.delete('/:id',
 	ensureAuthenticated,
-	asyncErrorHandler(deleteSubmission)
+	deleteSubmission
 )
 
 /**
@@ -151,7 +141,7 @@ router.delete('/:id',
  */
 router.post('/:id/evaluate',
 	ensureAuthenticated,
-	asyncErrorHandler(reEvaluateSubmission)
+	reEvaluateSubmission
 )
 
 export default router

@@ -1,22 +1,12 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Response, type Request } from 'express'
 import mongoose from 'mongoose'
 
-// Own modules
+import GameModel from '../../models/Game.js'
 import SubmissionModel from '../../models/Submission.js'
 import { submitCodeForEvaluation } from '../../services/CodeRunner.js'
 import logger from '../../utils/logger.js'
-import GameModel from '../../models/Game.js'
 
-// Environment variables
-
-// Config variables
-
-// Destructuring and global variables
-
-export async function createSubmission(
+export async function createSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -49,7 +39,7 @@ export async function createSubmission(
 	}
 }
 
-export async function getSubmissions(
+export async function getSubmissions (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -65,14 +55,14 @@ export async function getSubmissions(
 	const { fromDate, toDate } = req.query
 	if ((typeof fromDate === 'string') && (typeof toDate === 'string')) {
 		query.createdAt = {}
-		if (typeof fromDate === 'string') query.createdAt.$gte = new Date(fromDate)
-		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
+		if (typeof fromDate === 'string') { query.createdAt.$gte = new Date(fromDate) }
+		if (typeof toDate === 'string') { query.createdAt.$lte = new Date(toDate) }
 	}
 
-	if (req.query.active !== undefined) query.active = req.query.active
-	if (req.query.passedEvaluation !== undefined) query.passedEvaluation = req.query.passedEvaluation
-	if (req.query.user !== undefined) query.user = req.query.user
-	if (req.query.game !== undefined) query.game = req.query.game
+	if (req.query.active !== undefined) { query.active = req.query.active }
+	if (req.query.passedEvaluation !== undefined) { query.passedEvaluation = req.query.passedEvaluation }
+	if (req.query.user !== undefined) { query.user = req.query.user }
+	if (req.query.game !== undefined) { query.game = req.query.game }
 
 	try {
 		const submissions = await SubmissionModel
@@ -105,7 +95,7 @@ export async function getSubmissions(
 	}
 }
 
-export async function updateSubmission(
+export async function updateSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -143,7 +133,7 @@ export async function updateSubmission(
 		if (req.body.active !== undefined) { submission.active = req.body.active }
 
 		await submission.validate()
-		
+
 		// If the code was updated or the submission was not evaluated yet, re-evaluate it
 		if (codeUpdated || submission.passedEvaluation === null) {
 			const game = await GameModel.findById(submission.game)
@@ -196,7 +186,7 @@ export async function updateSubmission(
 	}
 }
 
-export async function getSubmission(
+export async function getSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -230,7 +220,7 @@ export async function getSubmission(
 	}
 }
 
-export async function deleteSubmission(
+export async function deleteSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -253,13 +243,12 @@ export async function deleteSubmission(
 		}
 		await submission.deleteOne()
 		res.status(204).end()
-	}
-	catch (error) {
+	} catch (error) {
 		next(error)
 	}
 }
 
-export async function reEvaluateSubmission(
+export async function reEvaluateSubmission (
 	req: Request,
 	res: Response,
 	next: NextFunction

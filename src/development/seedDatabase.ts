@@ -1,13 +1,13 @@
-/* eslint-disable local/enforce-comment-order */
 // file deepcode ignore NoHardcodedPasswords/test: Hardcoded credentials are only used for testing purposes
 // file deepcode ignore NoHardcodedCredentials/test: Hardcoded credentials are only used for testing purposes
 // file deepcode ignore HardcodedNonCryptoSecret/test: Hardcoded credentials are only used for testing purposes
 
+import { processTournamentGradings } from '../app/controllers/microservices/codeRunnerController.js'
+import GameModel from '../app/models/Game.js'
 import SubmissionModel from '../app/models/Submission.js'
 import UserModel from '../app/models/User.js'
 import logger from '../app/utils/logger.js'
-import { processTournamentGradings } from '../app/controllers/microservices/codeRunnerController.js'
-import GameModel from '../app/models/Game.js'
+
 import meyerFiles, { apiType, detEllerDeroverStrategy, dumbStrategy, exampleStrategy, honestStrategy, lyingStrategy, revealingStrategy, statisticsStrategy } from './gamefiles.js'
 
 logger.info('Seeding database')
@@ -67,7 +67,7 @@ const games = await Promise.all([
 		apiType,
 		exampleStrategy,
 		batchSize: 1
-	})	
+	})
 ])
 const gameIds = games.map(game => game.id as string)
 
@@ -102,8 +102,8 @@ const generateScore = () => {
 	} else {
 		// Outliers: either very low or very high
 		return Math.random() > 0.5 ?
-			normalRandomInRange(50, 25) :  // Very low scores
-			normalRandomInRange(950, 25)  // Very high scores
+			normalRandomInRange(50, 25) : // Very low scores
+			normalRandomInRange(950, 25) // Very high scores
 	}
 }
 
@@ -179,7 +179,7 @@ for (let i = 0; i < userCount - 1; i += batchSize) {
 	const batch = await Promise.all(
 		Array(Math.min(batchSize, userCount - 1 - i))
 			.fill(null)
-			.map((_, j) => createRandomUser(i + j + 2))  // Start from index 2
+			.map((_, j) => createRandomUser(i + j + 2)) // Start from index 2
 	)
 	users.push(batch)
 	// For each user, create submissions for each game and aggregate

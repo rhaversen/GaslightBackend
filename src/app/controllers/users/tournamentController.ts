@@ -1,19 +1,11 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Response, type Request } from 'express'
 import mongoose, { type SortOrder } from 'mongoose'
 
-// Own modules
+import GradingModel, { IGrading } from '../../models/Grading.js'
 import TournamentModel, { TournamentStanding } from '../../models/Tournament.js'
 import logger from '../../utils/logger.js'
-import GradingModel, { IGrading } from '../../models/Grading.js'
 
-// Environment variables
-// Config variables
-// Destructuring and global variables
-
-export async function getAllTournaments(
+export async function getAllTournaments (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -25,8 +17,8 @@ export async function getAllTournaments(
 
 	if (fromDate || toDate) {
 		query.createdAt = {}
-		if (typeof fromDate === 'string') query.createdAt.$gte = new Date(fromDate)
-		if (typeof toDate === 'string') query.createdAt.$lte = new Date(toDate)
+		if (typeof fromDate === 'string') { query.createdAt.$gte = new Date(fromDate) }
+		if (typeof toDate === 'string') { query.createdAt.$lte = new Date(toDate) }
 	}
 
 	if (typeof game === 'string') {
@@ -53,7 +45,7 @@ export async function getAllTournaments(
 			res.status(200).json([])
 			return
 		}
-	
+
 		const enrichedTournaments = await Promise.all(tournaments.map(async tournament => {
 			let standings: TournamentStanding[] | undefined = undefined
 			if (getStandings === 'true') {
@@ -90,7 +82,7 @@ export async function getAllTournaments(
 	}
 }
 
-export async function getTournament(
+export async function getTournament (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -133,7 +125,7 @@ export async function getTournament(
 	}
 }
 
-export async function getTournamentStatistics(
+export async function getTournamentStatistics (
 	req: Request,
 	res: Response,
 	next: NextFunction
@@ -154,7 +146,7 @@ export async function getTournamentStatistics(
 	}
 }
 
-export async function getTournamentStandings(
+export async function getTournamentStandings (
 	req: Request,
 	res: Response,
 	next: NextFunction

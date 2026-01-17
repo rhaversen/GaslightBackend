@@ -1,22 +1,13 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Request, type Response } from 'express'
 import passport from 'passport'
 
-// Own modules
+import SubmissionModel from '../../models/Submission.js'
 import { type IUser } from '../../models/User.js'
 import config from '../../utils/setupConfig.js'
-import SubmissionModel from '../../models/Submission.js'
 
-// Environment variables
-
-// Config variables
 const {
 	sessionExpiry
 } = config
-
-// Destructuring and global variables
 
 export async function loginUserLocal (req: Request, res: Response, next: NextFunction): Promise<void> {
 	// Check if name and password are provided
@@ -67,7 +58,7 @@ export async function loginUserLocal (req: Request, res: Response, next: NextFun
 				confirmed: loggedInUser.confirmed,
 				expirationDate: loggedInUser.expirationDate,
 				createdAt: loggedInUser.createdAt,
-				updatedAt: loggedInUser.updatedAt,
+				updatedAt: loggedInUser.updatedAt
 			}
 
 			res.status(200).json({
@@ -96,7 +87,7 @@ export async function logoutLocal (req: Request, res: Response, next: NextFuncti
 	})
 }
 
-export async function getMe(req: Request, res: Response): Promise<void> {
+export async function getMe (req: Request, res: Response): Promise<void> {
 	const user = req.user
 
 	if (user === undefined) {

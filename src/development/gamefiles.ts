@@ -1,4 +1,3 @@
-/* eslint-disable local/enforce-comment-order */
 const meyerFiles = {
 	'gameState.ts': `import { Action } from './types.ts'
 
