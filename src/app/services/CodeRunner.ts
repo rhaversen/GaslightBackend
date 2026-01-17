@@ -1,27 +1,20 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import axios from 'axios'
 
-// Own modules
+import { IGame } from '../models/Game.js'
 import { ISubmission, ISubmissionEvaluation } from '../models/Submission.js'
+import { EvaluationResults } from '../types/CodeRunnerTypes.js'
 import logger from '../utils/logger.js'
 import AppConfig from '../utils/setupConfig.js'
-import { EvaluationResults } from '../types/CodeRunnerTypes.js'
 
-// Environment variables
 const {
 	MICROSERVICE_AUTHORIZATION
 } = process.env as Record<string, string>
 
-// Config variables
 const {
 	evaluationRunnerHost,
 	strategyExecutionTimeout,
 	strategyLoadingTimeout
 } = AppConfig
-
-// Destructuring and global variables
 
 export interface FileMap {
 	'main.ts': string;
@@ -35,7 +28,9 @@ export interface submission {
 
 interface EvaluationRequestBody {
 	candidateSubmission: submission;
-	excludeUser: string;
+	gameFiles: FileMap;
+	batchSize: number;
+	gameId: string;
 }
 
 export interface ProcessedEvaluationResults {
@@ -43,7 +38,7 @@ export interface ProcessedEvaluationResults {
 	evaluation: ISubmissionEvaluation;
 }
 
-export async function submitCodeForEvaluation(candidateSubmission: ISubmission): Promise<ProcessedEvaluationResults | false> {
+export async function submitCodeForEvaluation (candidateUser: string, candidateSubmission: ISubmission, game: IGame): Promise<ProcessedEvaluationResults | false> {
 	try {
 		const mappedCandidateSubmission: submission = {
 			submissionId: candidateSubmission.id,
@@ -53,8 +48,11 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 		const response = await axios.post<EvaluationResults>(
 			`${evaluationRunnerHost}/api/v1/evaluate-submission`,
 			{
+				gameFiles: game.files,
+				gameId: game.id,
+				batchSize: game.batchSize,
 				candidateSubmission: mappedCandidateSubmission,
-				excludeUser: candidateSubmission.user
+				candidateUser
 			} as EvaluationRequestBody,
 			{
 				headers: {
@@ -105,7 +103,7 @@ export async function submitCodeForEvaluation(candidateSubmission: ISubmission):
 	} catch (error: any) {
 		logger.error(
 			'Error submitting code for test',
-			error?.response?.data?.error ?? error.message,
+			error?.response?.data?.error ?? error.message
 		)
 		return false
 	}

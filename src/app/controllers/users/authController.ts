@@ -1,21 +1,13 @@
-// Node.js built-in modules
-
-// Third-party libraries
 import { type NextFunction, type Request, type Response } from 'express'
 import passport from 'passport'
 
-// Own modules
+import SubmissionModel from '../../models/Submission.js'
 import { type IUser } from '../../models/User.js'
 import config from '../../utils/setupConfig.js'
 
-// Environment variables
-
-// Config variables
 const {
 	sessionExpiry
 } = config
-
-// Destructuring and global variables
 
 export async function loginUserLocal (req: Request, res: Response, next: NextFunction): Promise<void> {
 	// Check if name and password are provided
@@ -66,7 +58,7 @@ export async function loginUserLocal (req: Request, res: Response, next: NextFun
 				confirmed: loggedInUser.confirmed,
 				expirationDate: loggedInUser.expirationDate,
 				createdAt: loggedInUser.createdAt,
-				updatedAt: loggedInUser.updatedAt,
+				updatedAt: loggedInUser.updatedAt
 			}
 
 			res.status(200).json({
@@ -93,4 +85,27 @@ export async function logoutLocal (req: Request, res: Response, next: NextFuncti
 			res.status(200).json({ message: 'Logged out' })
 		})
 	})
+}
+
+export async function getMe (req: Request, res: Response): Promise<void> {
+	const user = req.user
+
+	if (user === undefined) {
+		res.status(401).json({ error: 'Unauthorized' })
+		return
+	}
+
+	const mappedUser = {
+		_id: user.id,
+		username: user.username,
+		email: user.email,
+		expirationDate: user.expirationDate,
+		confirmed: user.confirmed,
+		submissionCount: await SubmissionModel.countDocuments({ user: user.id }),
+		activeSubmission: (await SubmissionModel.findOne({ user: user.id, active: true }).exec())?.title || null,
+		createdAt: user.createdAt,
+		updatedAt: user.updatedAt
+	}
+
+	res.status(200).json(mappedUser)
 }

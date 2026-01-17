@@ -1,10 +1,8 @@
-/* eslint-disable local/enforce-comment-order */
-
 import gameState from './gameState.js'
 import { createStrategyAPI } from './strategyAPI.js'
 import { StrategyFunction } from './types.js'
 
-export function startGame(strategies: StrategyFunction[]) {
+export function startGame (strategies: StrategyFunction[]) {
 	gameState.setPlayers(strategies)
 	gameState.setFirstInRound(true)
 
@@ -31,7 +29,7 @@ export function startGame(strategies: StrategyFunction[]) {
 	}
 }
 
-function isGameOver(): boolean {
+function isGameOver (): boolean {
 	// Implement logic to determine if the game is over
 	const playerLives = gameState.getPlayerLives()
 	const activePlayers = playerLives.filter((lives) => lives > 0).length
