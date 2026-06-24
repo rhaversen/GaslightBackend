@@ -4,7 +4,7 @@
 	"scripts": {
 		"build": "tsc",
 		"start": "node \"index.js\"",
-		"dev": "if exist dist rmdir /s /q dist && tsc && node --env-file .env \"dist/development/index.js\"",
+		"dev": "(if exist dist rmdir /s /q dist) & tsc && node --env-file .env \"dist/development/index.js\"",
 		"test:development": "mocha --reporter spec --recursive \"dist/test/development/**/*.spec.js\"",
 		"lint": "npx eslint \"**/*.ts\"",
 		"lint:fix": "npx eslint \"**/*.ts\" --fix",
