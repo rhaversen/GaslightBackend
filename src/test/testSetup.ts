@@ -7,7 +7,7 @@ import process from 'process'
 
 import * as Sentry from '@sentry/node'
 import * as chai from 'chai'
-import chaiHttp from 'chai-http'
+import chaiHttp, { request as chaiRequest } from 'chai-http'
 import type MongoStore from 'connect-mongo'
 import { before, beforeEach, afterEach, after } from 'mocha'
 import mongoose from 'mongoose'
@@ -25,7 +25,7 @@ process.env.MICROSERVICE_AUTHORIZATION = 'TEST_MICROSERVICE_AUTHORIZATION'
 // Global variables
 const chaiHttpObject = chai.use(chaiHttp)
 let app: { server: Server, sessionStore: MongoStore }
-let chaiAppServer: ChaiHttp.Agent
+let chaiAppServer: ReturnType<typeof chaiRequest.execute>
 
 const cleanDatabase = async function (): Promise<void> {
 	// / ////////////////////////////////////////////
@@ -56,7 +56,7 @@ before(async function () {
 })
 
 beforeEach(async function () {
-	chaiAppServer = chaiHttpObject.request(app.server).keepOpen()
+	chaiAppServer = chaiRequest.execute(app.server).keepOpen()
 })
 
 afterEach(async function () {

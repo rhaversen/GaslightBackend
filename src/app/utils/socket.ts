@@ -44,8 +44,8 @@ export async function initSocket (server: HttpServer): Promise<void> {
 	const subClient = pubClient.duplicate()
 
 	// Handle Redis client errors
-	pubClient.on('error', (err) => { logger.error('Redis Pub Client Error:', err) })
-	subClient.on('error', (err) => { logger.error('Redis Sub Client Error:', err) })
+	pubClient.on('error', (err) => { logger.error('Redis Pub Client Error', { error: err }) })
+	subClient.on('error', (err) => { logger.error('Redis Sub Client Error', { error: err }) })
 
 	// Connect to Redis
 	await Promise.all([pubClient.connect(), subClient.connect()])
@@ -82,8 +82,8 @@ export function emitSocketEvent<T> (
 
 	try {
 		io.emit(eventName, data)
-		successLog ?? logger.silly(successLog)
+		if (successLog !== undefined) { logger.silly(successLog) }
 	} catch (error) {
-		logger.error(`Failed to emit ${eventName}:`, error)
+		logger.error(`Failed to emit ${eventName}`, { error })
 	}
 }

@@ -36,7 +36,7 @@ export async function getActiveSubmissions (req: Request, res: Response) {
 		}))
 		res.status(200).json(mappedSubmissions)
 	} catch (error) {
-		logger.error(error)
+		logger.error('Failed to fetch submissions', { error })
 		res.status(500).json({ error: 'Server error' })
 	}
 }
@@ -51,7 +51,7 @@ export async function getGames (req: Request, res: Response) {
 		}))
 		res.status(200).json(mappedGames)
 	} catch (error) {
-		logger.error(error)
+		logger.error('Failed to fetch games', { error })
 		res.status(500).json({ error: 'Server error' })
 	}
 }
@@ -91,18 +91,18 @@ export async function processTournamentGradings (gradings: Grading[], disqualifi
 			percentileRank: (scoreToCumulative.get(g.score)! / scores.length) * 100
 		})) as IGrading[]
 
-		const newGradings = await GradingModel.insertMany(enrichedGradings)
+		const newGradings = await GradingModel.insertMany(enrichedGradings as any)
 		const tournament = await TournamentModel.create({
 			gradings: newGradings.map(gr => gr._id),
 			disqualified,
 			tournamentExecutionTime,
-			game
+			game: game as any
 		})
 
 		emitTournamentCreated(tournament)
 		return tournament
 	} catch (error) {
-		logger.error(error)
+		logger.error('Failed to process tournament gradings', { error })
 		return null
 	}
 }

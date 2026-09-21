@@ -198,7 +198,7 @@ userSchema.methods.comparePassword = async function (this: IUser, password: stri
 	return isPasswordCorrect
 }
 
-userSchema.pre('save', async function (next) {
+userSchema.pre('save', async function () {
 	if (this.isNew) {
 		await this.generateNewConfirmationCode()
 	}
@@ -208,7 +208,6 @@ userSchema.pre('save', async function (next) {
 		this.password = await hash(this.password, bcryptSaltRounds) // Using a random salt for each user
 		this.passwordResetCode = undefined
 	}
-	next()
 })
 
 const UserModel = model<IUser>('User', userSchema)

@@ -18,7 +18,7 @@ const AppConfig = {
 	highSensitivityApiLimiterConfig: config.get('apiLimiter.sensitivity.high') as RateLimitOptions,
 	criticalSensitivityApiLimiterConfig: config.get('apiLimiter.sensitivity.critical') as RateLimitOptions,
 	expressPort: config.get('expressPort') as number,
-	mongooseOpts: config.get('mongoose.options') as ConnectOptions,
+	mongooseOpts: { ...config.get('mongoose.options') } as ConnectOptions,
 	maxRetryAttempts: config.get('mongoose.retrySettings.maxAttempts') as number,
 	retryInterval: config.get('mongoose.retrySettings.interval') as number, // in milliseconds
 	retryWrites: config.get('mongoose.options.retryWrites') as string,

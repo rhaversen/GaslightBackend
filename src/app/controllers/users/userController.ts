@@ -21,13 +21,13 @@ export async function register (req: Request, res: Response, next: NextFunction)
 		return
 	}
 
-	const existingUser = await UserModel.findOne({ email: body.email }).exec()
+	const existingUser = await UserModel.findOne({ email: body.email as string }).exec()
 
 	if (existingUser === null) {
 		// User doesn't exist, create a new user
 		const newUser = await UserModel.create({
-			email: body.email,
-			password: body.password
+			email: body.email as string,
+			password: body.password as string
 		})
 		newUser.confirmUser() // TODO: Implement confirmation logic later
 		await newUser.save()

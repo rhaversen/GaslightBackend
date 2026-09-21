@@ -156,7 +156,7 @@ function getTokenCount (code: string): number {
             token.type !== 'LineComment'
 		).length
 	} catch (error) {
-		logger.error('Error parsing code for token count:', error)
+		logger.error('Error parsing code for token count', { error })
 		// Fallback to simple line counting if parsing fails
 		return code.split('\n').filter((line: string): boolean => {
 			const trimmed = line.trim()
@@ -174,32 +174,29 @@ function getTokenCount (code: string): number {
 }
 
 // Pre-save middleware
-submissionSchema.pre('save', async function (next) {
+submissionSchema.pre('save', async function () {
 	if (this.isModified('code')) {
 		this.tokenCount = getTokenCount(this.code)
 	}
-	next()
 })
 
 // Pre-delete middleware
-submissionSchema.pre(['deleteOne', 'findOneAndDelete'], async function (next) {
+submissionSchema.pre(['deleteOne', 'findOneAndDelete'], async function () {
 	const doc = await SubmissionModel.findOne(this.getQuery())
 	// Delete gradings
 	if (doc !== null && doc !== undefined) {
 		await GradingModel.deleteMany({ submission: doc._id })
 	}
-	next()
 })
 
 // Pre-delete-many middleware
-submissionSchema.pre('deleteMany', async function (next) {
+submissionSchema.pre('deleteMany', async function () {
 	const docs = await SubmissionModel.find(this.getQuery())
 	const docIds = docs.map(doc => doc._id)
 	// Delete gradings
 	if (docIds.length > 0) {
 		await GradingModel.deleteMany({ submission: { $in: docIds } })
 	}
-	next()
 })
 
 // Compile the schema into a model

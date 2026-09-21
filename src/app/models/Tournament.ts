@@ -1,4 +1,4 @@
-import { type Document, model, Schema, SortOrder } from 'mongoose'
+import { type Document, model, Schema, SortOrder, Types } from 'mongoose'
 
 import GradingModel, { IGrading, IGradingPopulated } from './Grading.js'
 import SubmissionModel, { ISubmissionPopulated } from './Submission.js'
@@ -124,7 +124,7 @@ tournamentSchema.methods.getStandings = async function (limit: number = 0, skip:
 		.exec()
 
 	const submissions = await SubmissionModel
-		.find({ _id: { $in: gradings.map(g => g.submission) } })
+		.find({ _id: { $in: gradings.map(g => g.submission) } } as any)
 		.populate('user', 'username')
 		.exec() as ISubmissionPopulated[]
 
@@ -293,14 +293,14 @@ tournamentSchema.methods.calculateStatistics = async function () {
 }
 
 // Validations
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	if (v.length === 0) {
 		return false
 	}
 	return true
 }, 'Tournament must have at least one grading')
 
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	// Check if all gradings exist
 	const gradings = await GradingModel.find({ _id: { $in: v } })
 	if (gradings.length !== v.length) {
@@ -309,7 +309,7 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'All gradings must exist')
 
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	// Check if all gradings are from different submissions
 	const gradings = await GradingModel.find({ _id: { $in: v } })
 	const submissions = gradings.map(grading => grading.submission)
@@ -320,7 +320,7 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'All gradings must be from different submissions')
 
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	// Check if length of unique gradings is the same as the length of the gradings
 	const uniqueGradings = new Set(v)
 	if (v.length !== uniqueGradings.size) {
@@ -329,7 +329,7 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'Gradings must be unique')
 
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	// Check if all gradings are from different users
 	const gradings = await GradingModel.find({ _id: { $in: v } }).populate('submission').exec() as IGradingPopulated[]
 	const users = gradings.map(grading => grading.submission.user)
@@ -340,7 +340,7 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'All gradings must be from different users')
 
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	// Check if all gradings are from active and passed evaluation submissions
 	const gradings = await GradingModel.find({ _id: { $in: v } }).populate({
 		path: 'submission',
@@ -354,7 +354,7 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'All gradings must be from active and passed evaluation submissions')
 
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	// Check if some grading is in the disqualified array
 	const gradings = await GradingModel.find({ _id: { $in: v } }).exec()
 	const disqualifiedSubmissions = this.disqualified?.map(disqualification => disqualification.submission.toString()) || []
@@ -364,7 +364,7 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 	return true
 }, 'All gradings must not be disqualified')
 
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	const gradings = await GradingModel.find({ _id: { $in: v } })
 		.populate({ path: 'submission', select: 'game' })
 		.exec() as { submission: { game: Schema.Types.ObjectId } }[]
@@ -405,7 +405,7 @@ tournamentSchema.path('disqualified').validate(async function (v: { submission: 
 }, 'Submissions must be unique')
 
 // Submissions users must be unique
-tournamentSchema.path('gradings').validate(async function (v: Schema.Types.ObjectId[]) {
+tournamentSchema.path('gradings').validate(async function (v: Types.ObjectId[]) {
 	const gradings = await GradingModel.find({ _id: { $in: v } }).populate('submission').exec() as IGradingPopulated[]
 	const users = gradings.map(grading => grading.submission.user)
 	const uniqueUsers = new Set(users)
@@ -419,18 +419,18 @@ tournamentSchema.path('gradings').validate(async function (v: Schema.Types.Objec
 tournamentSchema.index({ gradings: 1 })
 
 // Pre-save middleware
-tournamentSchema.pre('save', async function (next) {
-	next()
+tournamentSchema.pre('save', async function () {
+	
 })
 
 // Pre-delete middleware
-tournamentSchema.pre(['deleteOne', 'findOneAndDelete'], async function (next) {
-	next()
+tournamentSchema.pre(['deleteOne', 'findOneAndDelete'], async function () {
+	
 })
 
 // Pre-delete-many middleware
-tournamentSchema.pre('deleteMany', async function (next) {
-	next()
+tournamentSchema.pre('deleteMany', async function () {
+	
 })
 
 // Compile the schema into a model

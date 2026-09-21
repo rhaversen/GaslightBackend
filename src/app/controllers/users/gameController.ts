@@ -24,7 +24,7 @@ export async function getAllGames (
 		const strategyCounts = await Promise.all(
 			games.map((game) =>
 				SubmissionModel
-					.countDocuments({ game: game._id, active: true })
+					.countDocuments({ game: game._id, active: true } as any)
 					.exec()
 			)
 		)
@@ -34,7 +34,7 @@ export async function getAllGames (
 			? await Promise.all(
 				games.map((game) =>
 					TournamentModel
-						.findOne({ game: game._id })
+						.findOne({ game: game._id } as any)
 						.sort({ createdAt: -1 })
 						.exec()
 				)
@@ -95,13 +95,13 @@ export async function getGame (
 
 		// Get the count of active strategies for the game
 		const strategyCount = await SubmissionModel
-			.countDocuments({ game: game._id, active: true })
+			.countDocuments({ game: game._id, active: true } as any)
 			.exec()
 
 		// Get latest tournament if requested
 		const tournament = getTournaments === 'true'
 			? await TournamentModel
-				.findOne({ game: game._id })
+				.findOne({ game: game._id } as any)
 				.sort({ createdAt: -1 })
 				.exec()
 			: undefined

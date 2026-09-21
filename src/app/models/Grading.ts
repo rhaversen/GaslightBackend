@@ -63,18 +63,18 @@ const gradingSchema = new Schema<IGrading>({
 gradingSchema.index({ submission: 1 })
 
 // Pre-save middleware
-gradingSchema.pre('save', async function (next) {
-	next()
+gradingSchema.pre('save', async function () {
+	
 })
 
 // Pre-delete middleware
-gradingSchema.pre(['deleteOne', 'findOneAndDelete'], async function (next) {
-	next()
+gradingSchema.pre(['deleteOne', 'findOneAndDelete'], async function () {
+	
 })
 
 // Pre-delete-many middleware
-gradingSchema.pre('deleteMany', async function (next) {
-	next()
+gradingSchema.pre('deleteMany', async function () {
+	
 })
 
 // Compile the schema into a model
