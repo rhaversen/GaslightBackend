@@ -14,8 +14,8 @@ WORKDIR /app
 # Create a user within the container
 RUN useradd -m gaslight_backend_user
 
-# Copy the app directory, package.json, package-lock.json and Config directory
-COPY dist/app/ ./
+# Copy the compiled app, package.json, package-lock.json and config directory
+COPY dist/ ./dist/
 COPY package*.json ./
 COPY config/ ./config/
 
