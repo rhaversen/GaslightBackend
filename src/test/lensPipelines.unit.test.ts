@@ -63,7 +63,16 @@ describe('lens pipelines (all lenses)', () => {
 		})
 		strategyId = submission.id
 
-		// Two tournaments: champion wins A, rival "wins" B via placement 1 for author there too
+		const rivalSubmission = await SubmissionModel.create({
+			title: 'Rival Strategy',
+			code: 'export const strategy = () => {}',
+			user: rivalId,
+			game: gameId,
+			active: true,
+			passedEvaluation: true
+		})
+
+		// Two tournaments; the author wins both, the rival places 2nd each
 		const tournamentA = await TournamentModel.create({
 			game: gameId,
 			gradingCount: 2,
@@ -79,9 +88,9 @@ describe('lens pipelines (all lenses)', () => {
 
 		await GradingModel.insertMany([
 			{ tournament: tournamentAId, game: gameId, user: userId, submission: strategyId, score: 200, placement: 1, percentileRank: 100, tokenCount: 10, avgExecutionTime: 1 },
-			{ tournament: tournamentAId, game: gameId, user: rivalId, submission: strategyId, score: 90, placement: 2, percentileRank: 50, tokenCount: 12, avgExecutionTime: 2 },
+			{ tournament: tournamentAId, game: gameId, user: rivalId, submission: rivalSubmission.id, score: 90, placement: 2, percentileRank: 50, tokenCount: 12, avgExecutionTime: 2 },
 			{ tournament: tournamentBId, game: gameId, user: userId, submission: strategyId, score: 150, placement: 1, percentileRank: 100, tokenCount: 10, avgExecutionTime: 1 },
-			{ tournament: tournamentBId, game: gameId, user: rivalId, submission: strategyId, score: 80, placement: 2, percentileRank: 50, tokenCount: 12, avgExecutionTime: 2 }
+			{ tournament: tournamentBId, game: gameId, user: rivalId, submission: rivalSubmission.id, score: 80, placement: 2, percentileRank: 50, tokenCount: 12, avgExecutionTime: 2 }
 		])
 	})
 
@@ -89,8 +98,8 @@ describe('lens pipelines (all lenses)', () => {
 		await disconnectFromInMemoryMongoDB()
 	})
 
-	it('registers 19 lenses with unique collection:id keys', () => {
-		assert.equal(lenses.length, 19)
+	it('registers all lenses with unique collection:id keys', () => {
+		assert.equal(lenses.length, 22)
 		const keys = new Set(lenses.map(l => `${l.from}:${l.id}`))
 		assert.equal(keys.size, lenses.length, 'no duplicate registration')
 	})
