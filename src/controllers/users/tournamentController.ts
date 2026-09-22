@@ -22,6 +22,41 @@ function standingsOptions (req: Request, defaults: { limit: number }): Standings
 	}
 }
 
+/**
+ * The daily tournament is scheduled at UTC midnight. Everything about
+ * "today's tournament" — the countdown target, whether it is currently
+ * running — derives from this boundary.
+ */
+export function utcMidnight (date: Date): Date {
+	return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
+export async function getTournamentStatus (
+	_req: Request,
+	res: Response
+): Promise<void> {
+	const now = new Date()
+	const dayStart = utcMidnight(now)
+	const nextDayStart = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000)
+
+	// A tournament "today" is one that ran since this UTC midnight. Its absence
+	// means the daily batch has not fired yet — the countdown is to midnight,
+	// and the flag stays false no matter how far past midnight local time is.
+	const todaysTournament = await TournamentModel
+		.findOne({ createdAt: { $gte: dayStart, $lt: nextDayStart } })
+		.sort({ createdAt: -1 })
+		.select('_id createdAt')
+		.exec()
+
+	res.status(200).json({
+		tournamentInProgress: todaysTournament !== null,
+		latestTournamentId: todaysTournament !== null ? todaysTournament.id : null,
+		latestTournamentStartedAt: todaysTournament !== null ? todaysTournament.createdAt : null,
+		nextTournamentAt: nextDayStart.toISOString(),
+		now: now.toISOString()
+	})
+}
+
 export async function getAllTournaments (
 	req: Request,
 	res: Response

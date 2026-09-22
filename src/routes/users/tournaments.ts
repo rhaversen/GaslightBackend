@@ -4,7 +4,8 @@ import {
 	getAllTournaments,
 	getTournament,
 	getTournamentStatistics,
-	getTournamentStandings
+	getTournamentStandings,
+	getTournamentStatus
 } from '../../controllers/users/tournamentController.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 
@@ -103,6 +104,25 @@ router.get('/:id/statistics',
  */
 router.get('/:id/standings',
 	asyncHandler(getTournamentStandings)
+)
+
+/**
+ * @route GET /api/v1/tournaments/status
+ * @description Status of the daily tournament cycle, which fires at UTC
+ *   midnight. tournamentInProgress is derived from whether a tournament
+ *   already exists for the current UTC day — not from wall-clock time.
+ * @access Public
+ * @returns {number} res.status - HTTP status code
+ * @returns {{
+ *   tournamentInProgress: boolean,
+ *   latestTournamentId: string|null,
+ *   latestTournamentStartedAt: Date|null,
+ *   nextTournamentAt: string,
+ *   now: string
+ * }} res.body - Daily cycle status
+ */
+router.get('/status',
+	asyncHandler(getTournamentStatus)
 )
 
 export default router
