@@ -14,6 +14,14 @@ import meyerFiles, { apiType, detEllerDeroverStrategy, dumbStrategy, exampleStra
 
 logger.info('Seeding database')
 
+// Every game must belong to a user — the seed author owns all seeded games
+const gameAuthor = await UserModel.create({
+	email: 'game-author@test.com',
+	password: 'password'
+})
+gameAuthor.confirmUser()
+await gameAuthor.save()
+
 // Create multiple games with different names
 const games = await Promise.all([
 	GameModel.create({
@@ -23,7 +31,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 10
+		batchSize: 10,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Meyer2',
@@ -32,7 +41,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 20
+		batchSize: 20,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Meyer3',
@@ -41,7 +51,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 15
+		batchSize: 15,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Two player meyer',
@@ -50,7 +61,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 2
+		batchSize: 2,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Three player meyer',
@@ -59,7 +71,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 3
+		batchSize: 3,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Single player meyer',
@@ -68,7 +81,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 1
+		batchSize: 1,
+		user: gameAuthor.id
 	})
 ])
 const gameIds = games.map(game => game.id as string)

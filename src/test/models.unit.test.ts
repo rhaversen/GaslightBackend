@@ -5,6 +5,7 @@ import mongoose from 'mongoose'
 
 import GameModel from '../models/Game.js'
 import UserModel from '../models/User.js'
+import { type IUser } from '../models/User.js'
 
 import connectToInMemoryMongoDB, { disconnectFromInMemoryMongoDB } from './mongoMemoryReplSetConnector.js'
 
@@ -12,6 +13,7 @@ import connectToInMemoryMongoDB, { disconnectFromInMemoryMongoDB } from './mongo
 // Runs against an isolated repl set, no app server, no network services.
 
 describe('models', () => {
+	let gameAuthor: IUser
 	before(async () => {
 		await connectToInMemoryMongoDB()
 	})
@@ -31,6 +33,7 @@ describe('models', () => {
 		assert.notEqual(user.password, password, 'password must not be stored in plain text')
 		const isMatch = await user.comparePassword(password)
 		assert.equal(isMatch, true)
+		gameAuthor = user
 	})
 
 	it('rejects a duplicate user email', async () => {
@@ -47,15 +50,31 @@ describe('models', () => {
 			files: { 'main.ts': 'export const Game = {}' },
 			apiType: 'turnBased',
 			exampleStrategy: 'export const strategy = () => {}',
-			batchSize: 2
+			batchSize: 2,
+			user: gameAuthor.id
 		})
 
 		assert.equal(game.name, 'Smoke Game')
 		assert.equal(game.batchSize, 2)
+		assert.equal(game.user, gameAuthor.id)
 
 		const found = await GameModel.findById(game._id)
 		assert.ok(found !== null)
 		assert.equal(found.id, game.id)
+	})
+
+	it('rejects a game without an owning user', async () => {
+		await assert.rejects(
+			() => GameModel.create({
+				name: 'Orphan Game',
+				summary: 'No author',
+				description: 'Should fail because user is required',
+				files: { 'main.ts': 'export const Game = {}' },
+				apiType: 'turnBased',
+				exampleStrategy: 'export const strategy = () => {}',
+				batchSize: 2
+			})
+		)
 	})
 
 	it('connects to an in-memory replica set', () => {

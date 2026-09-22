@@ -14,6 +14,8 @@ export interface IGame extends Document {
 	apiType: string
 	exampleStrategy: string
 	batchSize: number
+	/** User who submitted the game. Every game belongs to a user. */
+	user: string
 	// Timestamps
 	createdAt: Date
 	updatedAt: Date
@@ -35,10 +37,18 @@ const gameSchema = new Schema<IGame>({
 	},
 	apiType: { type: String, required: true },
 	exampleStrategy: { type: String, required: true },
-	batchSize: { type: Number, required: true }
+	batchSize: { type: Number, required: true },
+	user: {
+		type: String,
+		ref: 'User',
+		required: true
+	}
 }, {
 	timestamps: true
 })
+
+// Indexes — user → games they created (lens entry point), newest first
+gameSchema.index({ user: 1, createdAt: -1 })
 
 const GameModel = model<IGame>('Game', gameSchema)
 export default GameModel

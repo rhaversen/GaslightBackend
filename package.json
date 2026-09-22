@@ -10,10 +10,10 @@
 		"lint": "npx eslint \"**/*.ts\"",
 		"lint:fix": "npx eslint \"**/*.ts\" --fix",
 		"spellcheck": "npx cspell .",
-		"test": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test \"src/**/*.test.ts\"",
-		"test:unit": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test \"src/**/*.unit.test.ts\"",
-		"test:integration": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test \"src/**/*.integration.test.ts\"",
-		"test:development": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test \"src/**/*.development.test.ts\""
+		"test": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test --test-isolation=process --test-concurrency=1 \"src/**/*.test.ts\"",
+		"test:unit": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test --test-isolation=process --test-concurrency=1 \"src/**/*.unit.test.ts\"",
+		"test:integration": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test --test-isolation=process --test-concurrency=1 \"src/**/*.integration.test.ts\"",
+		"test:development": "node --env-file-if-exists=.env --env-file=.env.test --import tsx --test --test-isolation=process --test-concurrency=1 \"src/**/*.development.test.ts\""
 	},
 	"engines": {
 		"node": ">=24.0.0"

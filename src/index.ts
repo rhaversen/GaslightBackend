@@ -24,6 +24,7 @@ import gameRouter from './routes/users/games.js'
 import submissionRouter from './routes/users/submissions.js'
 import tournamentRouter from './routes/users/tournaments.js'
 import userRouter from './routes/users/users.js'
+import viewRouter from './routes/users/view.js'
 import databaseConnector from './utils/databaseConnector.js'
 import logger from './utils/logger.js'
 import configurePassport from './utils/passportConfig.js'
@@ -97,6 +98,7 @@ app.use('/api/v1/submissions', submissionRouter)
 app.use('/api/v1/users', userRouter)
 app.use('/api/v1/tournaments', tournamentRouter)
 app.use('/api/v1/games', gameRouter)
+app.use('/api/v1/view', viewRouter)
 app.use('/api/v1/microservices', microservicesRouter)
 app.use('/api/service', serviceRoutes)
 

@@ -186,14 +186,14 @@ submissionSchema.pre(['deleteOne', 'findOneAndDelete'], async function () {
 	const doc = await SubmissionModel.findOne(this.getQuery())
 	// Delete gradings
 	if (doc !== null && doc !== undefined) {
-		await GradingModel.deleteMany({ submission: doc._id })
+		await GradingModel.deleteMany({ submission: doc.id })
 	}
 })
 
 // Pre-delete-many middleware
 submissionSchema.pre('deleteMany', async function () {
 	const docs = await SubmissionModel.find(this.getQuery())
-	const docIds = docs.map(doc => doc._id)
+	const docIds = docs.map(doc => doc.id)
 	// Delete gradings
 	if (docIds.length > 0) {
 		await GradingModel.deleteMany({ submission: { $in: docIds } })

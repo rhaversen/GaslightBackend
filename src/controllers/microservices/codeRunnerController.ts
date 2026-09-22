@@ -93,13 +93,21 @@ export async function processTournamentGradings (gradings: Grading[], disqualifi
 			percentileRank: ((scoreToCumulative.get(g.score) ?? 0) / scores.length) * 100
 		}))
 
-		const newGradings = await GradingModel.insertMany(enrichedGradings)
 		const tournament = await TournamentModel.create({
-			gradings: newGradings.map(gr => gr.id),
+			game,
 			disqualified,
-			tournamentExecutionTime,
-			game
+			gradingCount: enrichedGradings.length,
+			tournamentExecutionTime
 		})
+
+		// Gradings are the flat event stream: each carries its dimensions
+		// (tournament, game, user) so every lens matches on an index directly.
+		await GradingModel.insertMany(enrichedGradings.map(g => ({
+			...g,
+			tournament: tournament.id,
+			game,
+			user: submissionMap.get(g.submission)?.user
+		})))
 
 		emitTournamentCreated(tournament)
 		return tournament
