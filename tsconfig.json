@@ -18,5 +18,5 @@
 "moduleDetection": "force",
 "skipLibCheck": true
 },
-"exclude": ["dist", "src/development/seedGameSource"]
+"exclude": ["dist", "src/development/games"]
 }

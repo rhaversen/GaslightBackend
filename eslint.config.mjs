@@ -124,10 +124,10 @@ export default tseslint.config(
 			"dist/**",
 			"node_modules/**",
 			"scripts/**",
-			// VM-target game code synced from GaslightCodeRunner (runner module
+			// VM-target game code from the gaslight-games submodule (runner module
 			// conventions: .ts import extensions, no verbatimModuleSyntax). It is
-			// stored as data and validated by the sync drift test instead.
-			"src/development/seedGameSource/**",
+			// stored as data and validated by the runner's test suite instead.
+			"src/development/games/**",
 		],
 	}
 );

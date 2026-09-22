@@ -15,6 +15,7 @@ import { loadApiTypeDoc, loadMeyerGameFiles, loadStrategy } from './seedGameSour
 logger.info('Seeding database')
 
 const meyerFiles = loadMeyerGameFiles()
+// The strategy-facing API documentation shipped with each seeded game.
 const apiType = loadApiTypeDoc()
 const exampleStrategy = loadStrategy('exampleStrategy')
 
