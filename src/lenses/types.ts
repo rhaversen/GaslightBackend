@@ -47,6 +47,8 @@ export interface ViewFocus {
 }
 
 export interface LensParams {
+	/** Free-text search over the lens's label field */
+	q?: string
 	/** ISO date — start of the time window */
 	from?: Date
 	/** ISO date — end of the time window */

@@ -45,13 +45,16 @@ const browseGame: LensDefinition = {
 	display: ['batchSize', 'strategyCount'],
 	pivots: [{ field: 'authorId', labelField: 'authorName', collection: 'user', text: 'Author' }],
 	pipeline: async ({ params }) => {
+		const filter = params.q !== undefined && params.q.length > 0
+			? { name: { $regex: params.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } }
+			: {}
 		const games = await GameModel
-			.find()
+			.find(filter)
 			.sort({ createdAt: -1 })
 			.skip(params.skip)
 			.limit(params.limit)
 			.exec()
-		const total = await GameModel.countDocuments()
+		const total = await GameModel.countDocuments(filter)
 		const strategyCounts = await SubmissionModel.aggregate<{ _id: string, count: number }>([
 			{ $group: { _id: '$game', count: { $sum: 1 } } }
 		])
@@ -183,13 +186,16 @@ const browseUser: LensDefinition = {
 	display: ['gamesPlayed'],
 	pivots: [],
 	pipeline: async ({ params }) => {
+		const filter = params.q !== undefined && params.q.length > 0
+			? { username: { $regex: params.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } }
+			: {}
 		const users = await UserModel
-			.find()
+			.find(filter)
 			.sort({ createdAt: -1 })
 			.skip(params.skip)
 			.limit(params.limit)
 			.exec()
-		const total = await UserModel.countDocuments()
+		const total = await UserModel.countDocuments(filter)
 		const played = await GradingModel.aggregate<{ _id: string, games: string[] }>([
 			{ $group: { _id: '$user', games: { $addToSet: '$game' } } }
 		])
@@ -429,6 +435,105 @@ const tournamentParticipants: LensDefinition = {
 }
 
 /* ===================== v1.5: sorts, temporal, derived ==================== */
+
+// Tournament browse — all tournaments across games, newest first (rail + meta)
+const browseTournament: LensDefinition = {
+	id: 'browse',
+	from: 'tournament',
+	onto: 'tournament',
+	scopes: 'collection',
+	cardinality: 'many',
+	dateField: 'createdAt',
+	costClass: 'edge',
+	maxRows: 200,
+	renderer: 'list',
+	description: 'All tournaments, newest first',
+	display: ['participants'],
+	pivots: [{ field: 'gameId', labelField: 'gameName', collection: 'game', text: 'Game' }],
+	pipeline: async ({ params }) => {
+		const filter = params.q !== undefined && params.q.length > 0
+			? { game: { $in: (await GameModel.find({ name: { $regex: params.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } }).select('_id').exec()).map(g => g.id) } }
+			: {}
+		const tournaments = await TournamentModel
+			.find(filter)
+			.sort({ createdAt: -1 })
+			.skip(params.skip)
+			.limit(params.limit)
+			.exec()
+		const total = await TournamentModel.countDocuments(filter)
+		const gameNames = await gameNameMap(tournaments.map(t => t.game))
+		return {
+			total,
+			rows: tournaments.map(tournament => ({
+				date: tournament.createdAt,
+				id: tournament.id,
+				label: `Tournament — ${tournament.createdAt.toLocaleDateString()}`,
+				participants: tournament.gradingCount,
+				gameId: tournament.game,
+				gameName: gameNames.get(tournament.game) ?? 'Unknown'
+			}))
+		}
+	}
+}
+
+// Strategy browse — all strategies, newest first (rail + meta)
+const browseStrategy: LensDefinition = {
+	id: 'browse',
+	from: 'strategy',
+	onto: 'strategy',
+	scopes: 'collection',
+	cardinality: 'many',
+	dateField: 'createdAt',
+	costClass: 'edge',
+	maxRows: 200,
+	renderer: 'list',
+	description: 'All strategies, newest first',
+	display: ['active', 'tournaments', 'bestPlacement'],
+	pivots: [
+		{ field: 'userId', labelField: 'userName', collection: 'user', text: 'Player' },
+		{ field: 'gameId', labelField: 'gameName', collection: 'game', text: 'Game' }
+	],
+	pipeline: async ({ params }) => {
+		const filter = params.q !== undefined && params.q.length > 0
+			? { title: { $regex: params.q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' } }
+			: {}
+		const submissions = await SubmissionModel
+			.find(filter)
+			.sort({ createdAt: -1 })
+			.skip(params.skip)
+			.limit(params.limit)
+			.select('title user game active createdAt')
+			.exec()
+		const total = await SubmissionModel.countDocuments(filter)
+		const stats = await GradingModel.aggregate<{ _id: string, tournaments: number, best: number }>([
+			{ $match: { submission: { $in: submissions.map(s => s.id) } } },
+			{ $group: { _id: '$submission', tournaments: { $sum: 1 }, best: { $min: '$placement' } } }
+		])
+		const statsBySubmission = new Map(stats.map(s => [s._id, s]))
+		const [userNames, gameNames] = await Promise.all([
+			userNameMap(submissions.map(s => s.user)),
+			gameNameMap(submissions.map(s => s.game))
+		])
+		return {
+			total,
+			rows: submissions.map(submission => {
+				const stat = statsBySubmission.get(submission.id)
+				return {
+					date: submission.createdAt,
+					id: submission.id,
+					label: submission.title,
+					active: submission.active,
+					tournaments: stat?.tournaments ?? 0,
+					bestPlacement: stat?.best,
+					userId: submission.user,
+					userName: userNames.get(submission.user) ?? 'Unknown',
+					gameId: submission.game,
+					gameName: gameNames.get(submission.game) ?? 'Unknown'
+				}
+			})
+		}
+	}
+}
 
 // Sort helpers for collection browse lenses. `params.sort` carries a metric
 // name; the pipeline computes the metric per row and sorts in memory (the
@@ -1001,10 +1106,29 @@ export const lenses: LensDefinition[] = [
 	userTimeline,
 	rivalsUser,
 	headToHead,
+	browseTournament,
+	browseStrategy,
 	strategyHistory,
 	strategyTimeline,
 	tournamentParticipants
 ]
+
+/** Metadata the UI needs to plan navigation — no pipeline execution. */
+export function lensMetaFor (from: string): Array<{
+	id: string
+	description: string
+	renderer: string
+	scopes: string
+}> {
+	return lenses
+		.filter(lens => lens.from === from)
+		.map(lens => ({
+			id: lens.id,
+			description: lens.description,
+			renderer: lens.renderer,
+			scopes: lens.scopes
+		}))
+}
 const registry = new Map<string, LensDefinition>()
 for (const lens of lenses) {
 	const key = `${lens.from}:${lens.id}`

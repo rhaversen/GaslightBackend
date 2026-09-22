@@ -120,6 +120,14 @@ export default tseslint.config(
 		},
 	},
 	{
-		ignores: ["dist/**", "node_modules/**", "scripts/**"],
+		ignores: [
+			"dist/**",
+			"node_modules/**",
+			"scripts/**",
+			// VM-target game code synced from GaslightCodeRunner (runner module
+			// conventions: .ts import extensions, no verbatimModuleSyntax). It is
+			// stored as data and validated by the sync drift test instead.
+			"src/development/seedGameSource/**",
+		],
 	}
 );

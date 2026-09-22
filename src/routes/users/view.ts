@@ -2,7 +2,8 @@ import { Router } from 'express'
 
 import {
 	viewCollection,
-	viewDocument
+	viewDocument,
+	viewMeta
 } from '../../controllers/users/viewController.js'
 import { asyncHandler } from '../../utils/asyncHandler.js'
 
@@ -26,6 +27,17 @@ const router = Router()
  */
 router.get('/:collection',
 	asyncHandler(viewCollection)
+)
+
+/**
+ * @route GET /api/v1/view/:collection/meta
+ * @description Lens metadata for a collection (no pipeline execution)
+ * @access Public
+ * @returns {number} res.status - HTTP status code
+ * @returns {{lenses: Array<{id: string, description: string, renderer: string, scopes: string}>}} res.body
+ */
+router.get('/:collection/meta',
+	asyncHandler(viewMeta)
 )
 
 /**

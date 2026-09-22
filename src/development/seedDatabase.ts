@@ -10,9 +10,13 @@ import SubmissionModel, { type ISubmission } from '../models/Submission.js'
 import UserModel from '../models/User.js'
 import logger from '../utils/logger.js'
 
-import meyerFiles, { apiType, detEllerDeroverStrategy, dumbStrategy, exampleStrategy, honestStrategy, lyingStrategy, revealingStrategy, statisticsStrategy } from './gamefiles.js'
+import { loadApiTypeDoc, loadMeyerGameFiles, loadStrategy } from './seedGameSourceLoader.js'
 
 logger.info('Seeding database')
+
+const meyerFiles = loadMeyerGameFiles()
+const apiType = loadApiTypeDoc()
+const exampleStrategy = loadStrategy('exampleStrategy')
 
 // Every game must belong to a user — the seed author owns all seeded games
 const gameAuthor = await UserModel.create({
@@ -88,12 +92,12 @@ const games = await Promise.all([
 const gameIds = games.map(game => game.id as string)
 
 const strategies = {
-	dumb: dumbStrategy,
-	honest: honestStrategy,
-	lying: lyingStrategy,
-	statistics: statisticsStrategy,
-	detEllerDerover: detEllerDeroverStrategy,
-	revealing: revealingStrategy
+	dumb: loadStrategy('dumbStrategy'),
+	honest: loadStrategy('honestStrategy'),
+	lying: loadStrategy('lyingStrategy'),
+	statistics: loadStrategy('statisticsStrategy'),
+	detEllerDerover: loadStrategy('detEllerDeroverStrategy'),
+	revealing: loadStrategy('revealingStrategy')
 }
 
 // Helper functions for normal distribution
