@@ -3,7 +3,7 @@
 # for production
 
 # Use 22 LTS version of Node.js and Debian as the base image and slim for ARM64 compatibility
-FROM node:lts-bookworm-slim
+FROM node:24-bookworm-slim
 
 # Use a non-interactive frontend for debconf
 ENV DEBIAN_FRONTEND=noninteractive
@@ -14,8 +14,8 @@ WORKDIR /app
 # Create a user within the container
 RUN useradd -m gaslight_backend_user
 
-# Copy the app directory, package.json, package-lock.json and Config directory
-COPY dist/app/ ./
+# Copy the compiled app, package.json, package-lock.json and config directory
+COPY dist/ ./dist/
 COPY package*.json ./
 COPY config/ ./config/
 
