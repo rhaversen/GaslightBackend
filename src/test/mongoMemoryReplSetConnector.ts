@@ -2,8 +2,8 @@ import type MongoStore from 'connect-mongo'
 import { MongoMemoryReplSet } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 
-import logger from '../app/utils/logger.js'
-import config from '../app/utils/setupConfig.js'
+import logger from '../utils/logger.js'
+import config from '../utils/setupConfig.js'
 
 const { mongooseOpts } = config
 let replSet: MongoMemoryReplSet
@@ -19,25 +19,28 @@ export default async function connectToInMemoryMongoDB (): Promise<void> {
 		const mongoUri = replSet.getUri()
 		await mongoose.connect(mongoUri, mongooseOpts)
 		logger.info('Connected to in-memory MongoDB')
-	} catch (error: any) {
-		logger.error(`Error connecting to in-memory MongoDB: ${error.message !== undefined ? error.message : error}`)
-		process.exit(1)
+	} catch (error) {
+		logger.error(`Error connecting to in-memory MongoDB: ${error instanceof Error ? error.message : String(error)}`)
+		throw error
 	}
 }
 
 function closeSessionStore (sessionStore: MongoStore): void {
-	// Clear the interval timer used by connect-mongo
-	const cleanupTimer = (sessionStore as any)._removeExpiredSessions
-	if (typeof cleanupTimer === 'function') {
-		clearInterval(cleanupTimer as NodeJS.Timeout)
+	// Clear the interval timer used by connect-mongo. The timer handle lives on
+	// an internal property that has no public type surface.
+	const cleanupTimer = (sessionStore as unknown as { _removeExpiredSessions?: NodeJS.Timeout })._removeExpiredSessions
+	if (cleanupTimer !== undefined) {
+		clearInterval(cleanupTimer)
 	}
 }
 
-export async function disconnectFromInMemoryMongoDB (sessionStore: MongoStore): Promise<void> {
+export async function disconnectFromInMemoryMongoDB (sessionStore?: MongoStore): Promise<void> {
 	try {
-		logger.info('Closing session store...')
-		closeSessionStore(sessionStore)
-		logger.info('Session store closed')
+		if (sessionStore !== undefined) {
+			logger.info('Closing session store...')
+			closeSessionStore(sessionStore)
+			logger.info('Session store closed')
+		}
 
 		logger.info('Closing connection to in-memory MongoDB...')
 		await mongoose.disconnect()
@@ -46,7 +49,7 @@ export async function disconnectFromInMemoryMongoDB (sessionStore: MongoStore): 
 		logger.info('Stopping memory database replica set...')
 		await replSet.stop({ force: true })
 		logger.info('Memory database replica set stopped')
-	} catch (error: any) {
-		logger.error(`Error disconnecting from in-memory MongoDB: ${error.message !== undefined ? error.message : error}`)
+	} catch (error) {
+		logger.error(`Error disconnecting from in-memory MongoDB: ${error instanceof Error ? error.message : String(error)}`)
 	}
 }
