@@ -2,15 +2,30 @@
 // file deepcode ignore NoHardcodedCredentials/test: Hardcoded credentials are only used for testing purposes
 // file deepcode ignore HardcodedNonCryptoSecret/test: Hardcoded credentials are only used for testing purposes
 
-import { processTournamentGradings } from '../app/controllers/microservices/codeRunnerController.js'
-import GameModel from '../app/models/Game.js'
-import SubmissionModel from '../app/models/Submission.js'
-import UserModel from '../app/models/User.js'
-import logger from '../app/utils/logger.js'
+import mongoose from 'mongoose'
 
-import meyerFiles, { apiType, detEllerDeroverStrategy, dumbStrategy, exampleStrategy, honestStrategy, lyingStrategy, revealingStrategy, statisticsStrategy } from './gamefiles.js'
+import { processTournamentGradings } from '../controllers/microservices/codeRunnerController.js'
+import GameModel from '../models/Game.js'
+import SubmissionModel, { type ISubmission } from '../models/Submission.js'
+import UserModel from '../models/User.js'
+import logger from '../utils/logger.js'
+
+import { loadApiTypeDoc, loadMeyerGameFiles, loadStrategy } from './seedGameSourceLoader.js'
 
 logger.info('Seeding database')
+
+const meyerFiles = loadMeyerGameFiles()
+// The strategy-facing API documentation shipped with each seeded game.
+const apiType = loadApiTypeDoc()
+const exampleStrategy = loadStrategy('exampleStrategy')
+
+// Every game must belong to a user — the seed author owns all seeded games
+const gameAuthor = await UserModel.create({
+	email: 'game-author@test.com',
+	password: 'password'
+})
+gameAuthor.confirmUser()
+await gameAuthor.save()
 
 // Create multiple games with different names
 const games = await Promise.all([
@@ -21,7 +36,9 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 10
+		minPlayers: 2,
+		maxPlayers: 10,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Meyer2',
@@ -30,7 +47,9 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 20
+		minPlayers: 2,
+		maxPlayers: 20,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Meyer3',
@@ -39,7 +58,9 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 15
+		minPlayers: 2,
+		maxPlayers: 15,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Two player meyer',
@@ -48,7 +69,9 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 2
+		minPlayers: 2,
+		maxPlayers: 2,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Three player meyer',
@@ -57,7 +80,9 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 3
+		minPlayers: 3,
+		maxPlayers: 3,
+		user: gameAuthor.id
 	}),
 	GameModel.create({
 		name: 'Single player meyer',
@@ -66,18 +91,20 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 1
+		minPlayers: 1,
+		maxPlayers: 1,
+		user: gameAuthor.id
 	})
 ])
 const gameIds = games.map(game => game.id as string)
 
 const strategies = {
-	dumb: dumbStrategy,
-	honest: honestStrategy,
-	lying: lyingStrategy,
-	statistics: statisticsStrategy,
-	detEllerDerover: detEllerDeroverStrategy,
-	revealing: revealingStrategy
+	dumb: loadStrategy('dumbStrategy'),
+	honest: loadStrategy('honestStrategy'),
+	lying: loadStrategy('lyingStrategy'),
+	statistics: loadStrategy('statisticsStrategy'),
+	detEllerDerover: loadStrategy('detEllerDeroverStrategy'),
+	revealing: loadStrategy('revealingStrategy')
 }
 
 // Helper functions for normal distribution
@@ -124,9 +151,9 @@ const createRandomUser = async (index: number) => {
 }
 
 // Modify createRandomSubmissions to include game name in title
-const createRandomSubmissions = async (user: any, count: number, gameId: string, gameName: string) => {
+const createRandomSubmissions = async (user: Awaited<ReturnType<typeof createRandomUser>>, count: number, gameId: string, gameName: string) => {
 	const strategyNames = Object.keys(strategies)
-	const submissions = []
+	const submissions: SeedSubmissionList = []
 
 	// First submission will be active and passed
 	const activeStrategyName = strategyNames[Math.floor(Math.random() * strategyNames.length)] as keyof typeof strategies
@@ -162,16 +189,18 @@ logger.info('Starting database seeding...')
 logger.info('Creating users...')
 
 const batchSize = 100
-const users = []
+const users: Array<Awaited<ReturnType<typeof createRandomUser>>[]> = []
 // Store submissions separately per game
-const allSubmissions: any[][] = Array(games.length).fill(null).map(() => [])
+const allSubmissions: SeedSubmissionList[][] = Array(games.length).fill(null).map(() => [])
 
 // Create user1 first and ensure they have submissions
 logger.info('Creating user1...')
 const user1 = await createRandomUser(1)
 await Promise.all(games.map(async (game, index) => {
-	const user1Subs = await createRandomSubmissions(user1, 1, gameIds[index], game.name)
-	allSubmissions[index].push(user1Subs)
+	const gameId = gameIds[index]
+	if (gameId === undefined) { return }
+	const user1Subs = await createRandomSubmissions(user1, 1, gameId, game.name)
+	allSubmissions[index]?.push(user1Subs)
 }))
 
 // Create remaining users starting from index 2
@@ -185,8 +214,10 @@ for (let i = 0; i < userCount - 1; i += batchSize) {
 	// For each user, create submissions for each game and aggregate
 	for (const user of batch) {
 		await Promise.all(games.map(async (game, index) => {
-			const subs = await createRandomSubmissions(user, Math.floor(Math.random() * 5) + 1, gameIds[index], game.name)
-			allSubmissions[index].push(subs)
+			const gameId = gameIds[index]
+			if (gameId === undefined) { return }
+			const subs = await createRandomSubmissions(user, Math.floor(Math.random() * 5) + 1, gameId, game.name)
+			allSubmissions[index]?.push(subs)
 		}))
 	}
 	logger.info(`Created users ${i + 1} to ${i + batch.length}`)
@@ -194,17 +225,20 @@ for (let i = 0; i < userCount - 1; i += batchSize) {
 
 logger.info('Creating submissions...')
 
+type SeedSubmission = mongoose.Document<unknown, Record<string, never>, ISubmission> & ISubmission & Required<{ _id: mongoose.Types.ObjectId }>
+type SeedSubmissionList = SeedSubmission[]
+
 // Helper function to get valid tournament submissions
-const getValidTournamentSubmissions = (submissions: any[], size: number) => {
+const getValidTournamentSubmissions = (submissions: SeedSubmission[], size: number) => {
 	// Get only active and passed submissions
 	const validSubmissions = submissions.flat().filter(sub =>
 		sub.active && sub.passedEvaluation
 	)
 
 	// Group by user and take only one submission per user
-	const submissionsByUser = validSubmissions.reduce((acc: any, submission: any) => {
+	const submissionsByUser = validSubmissions.reduce<Record<string, SeedSubmission>>((acc, submission) => {
 		const userId = submission.user.toString()
-		if (!acc[userId]) {
+		if (acc[userId] === undefined) {
 			acc[userId] = submission
 		}
 		return acc
@@ -217,10 +251,10 @@ const getValidTournamentSubmissions = (submissions: any[], size: number) => {
 }
 
 // Helper to flatten array of arrays
-const flatten = (arr: any[]) => arr.flat()
+const flatten = (arr: SeedSubmission[][]) => arr.flat()
 
 // Helper function to ensure user1 has at least one active and passed submission for a game
-const ensureUser1Submission = async (user: any, gameId: string, gameName: string, allSubs: any[]) => {
+const ensureUser1Submission = async (user: Awaited<ReturnType<typeof createRandomUser>>, gameId: string, gameName: string, allSubs: SeedSubmission[][]) => {
 	// Use user.id for filtering instead of user.email
 	let userSubs = flatten(allSubs).filter(sub => sub.user.toString() === user.id.toString() && sub.active && sub.passedEvaluation)
 	if (!userSubs.length) {
@@ -234,11 +268,14 @@ const ensureUser1Submission = async (user: any, gameId: string, gameName: string
 
 // Ensure user1 submissions exist for all games before special tournaments
 await Promise.all(games.map(async (game, index) => {
-	await ensureUser1Submission(user1, gameIds[index], game.name, allSubmissions[index])
+	const gameId = gameIds[index]
+	const subs = allSubmissions[index]
+	if (gameId === undefined || subs === undefined) { return }
+	await ensureUser1Submission(user1, gameId, game.name, subs)
 }))
 
 // Update user1 submission filtering to use ID
-const user1Submissions = games.map((game, index) => flatten(allSubmissions[index]).filter(sub =>
+const user1Submissions = games.map((game, index) => flatten(allSubmissions[index] ?? []).filter(sub =>
 	sub.user.toString() === user1.id.toString() &&
 	sub.active &&
 	sub.passedEvaluation
@@ -253,26 +290,28 @@ for (let t = 0; t < tournamentCount; t++) {
 	// Alternate tournaments between games
 	const gameIndex = t % games.length
 	const currentGameId = gameIds[gameIndex]
-	const submissionsPool = flatten(allSubmissions[gameIndex])
+	const gameSubs = allSubmissions[gameIndex]
+	if (currentGameId === undefined || gameSubs === undefined) { continue }
+	const submissionsPool = flatten(gameSubs)
 	const tournamentSubmissions = getValidTournamentSubmissions(submissionsPool, submissionsPerTournament)
 
 	// Generate disqualified submissions (5% chance)
 	const disqualified = tournamentSubmissions
 		.filter(() => Math.random() > 0.95)
-		.map((sub: any) => ({
+		.map(sub => ({
 			submission: sub.id,
 			reason: 'Random disqualification for testing'
 		}))
 
 	// Filter out disqualified submissions before creating scores
-	const qualifiedSubmissions = tournamentSubmissions.filter((sub: any) =>
+	const qualifiedSubmissions = tournamentSubmissions.filter(sub =>
 		!disqualified.some(d => d.submission === sub.id)
 	)
 
 	const scores = qualifiedSubmissions.map(() => generateScore())
-	const submissionScores = qualifiedSubmissions.map((sub: any, index: number) => ({
+	const submissionScores = qualifiedSubmissions.map((sub, index) => ({
 		submission: sub.id,
-		score: scores[index],
+		score: scores[index] ?? generateScore(),
 		avgExecutionTime: generateExecutionTime()
 	}))
 
@@ -283,7 +322,7 @@ for (let t = 0; t < tournamentCount; t++) {
 		currentGameId // changed: use current game id
 	)
 
-	logger.info(`Created tournament ${t + 1}/${tournamentCount} for ${games[gameIndex].name} with ${qualifiedSubmissions.length} submissions (${disqualified.length} disqualified)`)
+	logger.info(`Created tournament ${t + 1}/${tournamentCount} for ${games[gameIndex]?.name} with ${qualifiedSubmissions.length} submissions (${disqualified.length} disqualified)`)
 }
 
 // Create three special tournaments where user1 has top scores
@@ -294,13 +333,16 @@ const specialTournamentPositions = [1, 2, 3, 5, 20]
 for (let i = 0; i < specialTournamentPositions.length; i++) {
 	const gameIndex = i % games.length
 	const currentGameId = gameIds[gameIndex]
+	const position = specialTournamentPositions[i]
+	const gameSubs = allSubmissions[gameIndex]
+	if (currentGameId === undefined || position === undefined || gameSubs === undefined) { continue }
 	const user1SubmissionsForGame = user1Submissions[gameIndex]
 	if (!user1SubmissionsForGame?.length) {
 		logger.error('No active and passed submissions found for user1 for current game')
 		continue
 	}
 	const user1Submission = user1SubmissionsForGame[0]
-	const submissionsPool = flatten(allSubmissions[gameIndex])
+	const submissionsPool = flatten(gameSubs)
 	const otherValidSubmissions = submissionsPool.filter(s =>
 		s.user.toString() !== user1.id.toString() &&
 		s.active &&
@@ -308,13 +350,13 @@ for (let i = 0; i < specialTournamentPositions.length; i++) {
 	)
 
 	// Group by user and take one submission per user
-	const submissionsByUser = otherValidSubmissions.reduce((acc, submission) => {
+	const submissionsByUser = otherValidSubmissions.reduce<Record<string, SeedSubmission>>((acc, submission) => {
 		const userId = submission.user.toString()
-		if (!acc[userId]) {
+		if (acc[userId] === undefined) {
 			acc[userId] = submission
 		}
 		return acc
-	}, {} as Record<string, any>)
+	}, {})
 
 	const uniqueUserSubmissions = Object.values(submissionsByUser)
 		.sort(() => Math.random() - 0.5)
@@ -325,20 +367,22 @@ for (let i = 0; i < specialTournamentPositions.length; i++) {
 	// Generate scores where user1's submission is in the specified position from top
 	const scores = allTournamentSubmissions.map((_, index) => {
 		if (index === 0) { // user1's submission
-			return normalRandomInRange(950 - (specialTournamentPositions[i] - 1) * 10, 5) // High score with small variance
+			return normalRandomInRange(950 - (position - 1) * 10, 5) // High score with small variance
 		} else {
 			// Other submissions get scores that ensure they don't beat user1's position
-			return index < specialTournamentPositions[i] ?
+			return index < position ?
 				normalRandomInRange(950 - (index - 1) * 10, 5) : // Higher scores
 				normalRandomInRange(500, 100) // Normal scores
 		}
 	})
 
-	const submissionScores = allTournamentSubmissions.map((sub, index) => ({
-		submission: sub.id,
-		score: scores[index],
-		avgExecutionTime: generateExecutionTime()
-	}))
+	const submissionScores = allTournamentSubmissions
+		.filter(sub => sub !== undefined)
+		.map((sub, index) => ({
+			submission: sub.id,
+			score: scores[index] ?? generateScore(),
+			avgExecutionTime: generateExecutionTime()
+		}))
 
 	await processTournamentGradings(
 		submissionScores,
@@ -347,7 +391,7 @@ for (let i = 0; i < specialTournamentPositions.length; i++) {
 		currentGameId // changed: use game id
 	)
 
-	logger.info(`Created special tournament for ${games[gameIndex].name} with user1 in position ${specialTournamentPositions[i]}`)
+	logger.info(`Created special tournament for ${games[gameIndex]?.name} with user1 in position ${position}`)
 }
 
 // Create tournaments with small numbers of submissions
@@ -357,16 +401,19 @@ const smallSizes = [1, 2, 3, 5, 20]
 smallSizes.forEach(async (size, index) => {
 	const gameIndex = index % games.length
 	const currentGameId = gameIds[gameIndex]
-	const submissionsPool = flatten(allSubmissions[gameIndex])
-	const submissionsByUser = submissionsPool.reduce<Record<string, typeof submissionsPool[0][]>>((acc, submission) => {
+	const gameSubs = allSubmissions[gameIndex]
+	if (currentGameId === undefined || gameSubs === undefined) { return }
+	const submissionsPool = flatten(gameSubs)
+	const submissionsByUser = submissionsPool.reduce<Record<string, SeedSubmission[]>>((acc, submission) => {
 		const userId = submission.user.toString()
-		if (!acc[userId]) {
+		if (acc[userId] === undefined) {
 			acc[userId] = [submission]
 		}
 		return acc
 	}, {})
 	const shuffledSubmissions = Object.values(submissionsByUser)
 		.map(subs => subs[0])
+		.filter(sub => sub !== undefined)
 		.sort(() => Math.random() - 0.5)
 		.slice(0, size)
 
@@ -375,7 +422,7 @@ smallSizes.forEach(async (size, index) => {
 
 	const submissionScores = shuffledSubmissions.map((sub, index) => ({
 		submission: sub.id,
-		score: scores[index],
+		score: scores[index] ?? generateScore(),
 		avgExecutionTime: generateExecutionTime()
 	}))
 
@@ -386,7 +433,7 @@ smallSizes.forEach(async (size, index) => {
 		currentGameId // changed: use current game id
 	)
 
-	logger.info(`Created tournament for ${games[gameIndex].name} with ${size} submission(s)`)
+	logger.info(`Created tournament for ${games[gameIndex]?.name} with ${size} submission(s)`)
 })
 
 // Create one final large tournament with user1
@@ -394,25 +441,28 @@ logger.info('Creating final large tournament with user1...')
 
 // For each game, create a final large tournament with a slightly random number of submissions
 await Promise.all(games.map(async (game, index) => {
+	const gameId = gameIds[index]
+	const gameSubs = allSubmissions[index]
+	if (gameId === undefined || gameSubs === undefined) { return }
 	const user1FinalSub = user1Submissions[index]?.[0]
 	if (!user1FinalSub) {
 		logger.error(`No active and passed submission found for user1 for ${game.name} final tournament`)
 		return
 	}
-	const submissionsPool = flatten(allSubmissions[index])
+	const submissionsPool = flatten(gameSubs)
 	const otherValidSubmissions = submissionsPool.filter(s =>
 		s.user.toString() !== user1.id.toString() &&
 		s.active &&
 		s.passedEvaluation
 	)
 
-	const submissionsByUser = otherValidSubmissions.reduce((acc, submission) => {
+	const submissionsByUser = otherValidSubmissions.reduce<Record<string, SeedSubmission>>((acc, submission) => {
 		const userId = submission.user.toString()
-		if (!acc[userId]) {
+		if (acc[userId] === undefined) {
 			acc[userId] = submission
 		}
 		return acc
-	}, {} as Record<string, any>)
+	}, {})
 
 	const uniqueSubmissions = Object.values(submissionsByUser)
 		.sort(() => Math.random() - 0.5)
@@ -424,7 +474,7 @@ await Promise.all(games.map(async (game, index) => {
 	const finalScores = finalTournamentSubmissions.map(() => generateScore())
 	const submissionScores = finalTournamentSubmissions.map((sub, index) => ({
 		submission: sub.id,
-		score: finalScores[index],
+		score: finalScores[index] ?? generateScore(),
 		avgExecutionTime: generateExecutionTime()
 	}))
 
@@ -432,7 +482,7 @@ await Promise.all(games.map(async (game, index) => {
 		submissionScores,
 		[],
 		Math.floor(Math.random() * 60000) + 1000,
-		gameIds[index] // changed: use game id
+		gameId
 	)
 
 	logger.info(`Created final large tournament for ${game.name} with ${finalTournamentSubmissions.length} submissions`)
