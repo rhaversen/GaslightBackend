@@ -58,7 +58,8 @@ export async function getAllGames (
 			files: game.files,
 			apiType: game.apiType,
 			exampleStrategy: game.exampleStrategy,
-			batchSize: game.batchSize,
+			minPlayers: game.minPlayers,
+			maxPlayers: game.maxPlayers,
 			createdAt: game.createdAt,
 			updatedAt: game.updatedAt,
 			submissionCount: strategyCounts[index],
@@ -103,7 +104,8 @@ export async function getGame (
 		files: game.files,
 		apiType: game.apiType,
 		exampleStrategy: game.exampleStrategy,
-		batchSize: game.batchSize,
+		minPlayers: game.minPlayers,
+		maxPlayers: game.maxPlayers,
 		user: game.user,
 		createdAt: game.createdAt,
 		updatedAt: game.updatedAt,
@@ -128,7 +130,7 @@ export async function createGame (
 		throw new ForbiddenError('Unauthorized')
 	}
 
-	const { name, description, summary, files, apiType, exampleStrategy, batchSize } = req.body as Record<string, unknown>
+	const { name, description, summary, files, apiType, exampleStrategy, minPlayers, maxPlayers } = req.body as Record<string, unknown>
 
 	// Structural validation — Mongoose handles shape/required, these are
 	// content rules a schema validator can't express.
@@ -141,8 +143,14 @@ export async function createGame (
 	if (typeof description !== 'string' || description.length > 5000) {
 		throw new ValidationError('Description must be at most 5000 characters')
 	}
-	if (typeof batchSize !== 'number' || !Number.isInteger(batchSize) || batchSize < 1 || batchSize > 20) {
-		throw new ValidationError('Batch size must be an integer between 1 and 20')
+	if (typeof minPlayers !== 'number' || !Number.isInteger(minPlayers) || minPlayers < 1) {
+		throw new ValidationError('minPlayers must be an integer of at least 1')
+	}
+	if (typeof maxPlayers !== 'number' || !Number.isInteger(maxPlayers) || maxPlayers < 1 || maxPlayers > 50) {
+		throw new ValidationError('maxPlayers must be an integer between 1 and 50')
+	}
+	if (minPlayers > maxPlayers) {
+		throw new ValidationError('minPlayers must not exceed maxPlayers')
 	}
 	if (typeof files !== 'object' || files === null || typeof (files as Record<string, unknown>)['main.ts'] !== 'string') {
 		throw new ValidationError('files must include a main.ts file')
@@ -171,7 +179,8 @@ export async function createGame (
 		files: fileMap,
 		apiType,
 		exampleStrategy,
-		batchSize,
+		minPlayers,
+		maxPlayers,
 		user: user.id
 	})
 

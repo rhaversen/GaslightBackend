@@ -23,7 +23,8 @@ const router = Router()
  *   files: {[key: string]: string},
  * 	 apiType: string
  *   exampleStrategy: string
- *   batchSize: number,
+ *   minPlayers: number,
+ * 	 maxPlayers: number,
  * 	 submissionCount: number,
  *   createdAt: Date,
  *   updatedAt: Date
@@ -43,7 +44,8 @@ router.get('/',
  * @param {Object} req.body.files - Game files map, must include main.ts (10k chars each)
  * @param {string} req.body.apiType - API type of the game
  * @param {string} req.body.exampleStrategy - Example strategy source (max 10k chars)
- * @param {number} req.body.batchSize - Players per match (1-20)
+ * @param {number} req.body.minPlayers - Smallest playable table size (>= 1)
+ * @param {number} req.body.maxPlayers - Largest table size (1-50, >= minPlayers)
  * @returns {number} res.status - HTTP status code
  * @returns {Object} res.body - Created game
  */
@@ -66,7 +68,8 @@ router.post('/',
  *   files: {[key: string]: string},
  * 	 apiType: string
  *   exampleStrategy: string,
- *   batchSize: number,
+ *   minPlayers: number,
+ *   maxPlayers: number,
  * 	 submissionCount: number,
  *   createdAt: Date,
  *   updatedAt: Date

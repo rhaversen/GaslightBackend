@@ -29,7 +29,8 @@ export interface submission {
 interface EvaluationRequestBody {
 	candidateSubmission: submission;
 	gameFiles: FileMap;
-	batchSize: number;
+	minPlayers: number;
+	maxPlayers: number;
 	gameId: string;
 }
 
@@ -50,7 +51,8 @@ export async function submitCodeForEvaluation (candidateUser: string, candidateS
 			{
 				gameFiles: game.files,
 				gameId: game.id,
-				batchSize: game.batchSize,
+				minPlayers: game.minPlayers,
+				maxPlayers: game.maxPlayers,
 				candidateSubmission: mappedCandidateSubmission,
 				candidateUser
 			} as EvaluationRequestBody,

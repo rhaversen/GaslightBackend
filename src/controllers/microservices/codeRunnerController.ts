@@ -47,7 +47,8 @@ export async function getGames (req: Request, res: Response) {
 		const mappedGames = games.map(game => ({
 			id: game.id,
 			gameFiles: game.files,
-			batchSize: game.batchSize
+			minPlayers: game.minPlayers,
+			maxPlayers: game.maxPlayers
 		}))
 		res.status(200).json(mappedGames)
 	} catch (error) {

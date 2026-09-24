@@ -36,7 +36,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 10,
+		minPlayers: 2,
+		maxPlayers: 10,
 		user: gameAuthor.id
 	}),
 	GameModel.create({
@@ -46,7 +47,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 20,
+		minPlayers: 2,
+		maxPlayers: 20,
 		user: gameAuthor.id
 	}),
 	GameModel.create({
@@ -56,7 +58,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 15,
+		minPlayers: 2,
+		maxPlayers: 15,
 		user: gameAuthor.id
 	}),
 	GameModel.create({
@@ -66,7 +69,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 2,
+		minPlayers: 2,
+		maxPlayers: 2,
 		user: gameAuthor.id
 	}),
 	GameModel.create({
@@ -76,7 +80,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 3,
+		minPlayers: 3,
+		maxPlayers: 3,
 		user: gameAuthor.id
 	}),
 	GameModel.create({
@@ -86,7 +91,8 @@ const games = await Promise.all([
 		files: meyerFiles,
 		apiType,
 		exampleStrategy,
-		batchSize: 1,
+		minPlayers: 1,
+		maxPlayers: 1,
 		user: gameAuthor.id
 	})
 ])

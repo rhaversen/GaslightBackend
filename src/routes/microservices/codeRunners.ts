@@ -33,7 +33,7 @@ router.get('/submissions',
  * @access Private (Microservice)
  * @param {string} req.header.authorization - The secret key for the microservice
  * @returns {number} res.status - HTTP status code
- * @returns {Array<{id: string, gameFiles: {[key: string]: string}, batchSize: number}>} res.body - Array of games
+ * @returns {Array<{id: string, gameFiles: {[key: string]: string}, minPlayers: number, maxPlayers: number}>} res.body - Array of games
  */
 router.get('/games',
 	authenticateMicroservice,

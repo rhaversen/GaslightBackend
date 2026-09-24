@@ -13,7 +13,10 @@ export interface IGame extends Document {
 	files: FileMap
 	apiType: string
 	exampleStrategy: string
-	batchSize: number
+	/** Smallest table the game can run with. Below this the game cannot start. */
+	minPlayers: number
+	/** Largest table the game supports. The runner seats min(maxPlayers, roster size). */
+	maxPlayers: number
 	/** User who submitted the game. Every game belongs to a user. */
 	user: string
 	// Timestamps
@@ -37,7 +40,8 @@ const gameSchema = new Schema<IGame>({
 	},
 	apiType: { type: String, required: true },
 	exampleStrategy: { type: String, required: true },
-	batchSize: { type: Number, required: true },
+	minPlayers: { type: Number, required: true, min: 1 },
+	maxPlayers: { type: Number, required: true, min: 1, max: 50 },
 	user: {
 		type: String,
 		ref: 'User',

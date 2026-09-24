@@ -42,7 +42,8 @@ describe('view controllers', () => {
 			files: { 'main.ts': 'export const Game = {}' },
 			apiType: 'turnBased',
 			exampleStrategy: 'export const strategy = () => {}',
-			batchSize: 2,
+			minPlayers: 2,
+maxPlayers: 2,
 			user: userId
 		})
 		gameId = game.id

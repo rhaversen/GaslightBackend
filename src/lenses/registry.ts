@@ -9,7 +9,7 @@ import { getTournamentStandings } from '../services/standings.js'
 
 import { type LensDefinition } from './types.js'
 
-// The lens registry — the single source of truth for the explore UI. The
+// The lens registry - the single source of truth for the explore UI. The
 // frontend renders generically from `display` chips and `pivots`; it never
 // knows lens specifics. All pipelines resolve labels server-side: the client
 // never sees an id it cannot click.
@@ -42,7 +42,7 @@ const browseGame: LensDefinition = {
 	maxRows: 200,
 	renderer: 'list',
 	description: 'All games, newest first',
-	display: ['batchSize', 'strategyCount'],
+	display: ['players', 'strategyCount'],
 	pivots: [{ field: 'authorId', labelField: 'authorName', collection: 'user', text: 'Author' }],
 	pipeline: async ({ params }) => {
 		const filter = params.q !== undefined && params.q.length > 0
@@ -67,7 +67,7 @@ const browseGame: LensDefinition = {
 				id: game.id,
 				label: game.name,
 				summary: game.summary,
-				batchSize: game.batchSize,
+				players: `${game.minPlayers}-${game.maxPlayers}`,
 				strategyCount: counts.get(game.id) ?? 0,
 				authorId: game.user,
 				authorName: authorNames.get(game.user) ?? 'Unknown'
@@ -100,7 +100,7 @@ const gameTournaments: LensDefinition = {
 			.exec()
 		const total = await TournamentModel.countDocuments({ game: id })
 		// Resolve the winner of each tournament (placement 1) in one aggregate.
-		// Group by tournament — the grading's own _id is not the key here.
+		// Group by tournament - the grading's own _id is not the key here.
 		const winners = await GradingModel.aggregate<{ _id: string, user: string }>([
 			{ $match: { tournament: { $in: tournaments.map(t => t.id) }, placement: 1 } },
 			{ $group: { _id: '$tournament', user: { $first: '$user' } } }
@@ -115,7 +115,7 @@ const gameTournaments: LensDefinition = {
 				return {
 					date: tournament.createdAt,
 					id: tournament.id,
-					label: `Tournament — ${tournament.createdAt.toLocaleDateString()}`,
+					label: `Tournament - ${tournament.createdAt.toLocaleDateString()}`,
 					participants: tournament.gradingCount,
 					winnerId,
 					winnerName: winnerId !== undefined ? winnerNames.get(winnerId) ?? 'Unknown' : undefined
@@ -223,7 +223,7 @@ const userGamesCreated: LensDefinition = {
 	maxRows: 200,
 	renderer: 'list',
 	description: 'Games this user made',
-	display: ['batchSize', 'strategyCount'],
+	display: ['players', 'strategyCount'],
 	pivots: [],
 	pipeline: async ({ id, params }) => {
 		const user = await UserModel.findById(id)
@@ -248,7 +248,7 @@ const userGamesCreated: LensDefinition = {
 				id: game.id,
 				label: game.name,
 				summary: game.summary,
-				batchSize: game.batchSize,
+				players: `${game.minPlayers}-${game.maxPlayers}`,
 				strategyCount: counts.get(game.id) ?? 0
 			}))
 		}
@@ -380,7 +380,7 @@ const strategyHistory: LensDefinition = {
 			rows: gradings.map(grading => ({
 				date: grading.createdAt,
 				id: grading.tournament,
-				label: `Tournament — ${grading.createdAt.toLocaleDateString()}`,
+				label: `Tournament - ${grading.createdAt.toLocaleDateString()}`,
 				placement: grading.placement,
 				score: grading.score,
 				percentileRank: grading.percentileRank,
@@ -414,7 +414,7 @@ const tournamentParticipants: LensDefinition = {
 		return {
 			total: tournament.gradingCount,
 			focus: {
-				label: `Tournament — ${tournament.createdAt.toLocaleDateString()}`,
+				label: `Tournament - ${tournament.createdAt.toLocaleDateString()}`,
 				subtitle: `${tournament.gradingCount} participants`
 			},
 			rows: standings.map(standing => ({
@@ -436,7 +436,7 @@ const tournamentParticipants: LensDefinition = {
 
 /* ===================== v1.5: sorts, temporal, derived ==================== */
 
-// Tournament browse — all tournaments across games, newest first (rail + meta)
+// Tournament browse - all tournaments across games, newest first (rail + meta)
 const browseTournament: LensDefinition = {
 	id: 'browse',
 	from: 'tournament',
@@ -467,7 +467,7 @@ const browseTournament: LensDefinition = {
 			rows: tournaments.map(tournament => ({
 				date: tournament.createdAt,
 				id: tournament.id,
-				label: `Tournament — ${tournament.createdAt.toLocaleDateString()}`,
+				label: `Tournament - ${tournament.createdAt.toLocaleDateString()}`,
 				participants: tournament.gradingCount,
 				gameId: tournament.game,
 				gameName: gameNames.get(tournament.game) ?? 'Unknown'
@@ -476,7 +476,7 @@ const browseTournament: LensDefinition = {
 	}
 }
 
-// Strategy browse — all strategies, newest first (rail + meta)
+// Strategy browse - all strategies, newest first (rail + meta)
 const browseStrategy: LensDefinition = {
 	id: 'browse',
 	from: 'strategy',
@@ -860,7 +860,7 @@ const streaksGame: LensDefinition = {
 	}
 }
 
-// Champion succession chain (story 27) — the sequence of winners over time
+// Champion succession chain (story 27) - the sequence of winners over time
 const successionGame: LensDefinition = {
 	id: 'succession',
 	from: 'game',
@@ -945,7 +945,7 @@ const rivalsUser: LensDefinition = {
 	}
 }
 
-// Head-to-head: dual anchor set comparison (54, 57) — anchor in URL, rival in 'me'
+// Head-to-head: dual anchor set comparison (54, 57) - anchor in URL, rival in 'me'
 const headToHead: LensDefinition = {
 	id: 'head-to-head',
 	from: 'user',
@@ -1000,7 +1000,7 @@ const headToHead: LensDefinition = {
 	}
 }
 
-// Negative: silent drops — top-10% users with no recent gradings (48)
+// Negative: silent drops - top-10% users with no recent gradings (48)
 const silentDrops: LensDefinition = {
 	id: 'silent-drops',
 	from: 'game',
@@ -1039,7 +1039,7 @@ const silentDrops: LensDefinition = {
 	}
 }
 
-// Derived metric: dominance per game (35) — documented, versioned v1 formula
+// Derived metric: dominance per game (35) - documented, versioned v1 formula
 // dominance = 0.5 * winRate + 0.3 * activityShare + 0.2 * peakScore, windowed
 const dominanceGame: LensDefinition = {
 	id: 'dominance',
@@ -1113,7 +1113,7 @@ export const lenses: LensDefinition[] = [
 	tournamentParticipants
 ]
 
-/** Metadata the UI needs to plan navigation — no pipeline execution. */
+/** Metadata the UI needs to plan navigation - no pipeline execution. */
 export function lensMetaFor (from: string): Array<{
 	id: string
 	description: string

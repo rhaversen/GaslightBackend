@@ -50,12 +50,14 @@ describe('models', () => {
 			files: { 'main.ts': 'export const Game = {}' },
 			apiType: 'turnBased',
 			exampleStrategy: 'export const strategy = () => {}',
-			batchSize: 2,
-			user: gameAuthor.id
-		})
+minPlayers: 2,
+					maxPlayers: 5,
+					user: gameAuthor.id
+			})
 
-		assert.equal(game.name, 'Smoke Game')
-		assert.equal(game.batchSize, 2)
+			assert.equal(game.name, 'Smoke Game')
+			assert.equal(game.minPlayers, 2)
+			assert.equal(game.maxPlayers, 5)
 		assert.equal(game.user, gameAuthor.id)
 
 		const found = await GameModel.findById(game._id)
@@ -72,7 +74,8 @@ describe('models', () => {
 				files: { 'main.ts': 'export const Game = {}' },
 				apiType: 'turnBased',
 				exampleStrategy: 'export const strategy = () => {}',
-				batchSize: 2
+				minPlayers: 2,
+				maxPlayers: 2
 			})
 		)
 	})

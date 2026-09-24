@@ -31,7 +31,8 @@ describe('lens registry', () => {
 			files: { 'main.ts': 'export const Game = {}' },
 			apiType: 'turnBased',
 			exampleStrategy: 'export const strategy = () => {}',
-			batchSize: 2,
+			minPlayers: 2,
+			maxPlayers: 2,
 			user: authorId
 		})
 		await GameModel.create({
@@ -41,7 +42,8 @@ describe('lens registry', () => {
 			files: { 'main.ts': 'export const Game = {}' },
 			apiType: 'turnBased',
 			exampleStrategy: 'export const strategy = () => {}',
-			batchSize: 3,
+			minPlayers: 3,
+			maxPlayers: 3,
 			user: authorId
 		})
 
