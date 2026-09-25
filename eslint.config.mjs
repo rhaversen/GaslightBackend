@@ -19,9 +19,9 @@ const compat = new FlatCompat({
 export default tseslint.config(
 	eslint.configs.recommended,
 	...tseslint.configs.recommended,
-	nPlugin.configs["flat/recommended-module"],
 	...compat.extends(
 		"plugin:promise/recommended",
+		"plugin:n/recommended-module",
 	),
 	eslintConfigPrettier,
 	{
@@ -52,6 +52,7 @@ export default tseslint.config(
 			},
 		},
 		rules: {
+			"@typescript-eslint/strict-boolean-expressions": "error",
 			"@typescript-eslint/no-unused-vars": [
 				"warn",
 				{ argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
@@ -117,6 +118,7 @@ export default tseslint.config(
 				"error",
 				{ max: 1, maxEOF: 1 },
 			],
+			curly: ["error", "all"],
 		},
 	},
 	{

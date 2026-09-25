@@ -232,7 +232,7 @@ type SeedSubmissionList = SeedSubmission[]
 const getValidTournamentSubmissions = (submissions: SeedSubmission[], size: number) => {
 	// Get only active and passed submissions
 	const validSubmissions = submissions.flat().filter(sub =>
-		sub.active && sub.passedEvaluation
+		sub.active === true && sub.passedEvaluation === true
 	)
 
 	// Group by user and take only one submission per user
@@ -256,12 +256,12 @@ const flatten = (arr: SeedSubmission[][]) => arr.flat()
 // Helper function to ensure user1 has at least one active and passed submission for a game
 const ensureUser1Submission = async (user: Awaited<ReturnType<typeof createRandomUser>>, gameId: string, gameName: string, allSubs: SeedSubmission[][]) => {
 	// Use user.id for filtering instead of user.email
-	let userSubs = flatten(allSubs).filter(sub => sub.user.toString() === user.id.toString() && sub.active && sub.passedEvaluation)
+	let userSubs = flatten(allSubs).filter(sub => sub.user.toString() === user.id.toString() && sub.active === true && sub.passedEvaluation === true)
 	if (!userSubs.length) {
 		// Create one submission if none exists
 		const newSubs = await createRandomSubmissions(user, 1, gameId, gameName)
 		allSubs.push(newSubs)
-		userSubs = flatten(allSubs).filter(sub => sub.user.toString() === user.id.toString() && sub.active && sub.passedEvaluation)
+		userSubs = flatten(allSubs).filter(sub => sub.user.toString() === user.id.toString() && sub.active === true && sub.passedEvaluation === true)
 	}
 	return userSubs
 }
@@ -277,8 +277,8 @@ await Promise.all(games.map(async (game, index) => {
 // Update user1 submission filtering to use ID
 const user1Submissions = games.map((game, index) => flatten(allSubmissions[index] ?? []).filter(sub =>
 	sub.user.toString() === user1.id.toString() &&
-	sub.active &&
-	sub.passedEvaluation
+	sub.active === true &&
+	sub.passedEvaluation === true
 ))
 
 // Create tournaments
@@ -337,7 +337,7 @@ for (let i = 0; i < specialTournamentPositions.length; i++) {
 	const gameSubs = allSubmissions[gameIndex]
 	if (currentGameId === undefined || position === undefined || gameSubs === undefined) { continue }
 	const user1SubmissionsForGame = user1Submissions[gameIndex]
-	if (!user1SubmissionsForGame?.length) {
+	if (user1SubmissionsForGame === undefined || user1SubmissionsForGame.length === 0) {
 		logger.error('No active and passed submissions found for user1 for current game')
 		continue
 	}
@@ -345,8 +345,8 @@ for (let i = 0; i < specialTournamentPositions.length; i++) {
 	const submissionsPool = flatten(gameSubs)
 	const otherValidSubmissions = submissionsPool.filter(s =>
 		s.user.toString() !== user1.id.toString() &&
-		s.active &&
-		s.passedEvaluation
+		s.active === true &&
+		s.passedEvaluation === true
 	)
 
 	// Group by user and take one submission per user
@@ -452,8 +452,8 @@ await Promise.all(games.map(async (game, index) => {
 	const submissionsPool = flatten(gameSubs)
 	const otherValidSubmissions = submissionsPool.filter(s =>
 		s.user.toString() !== user1.id.toString() &&
-		s.active &&
-		s.passedEvaluation
+		s.active === true &&
+		s.passedEvaluation === true
 	)
 
 	const submissionsByUser = otherValidSubmissions.reduce<Record<string, SeedSubmission>>((acc, submission) => {

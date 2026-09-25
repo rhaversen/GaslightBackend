@@ -33,7 +33,7 @@ const gameSchema = new Schema<IGame>({
 		required: true,
 		validate: {
 			validator: function (v: Record<string, string>) {
-				return v && typeof v['main.ts'] === 'string'
+				return v !== undefined && v !== null && typeof v['main.ts'] === 'string'
 			},
 			message: 'files must have a main.ts file'
 		}

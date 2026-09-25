@@ -7,14 +7,14 @@ const { MICROSERVICE_AUTHORIZATION } = process.env
 export function authenticateMicroservice (req: Request, res: Response, next: NextFunction) {
 	const authHeader = req.headers.authorization
 
-	if (!authHeader) {
+	if (authHeader === undefined) {
 		logger.error('Authorization header not found')
 		return res.status(401).send({ message: 'Authorization header not found' })
 	}
 
 	const [scheme, token] = authHeader.split(' ')
 
-	if (scheme !== 'Bearer' || !token) {
+	if (scheme !== 'Bearer' || token === '') {
 		logger.error('Invalid authorization format')
 		return res.status(401).send({ message: 'Invalid authorization format' })
 	}
