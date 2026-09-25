@@ -11,7 +11,7 @@ jobs:
             project_name: "GaslightBackend"
             dockerhub_image_name: "gaslight-backend"
             node_version: "22"
-            submodules: "recursive"
+            submodules: true
             push_sourcemaps: true
             sentry_project: "gaslight-backend"
         secrets:
