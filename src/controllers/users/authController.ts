@@ -102,7 +102,7 @@ export async function getMe (req: Request, res: Response): Promise<void> {
 		expirationDate: user.expirationDate,
 		confirmed: user.confirmed,
 		submissionCount: await SubmissionModel.countDocuments({ user: user.id }),
-		activeSubmission: (await SubmissionModel.findOne({ user: user.id, active: true }).exec())?.title || null,
+		activeSubmission: (await SubmissionModel.findOne({ user: user.id, active: true }).exec())?.title ?? null,
 		createdAt: user.createdAt,
 		updatedAt: user.updatedAt
 	}

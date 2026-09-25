@@ -43,7 +43,7 @@ describe('view controllers', () => {
 			apiType: 'turnBased',
 			exampleStrategy: 'export const strategy = () => {}',
 			minPlayers: 2,
-maxPlayers: 2,
+			maxPlayers: 2,
 			user: userId
 		})
 		gameId = game.id
