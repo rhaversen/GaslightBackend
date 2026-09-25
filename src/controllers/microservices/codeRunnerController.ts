@@ -76,7 +76,7 @@ export async function processTournamentGradings (gradings: Grading[], disqualifi
 
 		const uniqueScoresAsc = [...uniqueScoresDesc].reverse()
 		const frequencyMap = new Map<number, number>()
-		scores.forEach(score => frequencyMap.set(score, (frequencyMap.get(score) || 0) + 1))
+		scores.forEach(score => frequencyMap.set(score, (frequencyMap.get(score) ?? 0) + 1))
 
 		let cumulativeCount = 0
 		const scoreToCumulative = new Map<number, number>()
