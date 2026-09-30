@@ -34,7 +34,7 @@ const submissionTitleMap = async (ids: string[]): Promise<Map<string, string>> =
 const browseGame: LensDefinition = {
 	id: 'browse',
 	from: 'game',
-	onto: 'row',
+	onto: 'game',
 	scopes: 'collection',
 	cardinality: 'many',
 	dateField: 'createdAt',
@@ -175,7 +175,7 @@ const gameStrategies: LensDefinition = {
 const browseUser: LensDefinition = {
 	id: 'browse',
 	from: 'user',
-	onto: 'row',
+	onto: 'user',
 	scopes: 'collection',
 	cardinality: 'many',
 	dateField: 'createdAt',
@@ -553,7 +553,7 @@ function applySort (rows: Array<{ [k: string]: unknown }>, params: { sort?: stri
 const leaderboardUser: LensDefinition = {
 	id: 'leaderboard',
 	from: 'user',
-	onto: 'row',
+	onto: 'user',
 	scopes: 'collection',
 	cardinality: 'many',
 	dateField: 'createdAt',
@@ -595,7 +595,7 @@ const leaderboardUser: LensDefinition = {
 const leaderboardGame: LensDefinition = {
 	id: 'leaderboard',
 	from: 'game',
-	onto: 'row',
+	onto: 'game',
 	scopes: 'collection',
 	cardinality: 'many',
 	dateField: 'createdAt',
