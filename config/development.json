@@ -28,7 +28,7 @@
 			}
 		}
 	},
-	"expressPort": 5000,
+	"expressPort": 5010,
 	"mongoose": {
 		"retrySettings": {
 			"maxAttempts": 5,
@@ -44,7 +44,10 @@
 		"saltRounds": 1
 	},
 	"cors": {
-		"origin": "http://localhost:3000",
+		"origin": [
+			"http://localhost:3000",
+			"http://localhost:3012"
+		],
 		"credentials": true
 	},
 	"cookieOptions": {
